@@ -1,0 +1,15 @@
+sprint_structure:
+  required_lists:
+    - Backlog
+    - To Do
+    - In Progress
+    - Done
+  
+user_story:
+  format_pattern: "^As a .* I want .* so that .*"
+  
+acceptance_criteria:
+  min_checklist_items: 3
+  
+ownership:
+  require_assignee: true
