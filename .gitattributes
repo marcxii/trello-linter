@@ -1,0 +1,13 @@
+# Force CRLF for all text files
+* text=auto eol=crlf
+
+# Treat common binaries as binary so Git doesn't touch line endings
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.gz  binary
+*.exe binary
+*.dll binary
