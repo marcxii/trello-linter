@@ -39,16 +39,21 @@ def analyze_partial():
         return render_template(
             "partials/error.html",
             message="Missing file. Please upload a Trello JSON export.",
-        ), 400
+        )
 
     filename = uploaded.filename or "(unnamed)"
     name_ok = filename.lower().endswith(".json")
-    type_ok = uploaded.mimetype in {"application/json", "text/json", ""} or uploaded.mimetype is None
+    type_ok = uploaded.mimetype in {
+        "application/json",
+        "text/json",
+        "application/octet-stream",
+        "",
+    } or uploaded.mimetype is None
     if not name_ok or not type_ok:
         return render_template(
             "partials/error.html",
             message="Invalid file type. Please upload a Trello JSON export.",
-        ), 400
+        )
 
     # Placeholder output for scaffold validation (no real linting yet)
     # `run_id` is a stub for now; if/when you add persistence, replace with real id.

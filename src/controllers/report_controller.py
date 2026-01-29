@@ -30,19 +30,30 @@ def report(run_id: str):
 
     is_print = request.args.get("print") in {"1", "true", "yes"}
 
-    # Minimal placeholder structure expected by the template.
-    # Replace with real persisted report JSON later.
+    run = {
+        "id": run_id,
+        "created_at": "(not yet generated)",
+        "board_ref": "(unknown)",
+        "source_type": "placeholder",
+    }
+
     report_data = {
-        "run_id": run_id,
-        "overall_score": "—",
-        "category_scores": {},
-        "metrics": {},
+        "scores": {
+            "overall_score": "—",
+            "total_findings": 0,
+            "critical_findings": 0,
+            "major_findings": 0,
+            "category_scores": {},
+        },
+        "summary": {
+            "note": "Placeholder report data. Connect the pipeline to populate this.",
+        },
         "findings": [],
-        "generated_at": "(not yet generated)",
     }
 
     return render_template(
         "report_template.html",
+        run=run,
         report=report_data,
         is_print=is_print,
     )

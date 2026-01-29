@@ -14,14 +14,14 @@ def test_partials_upload_get(client):
 
 def test_partials_analyze_requires_file(client):
     res = client.post("/partials/analyze", data={}, content_type="multipart/form-data")
-    assert res.status_code == 400
+    assert res.status_code == 200
     assert b"Missing file" in res.data
 
 
 def test_partials_analyze_rejects_wrong_type(client):
     data = {"file": (io.BytesIO(b"not-json"), "notes.txt")}
     res = client.post("/partials/analyze", data=data)
-    assert res.status_code == 400
+    assert res.status_code == 200
     assert b"Invalid file type" in res.data
 
 
@@ -30,5 +30,6 @@ def test_partials_analyze_accepts_json(client):
     res = client.post("/partials/analyze", data=data)
     assert res.status_code == 200
     assert b'id="results"' in res.data
+    assert b'class="results active"' in res.data
 
     

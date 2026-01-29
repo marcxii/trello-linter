@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TrelloScore — Report {{ run.id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <style>
+      /* Print helpers: keep this lightweight and additive. */
+      @media print {
+        .no-print { display: none !important; }
+        body { margin: 0; }
+        .card { break-inside: avoid; }
+      }
+
+      /* Optional print mode via query param ?print=1 */
+      .print-mode .no-print { display: none !important; }
+
+      .page { max-width: 1100px; margin: 0 auto; padding: 16px; }
+      .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+      .meta { color: #444; font-size: 0.95rem; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+      .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px 14px; background: #fff; }
+      .card h2 { margin: 0 0 8px 0; font-size: 1.1rem; }
+      .kpi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .kpi .item { border: 1px solid #eee; border-radius: 8px; padding: 10px; }
+      .kpi .label { font-size: 0.85rem; color: #555; }
+      .kpi .value { font-size: 1.35rem; font-weight: 700; }
+      .section { margin-top: 16px; }
+      .findings { margin: 0; padding-left: 18px; }
+      .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid #ddd; font-size: 0.85rem; }
+      .muted { color: #666; }
+      pre { white-space: pre-wrap; word-break: break-word; background: #fafafa; border: 1px solid #eee; padding: 10px; border-radius: 8px; }
+      .actions { display: flex; gap: 10px; justify-content: flex-end; }
+      .btn { display: inline-block; padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer; text-decoration: none; color: #000; }
+    </style>
+  </head>
+
+  <body class="report-page {% if is_print %}print-mode{% endif %}">
+    <div class="page">
+      <div class="header">
+        <div>
+          <h1 style="margin:0;">TrelloScore Report</h1>
+          <div class="meta">
+            <div><strong>Run ID:</strong> {{ run.id }}</div>
+            <div><strong>Created:</strong> {{ run.created_at }}</div>
+            <div><strong>Board Ref:</strong> {{ run.board_ref }}</div>
+            <div><strong>Source:</strong> <span class="pill">{{ run.source_type }}</span></div>
+          </div>
+        </div>
+
+        <div class="actions no-print">
+          <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+          <a class="btn" href="{{ url_for('main.index') }}">Back to Dashboard</a>
+        </div>
+      </div>
+
+      {% set scores = report.get('scores', {}) %}
+      {% set summary = report.get('summary', {}) %}
+      {% set findings = report.get('findings', []) %}
+
+      <div class="grid">
+        <div class="card">
+          <h2>Scorecard</h2>
+          <div class="kpi">
+            <div class="item">
+              <div class="label">Overall score</div>
+              <div class="value">{{ scores.get('overall_score', '—') }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Total findings</div>
+              <div class="value">{{ scores.get('total_findings', (findings|length)) }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Critical findings</div>
+              <div class="value">{{ scores.get('critical_findings', 0) }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Major findings</div>
+              <div class="value">{{ scores.get('major_findings', 0) }}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="muted"><strong>Note:</strong> {{ summary.get('note', '—') }}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Category Scores</h2>
+          {% set cat = scores.get('category_scores', {}) %}
+          {% if cat %}
+            <ul class="findings">
+              {% for k, v in cat.items() %}
+                <li><strong>{{ k }}:</strong> {{ v }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="muted">No category scores available yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>Findings</h2>
+
+        {% if findings and (findings|length) > 0 %}
+          <p class="muted">Showing {{ findings|length }} finding(s).</p>
+
+          <!-- Render a lightweight list. Findings may be dicts; show useful fields when present. -->
+          <ol class="findings">
+            {% for f in findings %}
+              {% if f is mapping %}
+                <li>
+                  <div>
+                    <strong>{{ f.get('title', f.get('rule', 'Finding')) }}</strong>
+                    {% if f.get('severity') %}
+                      <span class="pill">{{ f.get('severity') }}</span>
+                    {% endif %}
+                  </div>
+                  {% if f.get('message') %}
+                    <div class="muted">{{ f.get('message') }}</div>
+                  {% elif f.get('description') %}
+                    <div class="muted">{{ f.get('description') }}</div>
+                  {% endif %}
+                  {% if f.get('card_ids') or f.get('cards') %}
+                    <div class="muted">
+                      <strong>Affected:</strong>
+                      {{ (f.get('card_ids') or f.get('cards')) }}
+                    </div>
+                  {% endif %}
+                </li>
+              {% else %}
+                <li><pre>{{ f }}</pre></li>
+              {% endif %}
+            {% endfor %}
+          </ol>
+        {% else %}
+          <p class="muted">No findings available in this run.</p>
+        {% endif %}
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>Raw Report JSON</h2>
+        <p class="muted">This section helps debugging and will be hidden in print mode.</p>
+        <div class="no-print">
+          <pre>{{ report | tojson(indent=2) }}</pre>
+        </div>
+        <div class="muted" style="margin-top: 8px;">
+          Tip: append <code>?print=1</code> to the URL for a cleaner print layout.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
