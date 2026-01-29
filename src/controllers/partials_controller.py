@@ -10,9 +10,9 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, current_app, render_template, request
 
-from src.database.sqlite import get_db
+from src.database.sqlite import cleanup_runs, get_db
 from src.utils.session import get_or_set_session_id
 
 partials_bp = Blueprint("partials", __name__)
@@ -61,6 +61,16 @@ def analyze_partial():
             message="Invalid file type. Please upload a Trello JSON export.",
         )
 
+    try:
+        json.load(uploaded.stream)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return render_template(
+            "partials/error.html",
+            message="Invalid JSON file. Please export a valid Trello JSON file.",
+        )
+    finally:
+        uploaded.stream.seek(0)
+
     # Placeholder output for scaffold validation (no real linting yet)
     # `run_id` is a stub for now; if/when you add persistence, replace with real id.
     placeholder = {
@@ -79,6 +89,7 @@ def analyze_partial():
     }
 
     session_id = get_or_set_session_id()
+    cleanup_runs(int(current_app.config.get("RUN_TTL_SECONDS", 0)))
     created_at = datetime.now(timezone.utc).isoformat()
     report_data = {
         "scores": {

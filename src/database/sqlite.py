@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from flask import current_app, g
@@ -65,4 +66,17 @@ def init_db() -> None:
         ON runs(session_id, created_at)
         """
     )
+    conn.commit()
+
+
+def cleanup_runs(ttl_seconds: int) -> None:
+    """Delete runs older than the TTL."""
+    if ttl_seconds <= 0:
+        return
+
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=ttl_seconds)
+    cutoff_iso = cutoff.isoformat()
+
+    conn = get_db()
+    conn.execute("DELETE FROM runs WHERE created_at < ?", (cutoff_iso,))
     conn.commit()

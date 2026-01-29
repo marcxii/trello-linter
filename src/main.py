@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import os
 
-from flask import Flask
+from flask import Flask, render_template
+from werkzeug.exceptions import RequestEntityTooLarge
 
 
 def create_app() -> Flask:
@@ -27,6 +28,8 @@ def create_app() -> Flask:
     # Basic config (keep minimal for Commit 1)
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev")
     app.config["SQLITE_DB_PATH"] = os.getenv("SQLITE_DB_PATH")
+    app.config["RUN_TTL_SECONDS"] = int(os.getenv("RUN_TTL_SECONDS", "21600"))
+    app.config["MAX_CONTENT_LENGTH"] = int(os.getenv("MAX_CONTENT_LENGTH", str(10 * 1024 * 1024)))
 
     from src.utils.session import get_or_set_session_id
     from src.database.sqlite import close_db, init_db
@@ -34,6 +37,13 @@ def create_app() -> Flask:
     @app.before_request
     def ensure_session_id():
         get_or_set_session_id()
+
+    @app.errorhandler(RequestEntityTooLarge)
+    def handle_oversize(_err):
+        return render_template(
+            "partials/error.html",
+            message="File too large. Please upload a smaller Trello JSON export.",
+        )
 
     @app.teardown_appcontext
     def teardown_sqlite(exception=None):
