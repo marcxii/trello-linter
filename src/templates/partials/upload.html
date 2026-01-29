@@ -1,0 +1,22 @@
+<div class="upload-section" id="dropZone">
+  <div class="upload-icon">📤</div>
+  <div class="upload-text">Drop your Trello JSON file here</div>
+  <div class="upload-subtext">or click to browse</div>
+
+  <form
+    class="upload-form"
+    id="uploadForm"
+    hx-post="/partials/analyze"
+    hx-target="#content"
+    hx-swap="innerHTML"
+    hx-encoding="multipart/form-data"
+  >
+    <input type="file" id="fileInput" name="file" accept=".json" required />
+
+    <div class="actions">
+      <button class="btn" type="submit">Analyze Board</button>
+    </div>
+  </form>
+</div>
+
+<div class="error" id="errorMsg"></div>

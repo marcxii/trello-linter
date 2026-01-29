@@ -30,11 +30,13 @@ def create_app() -> Flask:
     # Register controller blueprints
     from src.controllers.main_controller import main_bp
     from src.controllers.analysis_controller import analysis_bp
+    from src.controllers.partials_controller import partials_bp
     from src.controllers.report_controller import report_bp
     from src.controllers.export_controller import export_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(analysis_bp)
+    app.register_blueprint(partials_bp)
     app.register_blueprint(report_bp)
     app.register_blueprint(export_bp)
 
