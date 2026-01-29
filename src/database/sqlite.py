@@ -43,3 +43,26 @@ def close_db(_error: Exception | None = None) -> None:
     conn: Optional[sqlite3.Connection] = g.pop("sqlite_db", None)
     if conn is not None:
         conn.close()
+
+
+def init_db() -> None:
+    """Initialize SQLite schema if missing."""
+    conn = get_db()
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            board_ref TEXT,
+            report_json TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_runs_session_created
+        ON runs(session_id, created_at)
+        """
+    )
+    conn.commit()

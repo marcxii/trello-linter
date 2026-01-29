@@ -29,7 +29,7 @@ def create_app() -> Flask:
     app.config["SQLITE_DB_PATH"] = os.getenv("SQLITE_DB_PATH")
 
     from src.utils.session import get_or_set_session_id
-    from src.database.sqlite import close_db
+    from src.database.sqlite import close_db, init_db
 
     @app.before_request
     def ensure_session_id():
@@ -38,6 +38,9 @@ def create_app() -> Flask:
     @app.teardown_appcontext
     def teardown_sqlite(exception=None):
         close_db(exception)
+
+    with app.app_context():
+        init_db()
 
     # Register controller blueprints
     from src.controllers.main_controller import main_bp
