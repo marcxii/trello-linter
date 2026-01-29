@@ -106,3 +106,13 @@ def analyze_partial():
     placeholder["run_id"] = cur.lastrowid
 
     return render_template("partials/results.html", **placeholder)
+
+
+@partials_bp.post("/reset")
+def reset_session_runs():
+    """Clear session-scoped runs and return the upload partial."""
+    session_id = get_or_set_session_id()
+    db = get_db()
+    db.execute("DELETE FROM runs WHERE session_id = ?", (session_id,))
+    db.commit()
+    return render_template("partials/upload.html")
