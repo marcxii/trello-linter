@@ -113,17 +113,20 @@
       const file = fileInput.files && fileInput.files[0];
       if (!file) {
         clearFileUI();
+        if (submitBtn) submitBtn.disabled = true;
         return;
       }
 
       if (!isJsonFile(file)) {
-      setError("Invalid file type. Please upload a Trello JSON export.");
+        setError("Invalid file type. Please upload a Trello JSON export.");
         fileInput.value = "";
         clearFileUI();
+        if (submitBtn) submitBtn.disabled = true;
         return;
       }
 
       updateFileUI(file);
+      if (submitBtn) submitBtn.disabled = false;
 
       if (AUTO_SUBMIT_ON_SELECT) {
         const form = getForm();
@@ -136,6 +139,8 @@
     // -------------------------
     const submitBtn = dropZone.querySelector("button[type='submit']");
     if (submitBtn) {
+      submitBtn.disabled = true;
+
       // Prevent submit button clicks from being treated as "browse".
       submitBtn.addEventListener("click", (e) => e.stopPropagation());
     }
@@ -165,12 +170,14 @@
       const file = files[0];
 
       if (!isJsonFile(file)) {
-      setError("Invalid file type. Please upload a Trello JSON export.");
+        setError("Invalid file type. Please upload a Trello JSON export.");
+        if (submitBtn) submitBtn.disabled = true;
         return;
       }
 
       setFileToInput(file);
       updateFileUI(file);
+      if (submitBtn) submitBtn.disabled = false;
 
       if (AUTO_SUBMIT_ON_SELECT) {
         const form = getForm();
