@@ -12,7 +12,12 @@ be reviewed without requiring Postgres or the analysis pipeline.
 
 from __future__ import annotations
 
+import json
+
 from flask import Blueprint, render_template, request
+
+from src.database.sqlite import get_db
+from src.utils.session import get_or_set_session_id
 
 report_bp = Blueprint("report", __name__)
 
@@ -30,26 +35,28 @@ def report(run_id: str):
 
     is_print = request.args.get("print") in {"1", "true", "yes"}
 
+    session_id = get_or_set_session_id()
+    db = get_db()
+    row = db.execute(
+        """
+        SELECT id, session_id, created_at, board_ref, report_json
+        FROM runs
+        WHERE id = ? AND session_id = ?
+        """,
+        (run_id, session_id),
+    ).fetchone()
+
+    if row is None:
+        return "Report not found for this session.", 404
+
     run = {
-        "id": run_id,
-        "created_at": "(not yet generated)",
-        "board_ref": "(unknown)",
-        "source_type": "placeholder",
+        "id": row["id"],
+        "created_at": row["created_at"],
+        "board_ref": row["board_ref"] or "(unknown)",
+        "source_type": "upload",
     }
 
-    report_data = {
-        "scores": {
-            "overall_score": "—",
-            "total_findings": 0,
-            "critical_findings": 0,
-            "major_findings": 0,
-            "category_scores": {},
-        },
-        "summary": {
-            "note": "Placeholder report data. Connect the pipeline to populate this.",
-        },
-        "findings": [],
-    }
+    report_data = json.loads(row["report_json"] or "{}")
 
     return render_template(
         "report_template.html",

@@ -9,6 +9,9 @@ from __future__ import annotations
 
 from flask import Blueprint, Response, request
 
+from src.database.sqlite import get_db
+from src.utils.session import get_or_set_session_id
+
 export_bp = Blueprint("export", __name__)
 
 
@@ -33,6 +36,15 @@ def export_findings_csv():
     """
 
     run_id = request.args.get("run_id", "")
+    if run_id:
+        session_id = get_or_set_session_id()
+        db = get_db()
+        row = db.execute(
+            "SELECT id FROM runs WHERE id = ? AND session_id = ?",
+            (run_id, session_id),
+        ).fetchone()
+        if row is None:
+            return Response("Not found", status=404)
     filename = "findings.csv" if not run_id else f"findings_{run_id}.csv"
     return _csv_stub(filename, "CSV export not implemented yet. Wire to persisted LintRun by run_id.")
 
@@ -49,5 +61,14 @@ def export_affected_cards_csv():
     """
 
     run_id = request.args.get("run_id", "")
+    if run_id:
+        session_id = get_or_set_session_id()
+        db = get_db()
+        row = db.execute(
+            "SELECT id FROM runs WHERE id = ? AND session_id = ?",
+            (run_id, session_id),
+        ).fetchone()
+        if row is None:
+            return Response("Not found", status=404)
     filename = "affected_cards.csv" if not run_id else f"affected_cards_{run_id}.csv"
     return _csv_stub(filename, "CSV export not implemented yet. Wire to persisted LintRun by run_id.")

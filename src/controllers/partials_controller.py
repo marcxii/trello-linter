@@ -7,7 +7,13 @@ Owns the HTML fragment endpoints used by the single-page shell.
 
 from __future__ import annotations
 
+import json
+from datetime import datetime, timezone
+
 from flask import Blueprint, render_template, request
+
+from src.database.sqlite import get_db
+from src.utils.session import get_or_set_session_id
 
 partials_bp = Blueprint("partials", __name__)
 
@@ -58,7 +64,6 @@ def analyze_partial():
     # Placeholder output for scaffold validation (no real linting yet)
     # `run_id` is a stub for now; if/when you add persistence, replace with real id.
     placeholder = {
-        "run_id": 1,
         "overall_score": 100,
         "category_scores": {
             "Hygiene": 100,
@@ -72,5 +77,32 @@ def analyze_partial():
         "minor": 0,
         "filename": filename,
     }
+
+    session_id = get_or_set_session_id()
+    created_at = datetime.now(timezone.utc).isoformat()
+    report_data = {
+        "scores": {
+            "overall_score": placeholder["overall_score"],
+            "total_findings": placeholder["total_findings"],
+            "critical_findings": placeholder["critical"],
+            "major_findings": placeholder["major"],
+            "category_scores": placeholder["category_scores"],
+        },
+        "summary": {
+            "note": "Placeholder report data. Connect the pipeline to populate this.",
+        },
+        "findings": [],
+    }
+
+    db = get_db()
+    cur = db.execute(
+        """
+        INSERT INTO runs (session_id, created_at, board_ref, report_json)
+        VALUES (?, ?, ?, ?)
+        """,
+        (session_id, created_at, filename, json.dumps(report_data)),
+    )
+    db.commit()
+    placeholder["run_id"] = cur.lastrowid
 
     return render_template("partials/results.html", **placeholder)
