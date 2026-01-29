@@ -117,7 +117,7 @@
       }
 
       if (!isJsonFile(file)) {
-        setError("Please upload a .json Trello export file.");
+      setError("Invalid file type. Please upload a Trello JSON export.");
         fileInput.value = "";
         clearFileUI();
         return;
@@ -165,7 +165,7 @@
       const file = files[0];
 
       if (!isJsonFile(file)) {
-        setError("Only .json files are supported. Please drop a Trello JSON export.");
+      setError("Invalid file type. Please upload a Trello JSON export.");
         return;
       }
 
