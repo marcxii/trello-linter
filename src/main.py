@@ -27,6 +27,12 @@ def create_app() -> Flask:
     # Basic config (keep minimal for Commit 1)
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev")
 
+    from src.utils.session import get_or_set_session_id
+
+    @app.before_request
+    def ensure_session_id():
+        get_or_set_session_id()
+
     # Register controller blueprints
     from src.controllers.main_controller import main_bp
     from src.controllers.analysis_controller import analysis_bp
