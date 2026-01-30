@@ -1,77 +1,76 @@
-# src/main.py
-from flask import Flask, request, render_template, jsonify, send_file
-from typing import Dict, List
-from parser.trello_parser import TrelloParser
-from linter.rule_engine import RuleEngine
-from scoring.scorer import Scorer
-from database.db_manager import DatabaseManager
-from database.models import Board, List, Card, Report, Finding
-from reports.csv_exporter import CSVExporter
-from reports.html_exporter import HTMLExporter
+"""TrelloScore Flask application entrypoint.
+
+Commit 1 refactor target:
+- Use an app factory (create_app)
+- Register MVC controller blueprints
+- Keep this module free of business logic (parsing/linting/scoring) and DB wiring
+
+Later commits will add Postgres + SQLAlchemy + Alembic and wire services.
+"""
+
+from __future__ import annotations
+
 import os
 
-app = Flask(__name__)
-db_manager = DatabaseManager()
-db_manager.init_db()
+from flask import Flask, render_template
+from werkzeug.exceptions import RequestEntityTooLarge
 
-current_directory= os.getcwd() 
-print("Current Working Directory:", current_directory)
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+def create_app() -> Flask:
+    """Create and configure the Flask app."""
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file uploaded'}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'Empty filename'}), 400
-    
-    # Save uploaded file temporarily
-    upload_path = os.path.join('uploads', file.filename)
-    os.makedirs('uploads', exist_ok=True)
-    file.save(upload_path)
-    
-    # Parse Trello JSON
-    parser = TrelloParser(upload_path)
-    parsed_data = parser.parse()
-    
-    # Run linting rules
-    rule_engine = RuleEngine()
-    findings = rule_engine.run_all_rules(parsed_data)
-    
-    # Calculate scores
-    scorer = Scorer()
-    scores = scorer.calculate_score(findings)
-    
-    # Store in database
-    session = db_manager.get_session()
-    # ... (database storage logic)
-    session.commit()
-    
-    # Clean up
-    os.remove(upload_path)
-    
-    return jsonify({
-        'scores': scores,
-        'findings': findings,
-        'board_name': parsed_data['board']['name']
-    })
+    app = Flask(
+        __name__,
+        template_folder="templates",
+        static_folder="static",
+    )
 
-@app.route('/export/csv')
-def export_csv():
-    #TODO
-    #returns CSV file
-    return 0
+    # Basic config (keep minimal for Commit 1)
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev")
+    app.config["SQLITE_DB_PATH"] = os.getenv("SQLITE_DB_PATH")
+    app.config["RUN_TTL_SECONDS"] = int(os.getenv("RUN_TTL_SECONDS", "21600"))
+    app.config["MAX_CONTENT_LENGTH"] = int(os.getenv("MAX_CONTENT_LENGTH", str(10 * 1024 * 1024)))
 
-@app.route('/export/html')
-def export_html():
-    #TODO
-    #returns html report
-    return 0
+    from src.utils.session import get_or_set_session_id
+    from src.database.sqlite import close_db, init_db
 
-if __name__ == '__main__':
+    @app.before_request
+    def ensure_session_id():
+        get_or_set_session_id()
+
+    @app.errorhandler(RequestEntityTooLarge)
+    def handle_oversize(_err):
+        return render_template(
+            "partials/error.html",
+            message="File too large. Please upload a smaller Trello JSON export.",
+        )
+
+    @app.teardown_appcontext
+    def teardown_sqlite(exception=None):
+        close_db(exception)
+
+    with app.app_context():
+        init_db()
+
+    # Register controller blueprints
+    from src.controllers.main_controller import main_bp
+    from src.controllers.analysis_controller import analysis_bp
+    from src.controllers.partials_controller import partials_bp
+    from src.controllers.report_controller import report_bp
+    from src.controllers.export_controller import export_bp
+
+    app.register_blueprint(main_bp)
+    app.register_blueprint(analysis_bp)
+    app.register_blueprint(partials_bp)
+    app.register_blueprint(report_bp)
+    app.register_blueprint(export_bp)
+
+    return app
+
+
+# WSGI app instance for `flask run` or gunicorn (later)
+app = create_app()
+
+
+if __name__ == "__main__":
     app.run(debug=True)

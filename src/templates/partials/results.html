@@ -1,0 +1,41 @@
+<div class="results active" id="results">
+  <div class="score-card">
+    <div class="score-number">{{ overall_score }}</div>
+    <div class="score-label">Overall Quality Score</div>
+  </div>
+
+  <div class="category-scores">
+    {% for k, v in category_scores.items() %}
+      <div class="category-score">
+        <div class="category-name">{{ k }}</div>
+        <div class="category-value">{{ v }}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="findings-summary">
+    <div class="findings-count">
+      Total Findings: <span>{{ total_findings }}</span>
+    </div>
+    <div>
+      🔴 Critical: <span>{{ critical }}</span> |
+      🟠 Major: <span>{{ major }}</span> |
+      🟡 Minor: <span>{{ minor }}</span>
+    </div>
+  </div>
+
+  <div class="export-buttons">
+    <a class="btn" href="/export/findings.csv?run_id={{ run_id }}">📊 Export CSV</a>
+    <a class="btn btn-secondary" href="/report/{{ run_id }}">📄 Printable Report</a>
+
+    <button
+      class="btn btn-secondary"
+      hx-post="/reset"
+      hx-target="#content"
+      hx-swap="innerHTML"
+      type="button"
+    >
+      🔄 Analyze Another Board
+    </button>
+  </div>
+</div>

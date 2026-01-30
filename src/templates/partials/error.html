@@ -1,0 +1,15 @@
+<div class="error active" role="alert">
+  <strong>Error:</strong> {{ message }}
+</div>
+
+<div class="actions">
+  <button
+    class="btn btn-secondary"
+    hx-get="/partials/upload"
+    hx-target="#content"
+    hx-swap="innerHTML"
+    type="button"
+  >
+    🔄 Try again
+  </button>
+</div>
