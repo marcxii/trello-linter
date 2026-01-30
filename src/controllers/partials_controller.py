@@ -75,7 +75,12 @@ def analyze_partial():
         uploaded.stream.seek(0)
 
     summary = parse_board_summary(payload)
+    lists_count = len(payload.get("lists") or [])
     cards = parse_cards(payload)
+
+    session_id = get_or_set_session_id()
+    cleanup_runs(int(current_app.config.get("RUN_TTL_SECONDS", 0)))
+    created_at = datetime.now(timezone.utc).isoformat()
 
     # Placeholder output for scaffold validation (no real linting yet)
     # `run_id` is a stub for now; if/when you add persistence, replace with real id.
@@ -94,18 +99,18 @@ def analyze_partial():
         "filename": filename,
         "board_name": summary["board_name"],
         "cards_count": summary["cards_count"],
+        "lists_count": lists_count,
         "members_count": summary["members_count"],
+        "generated_at": created_at,
     }
-
-    session_id = get_or_set_session_id()
-    cleanup_runs(int(current_app.config.get("RUN_TTL_SECONDS", 0)))
-    created_at = datetime.now(timezone.utc).isoformat()
     report_data = {
         "board": {
             "name": summary["board_name"],
             "cards_count": summary["cards_count"],
+            "lists_count": lists_count,
             "members_count": summary["members_count"],
         },
+        "generated_at": created_at,
         "scores": {
             "overall_score": placeholder["overall_score"],
             "total_findings": placeholder["total_findings"],

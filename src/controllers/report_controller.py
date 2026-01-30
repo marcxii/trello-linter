@@ -59,7 +59,7 @@ def report(run_id: str):
     report_data = json.loads(row["report_json"] or "{}")
 
     return render_template(
-        "report_template.html",
+        "partials/report.html",
         run=run,
         report=report_data,
         is_print=is_print,
