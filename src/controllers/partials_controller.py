@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, current_app, render_template, request
 
 from src.database.sqlite import cleanup_runs, get_db
-from src.parser.trello_parser import parse_board_summary
+from src.parser.trello_parser import parse_board_summary, parse_cards
 from src.utils.session import get_or_set_session_id
 
 partials_bp = Blueprint("partials", __name__)
@@ -73,6 +73,7 @@ def analyze_partial():
         uploaded.stream.seek(0)
 
     summary = parse_board_summary(payload)
+    cards = parse_cards(payload)
 
     # Placeholder output for scaffold validation (no real linting yet)
     # `run_id` is a stub for now; if/when you add persistence, replace with real id.
@@ -124,8 +125,19 @@ def analyze_partial():
         """,
         (session_id, created_at, summary["board_name"] or filename, json.dumps(report_data)),
     )
+    run_id = cur.lastrowid
+
+    if cards:
+        db.executemany(
+            """
+            INSERT INTO cards (run_id, card_name, due)
+            VALUES (?, ?, ?)
+            """,
+            [(run_id, card["name"], card["due"]) for card in cards],
+        )
+
     db.commit()
-    placeholder["run_id"] = cur.lastrowid
+    placeholder["run_id"] = run_id
 
     return render_template("partials/results.html", **placeholder)
 

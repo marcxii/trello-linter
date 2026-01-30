@@ -68,3 +68,17 @@ def parse_board_summary(payload: Dict[str, Any]) -> Dict[str, Any]:
         "cards_count": len(cards),
         "members_count": len(members),
     }
+
+
+def parse_cards(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Extract card name and due date from Trello JSON payload."""
+    cards = payload.get("cards") if isinstance(payload.get("cards"), list) else []
+    parsed = []
+    for card in cards:
+        parsed.append(
+            {
+                "name": card.get("name") or "(unnamed)",
+                "due": card.get("due"),
+            }
+        )
+    return parsed

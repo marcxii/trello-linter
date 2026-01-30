@@ -24,6 +24,12 @@
     </div>
   </div>
 
+  <div class="findings-summary">
+    <div class="findings-count">
+      Cards stored: <span>{{ cards_count }}</span>
+    </div>
+  </div>
+
   <div class="export-buttons">
     <a class="btn" href="/export/findings.csv?run_id={{ run_id }}">📊 Export CSV</a>
     <a class="btn btn-secondary" href="/report/{{ run_id }}">📄 Printable Report</a>

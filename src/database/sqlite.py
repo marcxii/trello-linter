@@ -62,6 +62,23 @@ def init_db() -> None:
     )
     conn.execute(
         """
+        CREATE TABLE IF NOT EXISTS cards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id INTEGER NOT NULL,
+            card_name TEXT NOT NULL,
+            due TEXT,
+            FOREIGN KEY(run_id) REFERENCES runs(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_cards_run
+        ON cards(run_id)
+        """
+    )
+    conn.execute(
+        """
         CREATE INDEX IF NOT EXISTS idx_runs_session_created
         ON runs(session_id, created_at)
         """
