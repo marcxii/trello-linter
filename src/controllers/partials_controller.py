@@ -14,6 +14,7 @@ from flask import Blueprint, current_app, render_template, request
 
 from src.database.sqlite import cleanup_runs, get_db
 from src.linter.rule_engine import count_overdue_cards
+from src.linter.scoring_engine import compute_overall_score
 from src.parser.trello_parser import parse_board_summary, parse_cards
 from src.utils.session import get_or_set_session_id
 
@@ -139,7 +140,11 @@ def analyze_partial():
         )
 
     overdue_count = count_overdue_cards(run_id)
+    overall_score = compute_overall_score(overdue_count)
     report_data["scores"]["overdue_count"] = overdue_count
+    report_data["scores"]["overall_score"] = overall_score
+
+    placeholder["overall_score"] = overall_score
 
     db.execute(
         "UPDATE runs SET report_json = ? WHERE id = ?",
