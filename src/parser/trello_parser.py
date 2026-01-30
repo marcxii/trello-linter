@@ -1,6 +1,6 @@
 # src/parser/trello_parser.py
 import json
-from typing import Dict, List
+from typing import Any, Dict, List
 from datetime import datetime
 
 class TrelloParser:
@@ -55,3 +55,16 @@ class TrelloParser:
             'fullName': member.get('fullName'),
             'username': member.get('username')
         } for member in self.board_data.get('members', [])]
+
+
+def parse_board_summary(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Extract board name and basic counts from a Trello JSON payload."""
+    board_name = payload.get("name") or "(unknown)"
+    cards = payload.get("cards") if isinstance(payload.get("cards"), list) else []
+    members = payload.get("members") if isinstance(payload.get("members"), list) else []
+
+    return {
+        "board_name": board_name,
+        "cards_count": len(cards),
+        "members_count": len(members),
+    }

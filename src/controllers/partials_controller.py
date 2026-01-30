@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, current_app, render_template, request
 
 from src.database.sqlite import cleanup_runs, get_db
+from src.parser.trello_parser import parse_board_summary
 from src.utils.session import get_or_set_session_id
 
 partials_bp = Blueprint("partials", __name__)
@@ -62,7 +63,7 @@ def analyze_partial():
         )
 
     try:
-        json.load(uploaded.stream)
+        payload = json.load(uploaded.stream)
     except (json.JSONDecodeError, UnicodeDecodeError):
         return render_template(
             "partials/error.html",
@@ -70,6 +71,8 @@ def analyze_partial():
         )
     finally:
         uploaded.stream.seek(0)
+
+    summary = parse_board_summary(payload)
 
     # Placeholder output for scaffold validation (no real linting yet)
     # `run_id` is a stub for now; if/when you add persistence, replace with real id.
@@ -86,12 +89,20 @@ def analyze_partial():
         "major": 0,
         "minor": 0,
         "filename": filename,
+        "board_name": summary["board_name"],
+        "cards_count": summary["cards_count"],
+        "members_count": summary["members_count"],
     }
 
     session_id = get_or_set_session_id()
     cleanup_runs(int(current_app.config.get("RUN_TTL_SECONDS", 0)))
     created_at = datetime.now(timezone.utc).isoformat()
     report_data = {
+        "board": {
+            "name": summary["board_name"],
+            "cards_count": summary["cards_count"],
+            "members_count": summary["members_count"],
+        },
         "scores": {
             "overall_score": placeholder["overall_score"],
             "total_findings": placeholder["total_findings"],
@@ -111,7 +122,7 @@ def analyze_partial():
         INSERT INTO runs (session_id, created_at, board_ref, report_json)
         VALUES (?, ?, ?, ?)
         """,
-        (session_id, created_at, filename, json.dumps(report_data)),
+        (session_id, created_at, summary["board_name"] or filename, json.dumps(report_data)),
     )
     db.commit()
     placeholder["run_id"] = cur.lastrowid
