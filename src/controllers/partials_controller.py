@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, current_app, render_template, request
 
 from src.database.sqlite import cleanup_runs, get_db
+from src.linter.rule_engine import count_overdue_cards
 from src.parser.trello_parser import parse_board_summary, parse_cards
 from src.utils.session import get_or_set_session_id
 
@@ -110,6 +111,7 @@ def analyze_partial():
             "critical_findings": placeholder["critical"],
             "major_findings": placeholder["major"],
             "category_scores": placeholder["category_scores"],
+            "overdue_count": 0,
         },
         "summary": {
             "note": "Placeholder report data. Connect the pipeline to populate this.",
@@ -135,6 +137,14 @@ def analyze_partial():
             """,
             [(run_id, card["name"], card["due"]) for card in cards],
         )
+
+    overdue_count = count_overdue_cards(run_id)
+    report_data["scores"]["overdue_count"] = overdue_count
+
+    db.execute(
+        "UPDATE runs SET report_json = ? WHERE id = ?",
+        (json.dumps(report_data), run_id),
+    )
 
     db.commit()
     placeholder["run_id"] = run_id
