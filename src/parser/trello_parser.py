@@ -1,4 +1,9 @@
-# src/parser/trello_parser.py
+"""Parse Trello board exports into normalized Python structures.
+
+Includes:
+- TrelloParser class for full-file parsing
+- lightweight helpers for board summary counts and card fields
+"""
 import json
 from typing import Any, Dict, List
 from datetime import datetime

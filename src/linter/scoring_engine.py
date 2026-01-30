@@ -1,4 +1,10 @@
-"""Compute overall quality scores."""
+"""Compute overall quality scores for a Trello analysis run.
+
+Currently this is a placeholder scoring policy:
+- start at 100
+- subtract 1 point per overdue card
+- clamp to the 0–100 range
+"""
 
 from __future__ import annotations
 

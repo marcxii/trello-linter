@@ -1,4 +1,8 @@
-"""Session helpers for per-user scoping."""
+"""Session helpers for per-user scoping.
+
+Ensures every browser session has a stable, signed identifier
+so database rows can be isolated per user.
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,10 @@
-"""SQLite connection helpers for request-scoped access."""
+"""SQLite connection helpers and schema utilities.
+
+Provides:
+- per-request connection management via Flask's g
+- optional pragmas for smoother local development
+- schema initialization and TTL cleanup helpers
+"""
 
 from __future__ import annotations
 

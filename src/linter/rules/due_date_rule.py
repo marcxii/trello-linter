@@ -1,4 +1,10 @@
-"""Rule: detect overdue cards based on due date."""
+"""Evaluate Trello card due dates for overdue status.
+
+This module provides a small, pure function that:
+- parses Trello ISO-8601 due timestamps (including trailing "Z")
+- normalizes timezones to UTC when missing
+- reports whether a card is overdue and how many whole days past due
+"""
 
 from __future__ import annotations
 

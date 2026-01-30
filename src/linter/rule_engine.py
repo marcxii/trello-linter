@@ -1,4 +1,9 @@
-# src/linter/rule_engine.py
+"""Rule evaluation and aggregation for Trello board linting.
+
+This module has two responsibilities:
+- maintain the legacy class-based rule engine (run_all_rules)
+- provide utility evaluation over persisted data (count_overdue_cards)
+"""
 from __future__ import annotations
 
 from datetime import datetime
