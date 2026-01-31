@@ -13,6 +13,9 @@ from datetime import datetime, timezone
 from flask import Blueprint, current_app, render_template, request
 
 from src.database.sqlite import cleanup_runs, get_db
+from src.linter.rule_engine import count_overdue_cards
+from src.linter.scoring_engine import compute_overall_score
+from src.parser.trello_parser import parse_board_summary, parse_cards
 from src.utils.session import get_or_set_session_id
 
 partials_bp = Blueprint("partials", __name__)
@@ -62,7 +65,7 @@ def analyze_partial():
         )
 
     try:
-        json.load(uploaded.stream)
+        payload = json.load(uploaded.stream)
     except (json.JSONDecodeError, UnicodeDecodeError):
         return render_template(
             "partials/error.html",
@@ -70,6 +73,14 @@ def analyze_partial():
         )
     finally:
         uploaded.stream.seek(0)
+
+    summary = parse_board_summary(payload)
+    lists_count = len(payload.get("lists") or [])
+    cards = parse_cards(payload)
+
+    session_id = get_or_set_session_id()
+    cleanup_runs(int(current_app.config.get("RUN_TTL_SECONDS", 0)))
+    created_at = datetime.now(timezone.utc).isoformat()
 
     # Placeholder output for scaffold validation (no real linting yet)
     # `run_id` is a stub for now; if/when you add persistence, replace with real id.
@@ -86,18 +97,27 @@ def analyze_partial():
         "major": 0,
         "minor": 0,
         "filename": filename,
+        "board_name": summary["board_name"],
+        "cards_count": summary["cards_count"],
+        "lists_count": lists_count,
+        "members_count": summary["members_count"],
+        "generated_at": created_at,
     }
-
-    session_id = get_or_set_session_id()
-    cleanup_runs(int(current_app.config.get("RUN_TTL_SECONDS", 0)))
-    created_at = datetime.now(timezone.utc).isoformat()
     report_data = {
+        "board": {
+            "name": summary["board_name"],
+            "cards_count": summary["cards_count"],
+            "lists_count": lists_count,
+            "members_count": summary["members_count"],
+        },
+        "generated_at": created_at,
         "scores": {
             "overall_score": placeholder["overall_score"],
             "total_findings": placeholder["total_findings"],
             "critical_findings": placeholder["critical"],
             "major_findings": placeholder["major"],
             "category_scores": placeholder["category_scores"],
+            "overdue_count": 0,
         },
         "summary": {
             "note": "Placeholder report data. Connect the pipeline to populate this.",
@@ -111,10 +131,33 @@ def analyze_partial():
         INSERT INTO runs (session_id, created_at, board_ref, report_json)
         VALUES (?, ?, ?, ?)
         """,
-        (session_id, created_at, filename, json.dumps(report_data)),
+        (session_id, created_at, summary["board_name"] or filename, json.dumps(report_data)),
     )
+    run_id = cur.lastrowid
+
+    if cards:
+        db.executemany(
+            """
+            INSERT INTO cards (run_id, card_name, due)
+            VALUES (?, ?, ?)
+            """,
+            [(run_id, card["name"], card["due"]) for card in cards],
+        )
+
+    overdue_count = count_overdue_cards(run_id)
+    overall_score = compute_overall_score(overdue_count)
+    report_data["scores"]["overdue_count"] = overdue_count
+    report_data["scores"]["overall_score"] = overall_score
+
+    placeholder["overall_score"] = overall_score
+
+    db.execute(
+        "UPDATE runs SET report_json = ? WHERE id = ?",
+        (json.dumps(report_data), run_id),
+    )
+
     db.commit()
-    placeholder["run_id"] = cur.lastrowid
+    placeholder["run_id"] = run_id
 
     return render_template("partials/results.html", **placeholder)
 

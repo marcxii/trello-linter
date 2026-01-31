@@ -1,4 +1,10 @@
-"""SQLite connection helpers for request-scoped access."""
+"""SQLite connection helpers and schema utilities.
+
+Provides:
+- per-request connection management via Flask's g
+- optional pragmas for smoother local development
+- schema initialization and TTL cleanup helpers
+"""
 
 from __future__ import annotations
 
@@ -58,6 +64,23 @@ def init_db() -> None:
             board_ref TEXT,
             report_json TEXT NOT NULL
         )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS cards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id INTEGER NOT NULL,
+            card_name TEXT NOT NULL,
+            due TEXT,
+            FOREIGN KEY(run_id) REFERENCES runs(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_cards_run
+        ON cards(run_id)
         """
     )
     conn.execute(

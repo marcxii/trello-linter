@@ -46,6 +46,35 @@
     return nameOk && typeOk;
   }
 
+  function localizeTimestamps() {
+    const nodes = document.querySelectorAll(".js-localize-timestamp");
+    if (!nodes.length) return;
+
+    nodes.forEach((node) => {
+      const iso = node.getAttribute("data-iso");
+      if (!iso) return;
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return;
+
+      const parts = new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      }).formatToParts(date);
+
+      const part = (type) => parts.find((p) => p.type === type)?.value || "";
+      const formatted = `${part("year")}-${part("month")}-${part("day")} ${part(
+        "hour"
+      )}:${part("minute")}:${part("second")} ${part("dayPeriod")}`;
+
+      node.textContent = formatted.trim();
+    });
+  }
+
   function initDropZone() {
     const dropZone = getDropZone();
     const fileInput = getFileInput();
@@ -187,7 +216,11 @@
   }
 
   initDropZone();
-  document.body.addEventListener("htmx:afterSwap", initDropZone);
+  localizeTimestamps();
+  document.body.addEventListener("htmx:afterSwap", () => {
+    initDropZone();
+    localizeTimestamps();
+  });
 
   // -------------------------
   // HTMX integration niceties
