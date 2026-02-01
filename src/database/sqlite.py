@@ -1,105 +1,36 @@
-"""SQLite connection helpers and schema utilities.
 
-Provides:
-- per-request connection management via Flask's g
-- optional pragmas for smoother local development
-- schema initialization and TTL cleanup helpers
-"""
-
-from __future__ import annotations
-
-import os
 import sqlite3
-from datetime import datetime, timedelta, timezone
-from typing import Optional
-
 from flask import current_app, g
+from pathlib import Path
 
+def get_db():
+    """Get database connection for current request."""
+    if 'db' not in g:
+        db_path = current_app.config.get('instance', 'trelloscore.db')
+        g.db = sqlite3.connect(db_path)
+        g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA foreign_keys = ON")
+    return g.db
 
-def _db_path() -> str:
-    path = current_app.config.get("SQLITE_DB_PATH")
-    if path:
-        return path
+def close_db(exception=None):
+    """Close database connection."""
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
 
-    # Default to instance folder (not tracked)
-    return os.path.join(current_app.instance_path, "trelloscore.db")
+def init_db():
+    """Initialize database with schema."""
+    db = get_db()
+    
+    # Load schema from file
+    schema_path = Path(__file__).parent / 'schema.sql'
+    with open(schema_path, 'r') as f:
+        db.executescript(f.read())
+    
+    db.commit()
 
-
-def get_db() -> sqlite3.Connection:
-    """Get a request-scoped SQLite connection."""
-    conn: Optional[sqlite3.Connection] = g.get("sqlite_db")
-    if conn is not None:
-        return conn
-
-    path = _db_path()
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-
-    conn = sqlite3.connect(path)
-    conn.row_factory = sqlite3.Row
-
-    # Optional pragmas for smoother concurrent access.
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA busy_timeout=3000;")
-
-    g.sqlite_db = conn
-    return conn
-
-
-def close_db(_error: Exception | None = None) -> None:
-    """Close the request-scoped SQLite connection, if any."""
-    conn: Optional[sqlite3.Connection] = g.pop("sqlite_db", None)
-    if conn is not None:
-        conn.close()
-
-
-def init_db() -> None:
-    """Initialize SQLite schema if missing."""
-    conn = get_db()
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS runs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            board_ref TEXT,
-            report_json TEXT NOT NULL
-        )
-        """
-    )
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS cards (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER NOT NULL,
-            card_name TEXT NOT NULL,
-            due TEXT,
-            FOREIGN KEY(run_id) REFERENCES runs(id)
-        )
-        """
-    )
-    conn.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_cards_run
-        ON cards(run_id)
-        """
-    )
-    conn.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_runs_session_created
-        ON runs(session_id, created_at)
-        """
-    )
-    conn.commit()
-
-
-def cleanup_runs(ttl_seconds: int) -> None:
-    """Delete runs older than the TTL."""
-    if ttl_seconds <= 0:
-        return
-
-    cutoff = datetime.now(timezone.utc) - timedelta(seconds=ttl_seconds)
-    cutoff_iso = cutoff.isoformat()
-
-    conn = get_db()
-    conn.execute("DELETE FROM runs WHERE created_at < ?", (cutoff_iso,))
-    conn.commit()
+def cleanup_runs(ttl_seconds: int):
+    """Clean up old runs."""
+    from src.database.db_functions import cleanup_old_runs
+    db = get_db()
+    return cleanup_old_runs(db, ttl_seconds)
