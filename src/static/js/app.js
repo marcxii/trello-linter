@@ -135,6 +135,12 @@
       if (e.target.closest("button")) return;
       fileInput.click();
     });
+    dropZone.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
 
     fileInput.addEventListener("change", () => {
       clearError();
@@ -226,6 +232,8 @@
   // HTMX integration niceties
   // -------------------------
   document.body.addEventListener("htmx:beforeRequest", (evt) => {
+    const content = document.getElementById("content");
+    if (content) content.setAttribute("aria-busy", "true");
     const form = evt.detail.elt?.closest?.("form");
     if (form) {
       const btn = form.querySelector("button[type='submit']");
@@ -241,6 +249,8 @@
   });
 
   document.body.addEventListener("htmx:afterRequest", (evt) => {
+    const content = document.getElementById("content");
+    if (content) content.setAttribute("aria-busy", "false");
     const form = evt.detail.elt?.closest?.("form");
     if (!form) return;
     const btn = form.querySelector("button[type='submit']");

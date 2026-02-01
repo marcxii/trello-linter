@@ -1,7 +1,15 @@
-<div class="upload-section" id="dropZone">
-  <div class="upload-icon">📤</div>
+<div
+  class="upload-section"
+  id="dropZone"
+  role="button"
+  tabindex="0"
+  aria-controls="fileInput"
+  aria-describedby="uploadHelp"
+  aria-label="Upload Trello JSON file"
+>
+  <div class="upload-icon" aria-hidden="true">📤</div>
   <div class="upload-text">Drop your Trello JSON file here</div>
-  <div class="upload-subtext">or click to browse</div>
+  <div class="upload-subtext" id="uploadHelp">or click to browse</div>
 
   <form
     class="upload-form"
@@ -11,6 +19,7 @@
     hx-swap="innerHTML"
     hx-encoding="multipart/form-data"
   >
+    <label class="sr-only" for="fileInput">Trello JSON file</label>
     <input type="file" id="fileInput" name="file" accept=".json" required />
 
     <div class="actions">
@@ -19,4 +28,4 @@
   </form>
 </div>
 
-<div class="error" id="errorMsg"></div>
+<div class="error" id="errorMsg" role="alert" aria-live="assertive"></div>

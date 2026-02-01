@@ -9,25 +9,29 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
 </head>
 <body>
+  <a class="skip-link" href="#content">Skip to main content</a>
   <div class="container">
-    <div class="header">
+    <header class="header">
       <h1>🔍 TrelloScore</h1>
       <p>Analyze your Trello boards for best practices and quality standards</p>
-    </div>
+    </header>
 
     <!--
       Single-page shell: all UI states (upload/loading/results/errors)
       render as partials and are swapped into this container.
     -->
-    <div
+    <main
       class="content"
       id="content"
       hx-get="/partials/upload"
       hx-trigger="load"
       hx-swap="innerHTML"
+      role="region"
+      aria-live="polite"
+      aria-busy="false"
     >
       <!-- Upload partial loads here -->
-    </div>
+    </main>
   </div>
 
   <!-- HTMX for partial swapping -->

@@ -1,12 +1,12 @@
 <div class="results active" id="results">
   <div class="results-top">
-    <div class="score-card">
+    <div class="score-card" aria-labelledby="overallScoreTitle">
       <div class="score-number">{{ overall_score }}</div>
-      <div class="score-label">Overall Quality Score</div>
+      <div class="score-label" id="overallScoreTitle">Overall Quality Score</div>
     </div>
 
-    <div class="quick-facts">
-      <div class="quick-title">Quick Stats</div>
+    <div class="quick-facts" aria-labelledby="quickStatsTitle">
+      <div class="quick-title" id="quickStatsTitle">Quick Stats</div>
       <div class="quick-line"><strong>Board:</strong> {{ board_name }}</div>
       <div class="quick-line">
         <strong>Created:</strong>
@@ -27,7 +27,7 @@
     {% endfor %}
   </div>
 
-  <div class="findings-summary">
+  <div class="findings-summary" role="status" aria-live="polite">
     <div class="findings-count">
       Total Findings: <span>{{ total_findings }}</span>
     </div>
@@ -39,8 +39,12 @@
   </div>
 
   <div class="export-buttons">
-    <a class="btn" href="/export/findings.csv?run_id={{ run_id }}">📊 Export CSV</a>
-    <a class="btn btn-secondary" href="/report/{{ run_id }}">📄 Printable Report</a>
+    <a class="btn" href="/export/findings.csv?run_id={{ run_id }}" aria-label="Export findings CSV">
+      📊 Export CSV
+    </a>
+    <a class="btn btn-secondary" href="/report/{{ run_id }}" aria-label="Open printable report">
+      📄 Printable Report
+    </a>
 
     <button
       class="btn btn-secondary"
