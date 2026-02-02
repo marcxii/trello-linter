@@ -83,6 +83,20 @@
     if (dropZone.dataset.dropzoneInit === "1") return;
     dropZone.dataset.dropzoneInit = "1";
 
+    const promptEls = [
+      dropZone.querySelector(".upload-icon"),
+      dropZone.querySelector(".upload-text"),
+      dropZone.querySelector(".upload-subtext"),
+    ].filter(Boolean);
+
+    function hidePrompt() {
+      promptEls.forEach((el) => el.classList.add("is-hidden"));
+    }
+
+    function showPrompt() {
+      promptEls.forEach((el) => el.classList.remove("is-hidden"));
+    }
+
     // Ensure file info container exists (optional UI)
     let fileInfo = dropZone.querySelector(".file-info");
     if (!fileInfo) {
@@ -112,6 +126,7 @@
       fileNameEl.textContent = "";
       fileSizeEl.textContent = "";
       fileInfo.classList.remove("active");
+      showPrompt();
     }
 
     function getForm() {
@@ -148,7 +163,10 @@
       const file = fileInput.files && fileInput.files[0];
       if (!file) {
         clearFileUI();
-        if (submitBtn) submitBtn.disabled = true;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.classList.add("is-hidden");
+        }
         return;
       }
 
@@ -156,12 +174,19 @@
         setError("Invalid file type. Please upload a Trello JSON export.");
         fileInput.value = "";
         clearFileUI();
-        if (submitBtn) submitBtn.disabled = true;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.classList.add("is-hidden");
+        }
         return;
       }
 
       updateFileUI(file);
-      if (submitBtn) submitBtn.disabled = false;
+      hidePrompt();
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("is-hidden");
+      }
 
       if (AUTO_SUBMIT_ON_SELECT) {
         const form = getForm();
@@ -175,6 +200,7 @@
     const submitBtn = dropZone.querySelector("button[type='submit']");
     if (submitBtn) {
       submitBtn.disabled = true;
+      submitBtn.classList.add("is-hidden");
 
       // Prevent submit button clicks from being treated as "browse".
       submitBtn.addEventListener("click", (e) => e.stopPropagation());
@@ -206,13 +232,20 @@
 
       if (!isJsonFile(file)) {
         setError("Invalid file type. Please upload a Trello JSON export.");
-        if (submitBtn) submitBtn.disabled = true;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.classList.add("is-hidden");
+        }
         return;
       }
 
       setFileToInput(file);
       updateFileUI(file);
-      if (submitBtn) submitBtn.disabled = false;
+      hidePrompt();
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("is-hidden");
+      }
 
       if (AUTO_SUBMIT_ON_SELECT) {
         const form = getForm();

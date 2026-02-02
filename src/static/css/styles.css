@@ -221,6 +221,10 @@ a.upload-form {
     display: inline-block;
 }
 
+.upload-form .actions .btn {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
 .btn:hover {
     transform: translateY(calc(-1 * var(--lift-hover)));
     box-shadow: var(--btn-hover-shadow);
@@ -413,6 +417,10 @@ a.upload-form {
 .actions {
   pointer-events: auto;
   margin-top: var(--space-2);
+}
+
+.is-hidden {
+  display: none;
 }
 
 /* Prevent accidental text selection when clicking the drop area */

@@ -22,8 +22,13 @@
     <label class="sr-only" for="fileInput">Trello JSON file</label>
     <input type="file" id="fileInput" name="file" accept=".json" required />
 
+    <div class="file-info">
+      <div class="file-name" id="fileName"></div>
+      <div class="file-size" id="fileSize"></div>
+    </div>
+
     <div class="actions">
-      <button class="btn" type="submit">Analyze Board</button>
+      <button class="btn is-hidden" type="submit">Analyze Board</button>
     </div>
   </form>
 </div>
