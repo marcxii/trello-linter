@@ -33,4 +33,11 @@
   </form>
 </div>
 
-<div class="error" id="errorMsg" role="alert" aria-live="assertive"></div>
+<div
+  class="error {% if message %}active{% endif %}"
+  id="errorMsg"
+  role="alert"
+  aria-live="assertive"
+>
+  {{ message or "" }}
+</div>

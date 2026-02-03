@@ -415,9 +415,28 @@ a.upload-form {
 }
 
 .rule-list {
-    margin: var(--space-1) 0 0 var(--space-3);
+    list-style: none;
+    margin: 0;
     padding: 0;
     color: var(--color-text);
+}
+
+.rule-item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    border-top: var(--border-thin) solid #9b9b9b;
+    padding: 2px 0;
+    line-height: 1.2;
+}
+
+.btn-sm {
+    padding: var(--space-0_75) var(--space-2);
+    font-size: 0.9em;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
 }
 
 .export-buttons {
@@ -434,6 +453,102 @@ a.upload-form {
 
 .btn-secondary:hover {
     background: var(--color-surface-soft);
+}
+
+.btn-dark {
+    background: #2f2f2f;
+    color: #fff;
+    border: none;
+}
+
+.btn-dark:hover {
+    background: #222;
+}
+
+.card-view {
+    display: block;
+}
+
+.card-view-header {
+    background: var(--color-surface-soft);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3) var(--space-4);
+    border: var(--border-thin) solid var(--color-border-soft);
+    margin-bottom: var(--space-4);
+}
+
+.card-view-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.card-panel {
+    background: var(--color-surface-soft);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    border: var(--border-thin) solid var(--color-border-soft);
+}
+
+.card-panel-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-3);
+    align-items: start;
+    margin-bottom: var(--space-3);
+}
+
+.card-meta {
+    display: grid;
+    gap: var(--space-1);
+}
+
+.card-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.card-actions .btn {
+    margin-top: 0;
+}
+
+.issues-panel {
+    background: #2f2f2f;
+    color: #fff;
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+}
+
+.issues-header {
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-2);
+}
+
+.issues-header::-webkit-details-marker {
+    display: none;
+}
+
+.issues-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-1);
+}
+
+.issues-list li {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: var(--space-1);
+}
+
+.card-view-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--space-4);
 }
 
 .error {

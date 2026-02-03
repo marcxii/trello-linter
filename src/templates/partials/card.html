@@ -1,0 +1,49 @@
+<div class="card-view active" id="cardView">
+  <div class="card-view-header">
+    <h2>🔍 TrelloScore: Card</h2>
+  </div>
+
+  <div class="card-panel">
+    <div class="card-panel-header">
+      <div class="card-meta">
+        <div><strong>Card:</strong> Fix login edge case</div>
+        <div><strong>List:</strong> In Progress</div>
+        <div><strong>Member:</strong> Ricky Gervais</div>
+        <div><strong>Link:</strong> www.trello.com/actual_link_to_card</div>
+      </div>
+
+      <div class="card-actions">
+      <button
+        class="btn btn-dark"
+        hx-get="/partials/results?run_id={{ run_id }}"
+        hx-target="#content"
+        hx-swap="innerHTML"
+        type="button"
+      >
+        Back to Report
+      </button>
+      </div>
+    </div>
+
+    <details class="issues-panel" open>
+      <summary class="issues-header">Issues found | 3</summary>
+      <ul class="issues-list">
+        <li>Overdue: Due date: 2026-01-20 | +5 days past due</li>
+        <li>Missing Story Points</li>
+        <li>Another issue</li>
+      </ul>
+    </details>
+  </div>
+
+  <div class="card-view-footer">
+    <button
+      class="btn btn-dark"
+      hx-post="/reset"
+      hx-target="#content"
+      hx-swap="innerHTML"
+      type="button"
+    >
+      Analyze Another Board
+    </button>
+  </div>
+</div>
