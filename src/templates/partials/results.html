@@ -1,8 +1,21 @@
 <div class="results active" id="results">
   <div class="results-top">
     <div class="score-card" aria-labelledby="overallScoreTitle">
-      <div class="score-number">{{ overall_score }}</div>
       <div class="score-label" id="overallScoreTitle">Overall Quality Score</div>
+      <div class="score-row">
+        <div class="score-number">{{ overall_score }}</div>
+        <div class="score-assessment">
+          {% if overall_score >= 95 %}
+            Perfect
+          {% elif overall_score >= 85 %}
+            Great
+          {% elif overall_score >= 70 %}
+            Fair
+          {% else %}
+            Critical
+          {% endif %}
+        </div>
+      </div>
     </div>
 
     <div class="quick-facts" aria-labelledby="quickStatsTitle">
@@ -18,23 +31,32 @@
     </div>
   </div>
 
-  <div class="category-scores">
-    {% for k, v in category_scores.items() %}
-      <div class="category-score">
-        <div class="category-name">{{ k }}</div>
-        <div class="category-value">{{ v }}</div>
-      </div>
-    {% endfor %}
-  </div>
-
-  <div class="findings-summary" role="status" aria-live="polite">
-    <div class="findings-count">
-      Total Findings: <span>{{ total_findings }}</span>
+  <!-- Placeholder grouped findings (replace with real rule output later) -->
+  <div class="findings-groups" aria-labelledby="findingsTitle">
+    <div class="findings-title" id="findingsTitle">Findings by Rule</div>
+    <div class="findings-summary" role="status" aria-live="polite">
+      <button class="rule-summary" type="button" aria-expanded="false">
+        <span class="rule-title">Past-due cards | 4 cards</span>
+        <span class="rule-toggle" aria-hidden="true">⏵</span>
+      </button>
+      <ul class="rule-list is-hidden">
+        <li>Create Web Scaffold - 5 days overdue</li>
+        <li>Define Project Scope - 2 days overdue</li>
+        <li>Project Report - Module 3 - 1 day overdue</li>
+        <li>Demo - 3 days overdue</li>
+      </ul>
     </div>
-    <div>
-      🔴 Critical: <span>{{ critical }}</span> |
-      🟠 Major: <span>{{ major }}</span> |
-      🟡 Minor: <span>{{ minor }}</span>
+
+    <div class="findings-summary" role="status" aria-live="polite">
+      <button class="rule-summary" type="button" aria-expanded="false">
+        <span class="rule-title">Missing owners | 3 cards</span>
+        <span class="rule-toggle" aria-hidden="true">⏵</span>
+      </button>
+      <ul class="rule-list is-hidden">
+        <li>Transform Mock-ups - no assignee</li>
+        <li>Estimation Record - no assignee</li>
+        <li>Use Cases - no assignee</li>
+      </ul>
     </div>
   </div>
 

@@ -75,6 +75,26 @@
     });
   }
 
+  function initRuleToggles() {
+    const buttons = document.querySelectorAll(".rule-summary");
+    if (!buttons.length) return;
+
+    buttons.forEach((btn) => {
+      if (btn.dataset.ruleToggleInit === "1") return;
+      btn.dataset.ruleToggleInit = "1";
+
+      btn.addEventListener("click", () => {
+        const list = btn.parentElement?.querySelector(".rule-list");
+        if (!list) return;
+
+        const expanded = btn.getAttribute("aria-expanded") === "true";
+        btn.setAttribute("aria-expanded", String(!expanded));
+        btn.classList.toggle("is-expanded", !expanded);
+        list.classList.toggle("is-hidden", expanded);
+      });
+    });
+  }
+
   function initDropZone() {
     const dropZone = getDropZone();
     const fileInput = getFileInput();
@@ -256,9 +276,11 @@
 
   initDropZone();
   localizeTimestamps();
+  initRuleToggles();
   document.body.addEventListener("htmx:afterSwap", () => {
     initDropZone();
     localizeTimestamps();
+    initRuleToggles();
   });
 
   // -------------------------
