@@ -4,7 +4,6 @@ This module provides Flask integration for SQLite:
 - get_db(): Returns connection using app.config["SQLITE_DB_PATH"]
 - init_db(): Initializes database schema from schema.sql
 - close_db(): Cleanup on request teardown
-- cleanup_runs(): Wrapper for cleanup function
 """
 from __future__ import annotations
 
@@ -59,9 +58,3 @@ def init_db():
         db.executescript(f.read())
     
     db.commit()
-
-def cleanup_runs(ttl_seconds: int):
-    """Clean up old runs."""
-    from src.database.db_functions import cleanup_old_runs
-    db = get_db()
-    return cleanup_old_runs(db, ttl_seconds)
