@@ -1,3 +1,13 @@
+"""Flask-aware SQLite database connection management.
+
+This module provides Flask integration for SQLite:
+- get_db(): Returns connection using app.config["SQLITE_DB_PATH"]
+- init_db(): Initializes database schema from schema.sql
+- close_db(): Cleanup on request teardown
+- cleanup_runs(): Wrapper for cleanup function
+"""
+from __future__ import annotations
+
 
 import sqlite3
 from flask import current_app, g
