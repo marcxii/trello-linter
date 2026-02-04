@@ -95,6 +95,42 @@
     });
   }
 
+  function initHelpPanel() {
+    const button = document.getElementById("helpButton");
+    const panel = document.getElementById("helpPanel");
+    if (!button || !panel) return;
+
+    if (button.dataset.helpInit === "1") return;
+    button.dataset.helpInit = "1";
+
+    const closeBtn = panel.querySelector(".help-close");
+
+    function setOpen(isOpen) {
+      panel.classList.toggle("active", isOpen);
+      panel.setAttribute("aria-hidden", String(!isOpen));
+      button.setAttribute("aria-expanded", String(isOpen));
+    }
+
+    button.addEventListener("click", () => {
+      const isOpen = panel.classList.contains("active");
+      setOpen(!isOpen);
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => setOpen(false));
+    }
+
+    const accordions = panel.querySelectorAll(".help-accordion");
+    accordions.forEach((details) => {
+      details.addEventListener("toggle", () => {
+        if (!details.open) return;
+        accordions.forEach((other) => {
+          if (other !== details) other.open = false;
+        });
+      });
+    });
+  }
+
   function initDropZone() {
     const dropZone = getDropZone();
     const fileInput = getFileInput();
@@ -277,6 +313,7 @@
   initDropZone();
   localizeTimestamps();
   initRuleToggles();
+  initHelpPanel();
   document.body.addEventListener("htmx:afterSwap", () => {
     initDropZone();
     localizeTimestamps();

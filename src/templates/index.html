@@ -34,6 +34,43 @@
     </main>
   </div>
 
+  <button class="help-button" id="helpButton" type="button" aria-expanded="false" aria-controls="helpPanel">
+    Help
+  </button>
+
+  <section class="help-panel" id="helpPanel" aria-hidden="true" aria-labelledby="helpTitle">
+    <div class="help-panel-header">
+      <h2 id="helpTitle">Help</h2>
+      <button class="help-close" type="button" aria-label="Close help">✕</button>
+    </div>
+    <ul class="help-list">
+      <li class="help-item">
+        <details class="help-accordion">
+          <summary>What file do I upload?</summary>
+          <div class="help-content">
+            <p>Use a Trello JSON export.</p>
+          </div>
+        </details>
+      </li>
+      <li class="help-item">
+        <details class="help-accordion">
+          <summary>What does the score mean?</summary>
+          <div class="help-content">
+            <p>It summarizes overall board quality.</p>
+          </div>
+        </details>
+      </li>
+      <li class="help-item">
+        <details class="help-accordion">
+          <summary>Can I analyze another board?</summary>
+          <div class="help-content">
+            <p>Yes—use the “Analyze Another Board” button.</p>
+          </div>
+        </details>
+      </li>
+    </ul>
+  </section>
+
   <!-- HTMX for partial swapping -->
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 
