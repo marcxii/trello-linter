@@ -6,13 +6,12 @@ No classes - just functions that work with SQLite connections.
 Usage:
     from src.database.db_functions import init_database, save_run, get_run_summary
     
-    # Initialize
-    conn = get_connection()
-    init_database(conn)
+    # In Flask route/controller
+    db = get_db()  # Uses Flask config for DB path
+    save_findings(db, run_id, findings_list)
     
     # Save analysis
     run_id = save_run(conn, session_id, board_data, scores)
-    save_findings(conn, run_id, findings_list)
     
     # Retrieve
     summary = get_run_summary(conn, run_id)
@@ -25,92 +24,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# -------------------------
-# Connection Management
-# -------------------------
-
-def get_connection(db_path: str = "trello_linter.db") -> sqlite3.Connection:
-    """Get a database connection with proper settings.
-    
-    Args:
-        db_path: Path to SQLite database file
-        
-    Returns:
-        SQLite connection with row factory enabled
-    """
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row  # Access columns by name
-    conn.execute("PRAGMA foreign_keys = ON")  # Enable foreign key constraints
-    return conn
-
-
-def init_database(conn: sqlite3.Connection, schema_file: str = "schema.sql") -> None:
-    """Initialize database with schema.
-    
-    Args:
-        conn: SQLite connection
-        schema_file: Path to SQL schema file
-    """
-    schema_path = Path(__file__).parent / schema_file
-    
-    if schema_path.exists():
-        with open(schema_path, 'r') as f:
-            schema = f.read()
-        conn.executescript(schema)
-        conn.commit()
-    else:
-        # Fallback: create minimal schema
-        _create_minimal_schema(conn)
-
-
-def _create_minimal_schema(conn: sqlite3.Connection) -> None:
-    """Create minimal schema if schema.sql not found."""
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS runs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            board_ref TEXT NOT NULL,
-            board_name TEXT,
-            overall_score REAL,
-            total_findings INTEGER DEFAULT 0,
-            critical_findings INTEGER DEFAULT 0,
-            major_findings INTEGER DEFAULT 0,
-            minor_findings INTEGER DEFAULT 0,
-            report_json TEXT
-        );
-        
-        CREATE TABLE IF NOT EXISTS findings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER NOT NULL,
-            card_id TEXT,
-            card_name TEXT,
-            rule_name TEXT NOT NULL,
-            category TEXT NOT NULL,
-            severity TEXT NOT NULL,
-            description TEXT NOT NULL,
-            suggestion TEXT,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY (run_id) REFERENCES runs(id) ON DELETE CASCADE
-        );
-        
-        CREATE INDEX IF NOT EXISTS idx_runs_session ON runs(session_id);
-        CREATE INDEX IF NOT EXISTS idx_findings_run ON findings(run_id);
-    """)
-    conn.commit()
-
-
-def cleanup_runs(ttl_seconds: int) -> None:
-    """Delete runs older than the TTL."""
-    if ttl_seconds <= 0:
-        return
-
-    cutoff = datetime.now(timezone.utc) - timedelta(seconds=ttl_seconds)
-    cutoff_iso = cutoff.isoformat()
-
-    conn = get_db()
-    conn.execute("DELETE FROM runs WHERE created_at < ?", (cutoff_iso,))
-    conn.commit()
 
 # -------------------------
 # Run Management
