@@ -11,6 +11,7 @@ Later commits will add Postgres + SQLAlchemy + Alembic and wire services.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from flask import Flask, render_template
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -25,9 +26,17 @@ def create_app() -> Flask:
         static_folder="static",
     )
 
+    #Determine project root
+    project_root = Path(__file__).parent.parent
+    default_db_path = project_root / "instance" / "trelloscore.db"
+    
+    # Ensure instance directory exists
+    instance_dir = project_root / "instance"
+    instance_dir.mkdir(exist_ok=True)
+
     # Basic config (keep minimal for Commit 1)
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev")
-    app.config["SQLITE_DB_PATH"] = os.getenv("SQLITE_DB_PATH")
+    app.config["SQLITE_DB_PATH"] = os.getenv("SQLITE_DB_PATH", str(default_db_path))
     app.config["RUN_TTL_SECONDS"] = int(os.getenv("RUN_TTL_SECONDS", "21600"))
     app.config["MAX_CONTENT_LENGTH"] = int(os.getenv("MAX_CONTENT_LENGTH", str(10 * 1024 * 1024)))
 
