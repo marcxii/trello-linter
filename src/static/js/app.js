@@ -75,6 +75,62 @@
     });
   }
 
+  function initRuleToggles() {
+    const buttons = document.querySelectorAll(".rule-summary");
+    if (!buttons.length) return;
+
+    buttons.forEach((btn) => {
+      if (btn.dataset.ruleToggleInit === "1") return;
+      btn.dataset.ruleToggleInit = "1";
+
+      btn.addEventListener("click", () => {
+        const list = btn.parentElement?.querySelector(".rule-list");
+        if (!list) return;
+
+        const expanded = btn.getAttribute("aria-expanded") === "true";
+        btn.setAttribute("aria-expanded", String(!expanded));
+        btn.classList.toggle("is-expanded", !expanded);
+        list.classList.toggle("is-hidden", expanded);
+      });
+    });
+  }
+
+  function initHelpPanel() {
+    const button = document.getElementById("helpButton");
+    const panel = document.getElementById("helpPanel");
+    if (!button || !panel) return;
+
+    if (button.dataset.helpInit === "1") return;
+    button.dataset.helpInit = "1";
+
+    const closeBtn = panel.querySelector(".help-close");
+
+    function setOpen(isOpen) {
+      panel.classList.toggle("active", isOpen);
+      panel.setAttribute("aria-hidden", String(!isOpen));
+      button.setAttribute("aria-expanded", String(isOpen));
+    }
+
+    button.addEventListener("click", () => {
+      const isOpen = panel.classList.contains("active");
+      setOpen(!isOpen);
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => setOpen(false));
+    }
+
+    const accordions = panel.querySelectorAll(".help-accordion");
+    accordions.forEach((details) => {
+      details.addEventListener("toggle", () => {
+        if (!details.open) return;
+        accordions.forEach((other) => {
+          if (other !== details) other.open = false;
+        });
+      });
+    });
+  }
+
   function initDropZone() {
     const dropZone = getDropZone();
     const fileInput = getFileInput();
@@ -82,6 +138,20 @@
 
     if (dropZone.dataset.dropzoneInit === "1") return;
     dropZone.dataset.dropzoneInit = "1";
+
+    const promptEls = [
+      dropZone.querySelector(".upload-icon"),
+      dropZone.querySelector(".upload-text"),
+      dropZone.querySelector(".upload-subtext"),
+    ].filter(Boolean);
+
+    function hidePrompt() {
+      promptEls.forEach((el) => el.classList.add("is-hidden"));
+    }
+
+    function showPrompt() {
+      promptEls.forEach((el) => el.classList.remove("is-hidden"));
+    }
 
     // Ensure file info container exists (optional UI)
     let fileInfo = dropZone.querySelector(".file-info");
@@ -112,6 +182,7 @@
       fileNameEl.textContent = "";
       fileSizeEl.textContent = "";
       fileInfo.classList.remove("active");
+      showPrompt();
     }
 
     function getForm() {
@@ -135,6 +206,12 @@
       if (e.target.closest("button")) return;
       fileInput.click();
     });
+    dropZone.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
 
     fileInput.addEventListener("change", () => {
       clearError();
@@ -142,7 +219,10 @@
       const file = fileInput.files && fileInput.files[0];
       if (!file) {
         clearFileUI();
-        if (submitBtn) submitBtn.disabled = true;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.classList.add("is-hidden");
+        }
         return;
       }
 
@@ -150,12 +230,19 @@
         setError("Invalid file type. Please upload a Trello JSON export.");
         fileInput.value = "";
         clearFileUI();
-        if (submitBtn) submitBtn.disabled = true;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.classList.add("is-hidden");
+        }
         return;
       }
 
       updateFileUI(file);
-      if (submitBtn) submitBtn.disabled = false;
+      hidePrompt();
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("is-hidden");
+      }
 
       if (AUTO_SUBMIT_ON_SELECT) {
         const form = getForm();
@@ -169,6 +256,7 @@
     const submitBtn = dropZone.querySelector("button[type='submit']");
     if (submitBtn) {
       submitBtn.disabled = true;
+      submitBtn.classList.add("is-hidden");
 
       // Prevent submit button clicks from being treated as "browse".
       submitBtn.addEventListener("click", (e) => e.stopPropagation());
@@ -200,13 +288,20 @@
 
       if (!isJsonFile(file)) {
         setError("Invalid file type. Please upload a Trello JSON export.");
-        if (submitBtn) submitBtn.disabled = true;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.classList.add("is-hidden");
+        }
         return;
       }
 
       setFileToInput(file);
       updateFileUI(file);
-      if (submitBtn) submitBtn.disabled = false;
+      hidePrompt();
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("is-hidden");
+      }
 
       if (AUTO_SUBMIT_ON_SELECT) {
         const form = getForm();
@@ -217,15 +312,20 @@
 
   initDropZone();
   localizeTimestamps();
+  initRuleToggles();
+  initHelpPanel();
   document.body.addEventListener("htmx:afterSwap", () => {
     initDropZone();
     localizeTimestamps();
+    initRuleToggles();
   });
 
   // -------------------------
   // HTMX integration niceties
   // -------------------------
   document.body.addEventListener("htmx:beforeRequest", (evt) => {
+    const content = document.getElementById("content");
+    if (content) content.setAttribute("aria-busy", "true");
     const form = evt.detail.elt?.closest?.("form");
     if (form) {
       const btn = form.querySelector("button[type='submit']");
@@ -241,6 +341,8 @@
   });
 
   document.body.addEventListener("htmx:afterRequest", (evt) => {
+    const content = document.getElementById("content");
+    if (content) content.setAttribute("aria-busy", "false");
     const form = evt.detail.elt?.closest?.("form");
     if (!form) return;
     const btn = form.querySelector("button[type='submit']");

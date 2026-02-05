@@ -47,6 +47,43 @@ def upload_partial():
     """Return the upload UI fragment for the single-page shell."""
     return render_template("partials/upload.html")
 
+@partials_bp.get("/partials/results")
+def results_partial():
+    """Return results fragment for a given run_id (fallbacks to placeholder)."""
+    run_id = request.args.get("run_id", type=int)
+    if run_id:
+        session_id = get_or_set_session_id()
+        db = get_db()
+        row = db.execute(
+            "SELECT report_json FROM runs WHERE id = ? AND session_id = ?",
+            (run_id, session_id),
+        ).fetchone()
+        if row:
+            report = json.loads(row["report_json"])
+            board = report.get("board", {})
+            scores = report.get("scores", {})
+            summary = report.get("summary", {})
+            return render_template(
+                "partials/results.html",
+                overall_score=scores.get("overall_score", 0),
+                total_findings=scores.get("total_findings", 0),
+                critical=scores.get("critical_findings", 0),
+                major=scores.get("major_findings", 0),
+                minor=scores.get("minor_findings", 0),
+                filename=summary.get("filename", "(unknown)"),
+                board_name=board.get("name", "(unknown)"),
+                cards_count=board.get("cards_count", 0),
+                lists_count=board.get("lists_count", 0),
+                members_count=board.get("members_count", 0),
+                generated_at=report.get("generated_at", datetime.now(timezone.utc).isoformat()),
+                run_id=run_id,
+            )
+
+    return render_template(
+        "partials/upload.html",
+        message="Report not found. Please analyze a board.",
+    )
+
 
 @partials_bp.post("/partials/analyze")
 def analyze_partial():
@@ -268,3 +305,10 @@ def reset_session_runs():
     delete_session_runs(db, session_id)
     
     return render_template("partials/upload.html")
+
+
+@partials_bp.get("/partials/card")
+def card_partial():
+    """Return a placeholder single-card view fragment."""
+    run_id = request.args.get("run_id", type=int) or 0
+    return render_template("partials/card.html", run_id=run_id)

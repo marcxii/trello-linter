@@ -28,5 +28,14 @@ Environment variables you can set:
 - `RUN_TTL_SECONDS` (defaults to 21600 seconds / 6 hours)
 - `MAX_CONTENT_LENGTH` (defaults to 10 MB)
 
+## UI flows (current)
+- Upload JSON on the home page to render the results partial.
+- Results page includes:
+  - Quick Stats and Overall Quality Score.
+  - Grouped findings (placeholder) with "View Card" buttons.
+- "View Card" opens a card detail partial (placeholder) with a Back to Report button.
+- Back to Report restores the results partial for the same `run_id`.
+- Help button opens a slide-up FAQ panel (single item open at a time).
+
 ## Tests
 `pytest -q`
