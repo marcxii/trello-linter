@@ -141,7 +141,14 @@
     <a class="btn" href="/export/findings.csv?run_id={{ run_id }}" aria-label="Export findings CSV">
       📊 Export CSV
     </a>
-    <a class="btn btn-secondary" href="/report/{{ run_id }}" aria-label="Open printable report">
+    <a
+      class="btn btn-secondary"
+      href="/report/{{ run_id }}"
+      hx-get="/partials/report?run_id={{ run_id }}"
+      hx-target="#overlay-root"
+      hx-swap="innerHTML"
+      aria-label="Open printable report"
+    >
       📄 Printable Report
     </a>
 

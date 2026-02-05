@@ -85,6 +85,43 @@ def results_partial():
     )
 
 
+@partials_bp.get("/partials/report")
+def report_overlay_partial():
+    """Return printable report as an overlay partial for a given run_id."""
+    run_id = request.args.get("run_id", type=int)
+    if not run_id:
+        return render_template(
+            "partials/error.html",
+            message="Missing run ID. Please open a report from results.",
+        )
+
+    session_id = get_or_set_session_id()
+    db = get_db()
+    row = db.execute(
+        """
+        SELECT id, created_at, board_ref, report_json
+        FROM runs
+        WHERE id = ? AND session_id = ?
+        """,
+        (run_id, session_id),
+    ).fetchone()
+
+    if row is None:
+        return render_template(
+            "partials/error.html",
+            message="Report not found for this session.",
+        )
+
+    run = {
+        "id": row["id"],
+        "created_at": row["created_at"],
+        "board_ref": row["board_ref"] or "(unknown)",
+        "source_type": "upload",
+    }
+    report_data = json.loads(row["report_json"] or "{}")
+    return render_template("partials/report_overlay.html", run=run, report=report_data)
+
+
 @partials_bp.post("/partials/analyze")
 def analyze_partial():
     """Accept an uploaded Trello JSON export and return a results fragment.
