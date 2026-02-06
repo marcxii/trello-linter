@@ -244,6 +244,57 @@ def get_findings_for_run(
 # Cards Management
 # -------------------------
 
+def save_members(
+    conn: sqlite3.Connection,
+    run_id: int,
+    members: List[Dict[str, Any]],
+) -> None:
+    """Save board members to the database.
+
+    Args:
+        conn: SQLite connection
+        run_id: Run ID these members belong to
+        members: List of member dicts from parser
+    """
+    rows = []
+    for member in members:
+        if not member.get("id"):
+            continue
+        rows.append((
+            run_id,
+            member.get('id'),
+            member.get('fullName'),
+            member.get('username'),
+        ))
+
+    if not rows:
+        return
+
+    conn.executemany("""
+        INSERT INTO members (
+            run_id, member_id, full_name, username
+        ) VALUES (?, ?, ?, ?)
+    """, rows)
+
+    conn.commit()
+
+
+def get_members_for_run(conn: sqlite3.Connection, run_id: int) -> Dict[str, str]:
+    """Return mapping of member_id -> display name for a run."""
+    cursor = conn.execute("""
+        SELECT member_id, full_name, username
+        FROM members
+        WHERE run_id = ?
+    """, (run_id,))
+
+    mapping = {}
+    for row in cursor.fetchall():
+        name = row["full_name"] or row["username"] or row["member_id"]
+        mapping[row["member_id"]] = name
+
+    return mapping
+
+
 def save_cards(
     conn: sqlite3.Connection,
     run_id: int,
