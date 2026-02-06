@@ -397,6 +397,79 @@ a.upload-form {
 .findings-link:hover {
     text-decoration: underline;
 }
+.findings-filter .filter-label {
+    margin-bottom: var(--space-1);
+}
+.findings-filter {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+.findings-filter .filter-label {
+    margin-bottom: 0;
+}
+.findings-filter .filter-dropdown {
+    position: relative;
+    display: inline-block;
+}
+.findings-filter .filter-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-0_5);
+    padding: var(--space-0_75) var(--space-2);
+    border-radius: var(--radius-sm);
+    border: var(--border-thin) solid var(--color-border-soft);
+    background: var(--color-surface);
+    cursor: pointer;
+}
+.findings-filter .filter-menu {
+    position: absolute;
+    top: calc(100% + var(--space-0_5));
+    left: 0;
+    min-width: 220px;
+    max-height: 240px;
+    overflow: auto;
+    display: none;
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    border: var(--border-thin) solid var(--color-border-soft);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+    z-index: 20;
+}
+.findings-filter .filter-dropdown.is-open .filter-menu {
+    display: grid;
+    gap: var(--space-0_5);
+}
+.findings-filter .filter-actions {
+    display: flex;
+    gap: var(--space-1);
+    margin-bottom: var(--space-1);
+}
+.findings-filter .filter-action {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--color-accent);
+    cursor: pointer;
+    font-weight: 600;
+}
+.findings-filter .filter-action:hover {
+    text-decoration: underline;
+}
+.findings-filter .filter-divider {
+    height: 1px;
+    background: var(--color-border-soft);
+    margin: var(--space-0_5) 0;
+}
+.findings-filter .filter-option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-0_5);
+}
+.findings-filter .filter-empty {
+    color: var(--color-muted);
+}
 .rule-item-header,
 .rule-item-row {
     display: grid;

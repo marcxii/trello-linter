@@ -118,6 +118,8 @@ def results_partial():
             scores = report.get("scores", {})
             summary = report.get("summary", {})
             overdue_cards = _get_overdue_cards(run_id)
+            member_names = sorted(set(get_members_for_run(db, run_id).values()))
+            member_names.append("Unassigned")
             return render_template(
                 "partials/results.html",
                 overall_score=scores.get("overall_score", 0),
@@ -133,6 +135,7 @@ def results_partial():
                 generated_at=report.get("generated_at", datetime.now(timezone.utc).isoformat()),
                 run_id=run_id,
                 overdue_cards=overdue_cards,
+                member_names=member_names,
             )
 
     return render_template(
@@ -179,6 +182,8 @@ def report_overlay_partial():
     scores = report_data.get("scores", {})
     summary = report_data.get("summary", {})
     overdue_cards = _get_overdue_cards(run_id)
+    member_names = sorted(set(get_members_for_run(db, run_id).values()))
+    member_names.append("Unassigned")
     return render_template(
         "partials/report_overlay.html",
         run=run,
@@ -398,6 +403,8 @@ def analyze_partial():
         save_findings(conn=db, run_id=run_id, findings=findings)
 
     overdue_cards = _get_overdue_cards(run_id)
+    member_names = sorted(set(get_members_for_run(db, run_id).values()))
+    member_names.append("Unassigned")
 
     # -------------------------
     # Step 6: Return Results
@@ -419,6 +426,7 @@ def analyze_partial():
         "members_count": summary["members_count"],
         "generated_at": report_data["generated_at"],
         "overdue_cards": overdue_cards,
+        "member_names": member_names,
     }
 
     return render_template("partials/results.html", **context)

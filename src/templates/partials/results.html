@@ -45,6 +45,34 @@
         Change Report Settings
       </button>
     </div>
+    <div class="findings-filter">
+      <div class="filter-label"><strong>Filter by member:</strong></div>
+      <div class="filter-dropdown" data-dropdown data-filter-checkboxes>
+        <button class="filter-trigger" type="button" data-dropdown-toggle aria-expanded="false">
+          Select members
+        </button>
+        <div class="filter-menu" data-dropdown-menu>
+          <div class="filter-actions">
+            <button type="button" class="filter-action" data-select-all>Select all</button>
+            <button type="button" class="filter-action" data-select-none>Select none</button>
+          </div>
+        {% if member_names and (member_names|length) > 0 %}
+          {% for name in member_names %}
+            {% if name == "Unassigned" %}
+              <div class="filter-divider"></div>
+            {% endif %}
+            <label class="filter-option">
+              <input type="checkbox" name="memberFilter" value="{{ name }}" checked>
+              <span>{{ name }}</span>
+            </label>
+          {% endfor %}
+        {% else %}
+          <span class="filter-empty">No members found.</span>
+        {% endif %}
+        </div>
+      </div>
+    </div>
+
     <div class="findings-summary" role="status" aria-live="polite">
       <button class="rule-summary" type="button" aria-expanded="false">
         <span class="rule-title">Past-due cards | {{ overdue_cards|length }} cards</span>
