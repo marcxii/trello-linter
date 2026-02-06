@@ -150,6 +150,10 @@
       toggle.addEventListener("click", () => {
         const isOpen = dropdown.classList.toggle("is-open");
         toggle.setAttribute("aria-expanded", String(isOpen));
+        if (isOpen) {
+          const first = dropdown.querySelector("input[type='checkbox']");
+          if (first) first.focus();
+        }
       });
 
       if (selectAll) {
@@ -202,6 +206,14 @@
         if (!dropdown.contains(event.target)) {
           dropdown.classList.remove("is-open");
           toggle.setAttribute("aria-expanded", "false");
+        }
+      });
+
+      dropdown.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          dropdown.classList.remove("is-open");
+          toggle.setAttribute("aria-expanded", "false");
+          toggle.focus();
         }
       });
     });

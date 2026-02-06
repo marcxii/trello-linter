@@ -47,10 +47,22 @@
     <div class="findings-filter">
       <div class="filter-label"><strong>Filter by member:</strong></div>
       <div class="filter-dropdown" data-dropdown data-filter-checkboxes>
-        <button class="filter-trigger" type="button" data-dropdown-toggle aria-expanded="false">
+        <button
+          class="filter-trigger"
+          type="button"
+          data-dropdown-toggle
+          aria-expanded="false"
+          aria-controls="memberFilterMenu"
+        >
           Select members
         </button>
-        <div class="filter-menu" data-dropdown-menu>
+        <div
+          class="filter-menu"
+          id="memberFilterMenu"
+          data-dropdown-menu
+          role="listbox"
+          aria-multiselectable="true"
+        >
           <div class="filter-actions">
             <button type="button" class="filter-action" data-select-all>Select all</button>
             <button type="button" class="filter-action" data-select-none>Select none</button>
@@ -61,7 +73,7 @@
             {% if name == "Unassigned" %}
               <div class="filter-divider"></div>
             {% endif %}
-            <label class="filter-option">
+            <label class="filter-option" role="option" aria-selected="{% if selected_members and (name in selected_members) %}true{% else %}false{% endif %}">
               <input
                 type="checkbox"
                 name="memberFilter"
