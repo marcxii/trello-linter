@@ -77,50 +77,6 @@
       </ul>
     </div>
 
-    <div class="findings-summary" role="status" aria-live="polite">
-      <button class="rule-summary" type="button" aria-expanded="false">
-        <span class="rule-title">Missing owners | 3 cards</span>
-        <span class="rule-toggle" aria-hidden="true">⏵</span>
-      </button>
-      <ul class="rule-list is-hidden">
-        <li class="rule-item">
-          <span>Transform Mock-ups - no assignee</span>
-          <button
-            class="btn btn-dark btn-sm"
-            hx-get="/partials/card?run_id={{ run_id }}"
-            hx-target="#content"
-            hx-swap="innerHTML"
-            type="button"
-          >
-            View Card
-          </button>
-        </li>
-        <li class="rule-item">
-          <span>Estimation Record - no assignee</span>
-          <button
-            class="btn btn-dark btn-sm"
-            hx-get="/partials/card?run_id={{ run_id }}"
-            hx-target="#content"
-            hx-swap="innerHTML"
-            type="button"
-          >
-            View Card
-          </button>
-        </li>
-        <li class="rule-item">
-          <span>Use Cases - no assignee</span>
-          <button
-            class="btn btn-dark btn-sm"
-            hx-get="/partials/card?run_id={{ run_id }}"
-            hx-target="#content"
-            hx-swap="innerHTML"
-            type="button"
-          >
-            View Card
-          </button>
-        </li>
-      </ul>
-    </div>
   </div>
 
   <div class="export-buttons">
