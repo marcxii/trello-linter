@@ -1,4 +1,4 @@
-<div class="results active" id="results">
+<div class="results active" id="results" data-run-id="{{ run_id }}">
   <div class="results-top">
     <div class="score-card" aria-labelledby="overallScoreTitle">
       <div class="score-label" id="overallScoreTitle">Overall Quality Score</div>
@@ -31,7 +31,6 @@
     </div>
   </div>
 
-  <!-- Placeholder grouped findings (replace with real rule output later) -->
   <div class="findings-groups" aria-labelledby="findingsTitle">
     <div class="findings-header">
       <div class="findings-title" id="findingsTitle">Findings by Rule</div>
@@ -55,6 +54,7 @@
           <div class="filter-actions">
             <button type="button" class="filter-action" data-select-all>Select all</button>
             <button type="button" class="filter-action" data-select-none>Select none</button>
+            <button type="button" class="filter-action" data-apply-filter>Apply</button>
           </div>
         {% if member_names and (member_names|length) > 0 %}
           {% for name in member_names %}
@@ -62,7 +62,12 @@
               <div class="filter-divider"></div>
             {% endif %}
             <label class="filter-option">
-              <input type="checkbox" name="memberFilter" value="{{ name }}" checked>
+              <input
+                type="checkbox"
+                name="memberFilter"
+                value="{{ name }}"
+                {% if selected_members and (name in selected_members) %}checked{% endif %}
+              >
               <span>{{ name }}</span>
             </label>
           {% endfor %}
@@ -74,11 +79,19 @@
     </div>
 
     <div class="findings-summary" role="status" aria-live="polite">
-      <button class="rule-summary" type="button" aria-expanded="false">
+      <button
+        class="rule-summary"
+        type="button"
+        data-rule-id="past-due"
+        aria-expanded="{% if expanded_rule_ids and ('past-due' in expanded_rule_ids) %}true{% else %}false{% endif %}"
+      >
         <span class="rule-title">Past-due cards | {{ overdue_cards|length }} cards</span>
         <span class="rule-toggle" aria-hidden="true">⏵</span>
       </button>
-      <ul class="rule-list is-hidden">
+      <ul
+        class="rule-list {% if expanded_rule_ids and ('past-due' in expanded_rule_ids) %}{% else %}is-hidden{% endif %}"
+        data-rule-id="past-due"
+      >
         {% if overdue_cards and (overdue_cards|length) > 0 %}
           {% for card in overdue_cards %}
             <li class="rule-item rule-item-3col">
@@ -114,7 +127,7 @@
     <a
       class="btn btn-secondary"
       href="/report/{{ run_id }}"
-      hx-get="/partials/report?run_id={{ run_id }}"
+      hx-get="/partials/report?run_id={{ run_id }}{% if selected_members is defined and selected_members|length == 0 %}&members=__none__{% else %}{% for member in selected_members %}&members={{ member|urlencode }}{% endfor %}{% endif %}"
       hx-target="#overlay-root"
       hx-swap="innerHTML"
       aria-label="Open printable report"

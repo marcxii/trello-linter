@@ -93,6 +93,28 @@ def _get_overdue_cards(run_id: int) -> list[dict]:
     return overdue_cards
 
 
+def _filter_cards_by_members(cards: list[dict], selected_members: list[str]) -> list[dict]:
+    """Filter cards by selected member names (including Unassigned)."""
+    if not selected_members:
+        return []
+
+    selected_set = set(selected_members)
+    include_unassigned = "Unassigned" in selected_set
+    selected_set.discard("Unassigned")
+
+    filtered = []
+    for card in cards:
+        members = card.get("members") or []
+        if not members:
+            if include_unassigned:
+                filtered.append(card)
+            continue
+        if selected_set and any(member in selected_set for member in members):
+            filtered.append(card)
+
+    return filtered
+
+
 # -------------------------
 # HTMX partial endpoints
 # -------------------------
@@ -120,6 +142,18 @@ def results_partial():
             overdue_cards = _get_overdue_cards(run_id)
             member_names = sorted(set(get_members_for_run(db, run_id).values()))
             member_names.append("Unassigned")
+            selected_members = request.args.getlist("members")
+            expanded_rule_ids = request.args.getlist("expanded")
+            if selected_members:
+                if selected_members == ["__none__"]:
+                    selected_members = []
+                else:
+                    valid = set(member_names)
+                    selected_members = [m for m in selected_members if m in valid]
+            else:
+                selected_members = member_names
+
+            overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
             return render_template(
                 "partials/results.html",
                 overall_score=scores.get("overall_score", 0),
@@ -136,6 +170,8 @@ def results_partial():
                 run_id=run_id,
                 overdue_cards=overdue_cards,
                 member_names=member_names,
+                selected_members=selected_members,
+                expanded_rule_ids=expanded_rule_ids,
             )
 
     return render_template(
@@ -184,6 +220,19 @@ def report_overlay_partial():
     overdue_cards = _get_overdue_cards(run_id)
     member_names = sorted(set(get_members_for_run(db, run_id).values()))
     member_names.append("Unassigned")
+    selected_members = member_names
+    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
+    selected_members = request.args.getlist("members")
+    expanded_rule_ids = request.args.getlist("expanded")
+    if selected_members:
+        if selected_members == ["__none__"]:
+            selected_members = []
+        else:
+            valid = set(member_names)
+            selected_members = [m for m in selected_members if m in valid]
+    else:
+        selected_members = member_names
+    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
     return render_template(
         "partials/report_overlay.html",
         run=run,
@@ -405,6 +454,17 @@ def analyze_partial():
     overdue_cards = _get_overdue_cards(run_id)
     member_names = sorted(set(get_members_for_run(db, run_id).values()))
     member_names.append("Unassigned")
+    selected_members = request.args.getlist("members")
+    if selected_members:
+        if selected_members == ["__none__"]:
+            selected_members = []
+        else:
+            valid = set(member_names)
+            selected_members = [m for m in selected_members if m in valid]
+    else:
+        selected_members = member_names
+    expanded_rule_ids = []
+    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
 
     # -------------------------
     # Step 6: Return Results
@@ -427,6 +487,8 @@ def analyze_partial():
         "generated_at": report_data["generated_at"],
         "overdue_cards": overdue_cards,
         "member_names": member_names,
+        "selected_members": selected_members,
+        "expanded_rule_ids": expanded_rule_ids,
     }
 
     return render_template("partials/results.html", **context)
