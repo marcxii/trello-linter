@@ -47,58 +47,33 @@
     </div>
     <div class="findings-summary" role="status" aria-live="polite">
       <button class="rule-summary" type="button" aria-expanded="false">
-        <span class="rule-title">Past-due cards | 4 cards</span>
+        <span class="rule-title">Past-due cards | {{ overdue_cards|length }} cards</span>
         <span class="rule-toggle" aria-hidden="true">⏵</span>
       </button>
       <ul class="rule-list is-hidden">
-        <li class="rule-item">
-          <span>Create Web Scaffold - 5 days overdue</span>
-          <button
-            class="btn btn-dark btn-sm"
-            hx-get="/partials/card?run_id={{ run_id }}"
-            hx-target="#content"
-            hx-swap="innerHTML"
-            type="button"
-          >
-            View Card
-          </button>
-        </li>
-        <li class="rule-item">
-          <span>Define Project Scope - 2 days overdue</span>
-          <button
-            class="btn btn-dark btn-sm"
-            hx-get="/partials/card?run_id={{ run_id }}"
-            hx-target="#content"
-            hx-swap="innerHTML"
-            type="button"
-          >
-            View Card
-          </button>
-        </li>
-        <li class="rule-item">
-          <span>Project Report - Module 3 - 1 day overdue</span>
-          <button
-            class="btn btn-dark btn-sm"
-            hx-get="/partials/card?run_id={{ run_id }}"
-            hx-target="#content"
-            hx-swap="innerHTML"
-            type="button"
-          >
-            View Card
-          </button>
-        </li>
-        <li class="rule-item">
-          <span>Demo - 3 days overdue</span>
-          <button
-            class="btn btn-dark btn-sm"
-            hx-get="/partials/card?run_id={{ run_id }}"
-            hx-target="#content"
-            hx-swap="innerHTML"
-            type="button"
-          >
-            View Card
-          </button>
-        </li>
+        {% if overdue_cards and (overdue_cards|length) > 0 %}
+          {% for card in overdue_cards %}
+            <li class="rule-item rule-item-3col">
+              <span class="rule-card-name">{{ card.name }}</span>
+              <span class="rule-card-days">{{ card.days_past_due }} day{% if card.days_past_due != 1 %}s{% endif %} overdue</span>
+              <span class="rule-card-action">
+                <button
+                  class="btn btn-dark btn-sm"
+                  hx-get="/partials/card?run_id={{ run_id }}"
+                  hx-target="#content"
+                  hx-swap="innerHTML"
+                  type="button"
+                >
+                  View Card
+                </button>
+              </span>
+            </li>
+          {% endfor %}
+        {% else %}
+          <li class="rule-item">
+            <span>No overdue cards.</span>
+          </li>
+        {% endif %}
       </ul>
     </div>
 

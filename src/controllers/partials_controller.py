@@ -21,12 +21,16 @@ from src.database.sqlite import get_db
 from src.database.db_functions import (
     save_run,
     save_cards,
+    save_members,
     save_findings,
     cleanup_old_runs,
     delete_session_runs,
     get_run_summary,
+    get_cards_for_run,
+    get_members_for_run,
 )
 from src.linter.rule_engine import count_overdue_cards
+from src.linter.rules.due_date_rule import evaluate_due_date
 from src.linter.scoring_engine import compute_overall_score
 from src.parser.trello_parser import (
     parse_board_summary,
@@ -37,6 +41,33 @@ from src.parser.trello_parser import (
 from src.utils.session import get_or_set_session_id
 
 partials_bp = Blueprint("partials", __name__)
+
+
+def _get_overdue_cards(run_id: int) -> list[dict]:
+    """Return overdue cards for a run with metadata."""
+    db = get_db()
+    cards = get_cards_for_run(db, run_id)
+    member_map = get_members_for_run(db, run_id)
+    overdue_cards = []
+    for card in cards:
+        if card.get("is_closed"):
+            continue
+        result = evaluate_due_date(card.get("due"))
+        if result["overdue"]:
+            member_names = [
+                member_map.get(member_id, member_id) for member_id in (card.get("members") or [])
+            ]
+            overdue_cards.append(
+                {
+                    "name": card.get("card_name") or "(untitled card)",
+                    "days_past_due": result["days_past_due"],
+                    "list_name": card.get("list_name") or "",
+                    "members": member_names,
+                    "due": card.get("due"),
+                }
+            )
+    overdue_cards.sort(key=lambda item: item["days_past_due"], reverse=True)
+    return overdue_cards
 
 
 # -------------------------
@@ -63,6 +94,7 @@ def results_partial():
             board = report.get("board", {})
             scores = report.get("scores", {})
             summary = report.get("summary", {})
+            overdue_cards = _get_overdue_cards(run_id)
             return render_template(
                 "partials/results.html",
                 overall_score=scores.get("overall_score", 0),
@@ -77,6 +109,7 @@ def results_partial():
                 members_count=board.get("members_count", 0),
                 generated_at=report.get("generated_at", datetime.now(timezone.utc).isoformat()),
                 run_id=run_id,
+                overdue_cards=overdue_cards,
             )
 
     return render_template(
@@ -122,6 +155,7 @@ def report_overlay_partial():
     board = report_data.get("board", {})
     scores = report_data.get("scores", {})
     summary = report_data.get("summary", {})
+    overdue_cards = _get_overdue_cards(run_id)
     return render_template(
         "partials/report_overlay.html",
         run=run,
@@ -137,6 +171,7 @@ def report_overlay_partial():
         lists_count=board.get("lists_count", 0),
         members_count=board.get("members_count", 0),
         generated_at=report_data.get("generated_at", datetime.now(timezone.utc).isoformat()),
+        overdue_cards=overdue_cards,
     )
 
 
@@ -328,9 +363,18 @@ def analyze_partial():
         list_map=list_map,
     )
 
+    # Save members for name lookups
+    save_members(
+        conn=db,
+        run_id=run_id,
+        members=board_data.get('members', []),
+    )
+
     # Save findings (when rule engine is wired, findings will be populated)
     if findings:
         save_findings(conn=db, run_id=run_id, findings=findings)
+
+    overdue_cards = _get_overdue_cards(run_id)
 
     # -------------------------
     # Step 6: Return Results
@@ -351,6 +395,7 @@ def analyze_partial():
         "lists_count": lists_count,
         "members_count": summary["members_count"],
         "generated_at": report_data["generated_at"],
+        "overdue_cards": overdue_cards,
     }
 
     return render_template("partials/results.html", **context)

@@ -397,6 +397,45 @@ a.upload-form {
 .findings-link:hover {
     text-decoration: underline;
 }
+.rule-item-header,
+.rule-item-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1.4fr 1fr;
+    gap: var(--space-2);
+    align-items: start;
+}
+.rule-item-header {
+    font-weight: 600;
+    color: var(--color-muted);
+}
+.rule-members {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.rule-table {
+    margin-top: var(--space-2);
+    border-top: 1px solid var(--color-border-soft);
+}
+.rule-table-grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+.rule-table-grid th,
+.rule-table-grid td {
+    text-align: left;
+    vertical-align: top;
+    padding: var(--space-1) 0;
+    border-bottom: 1px solid var(--color-border-soft);
+}
+.rule-table-grid th {
+    font-weight: 600;
+    color: var(--color-text);
+}
+.rule-table-date {
+    text-align: right;
+}
 
 .score-card {
     background: var(--color-surface-soft);
@@ -464,6 +503,9 @@ a.upload-form {
     cursor: pointer;
     text-align: left;
 }
+.rule-summary-static {
+    cursor: default;
+}
 
 .rule-title {
     font-weight: 600;
@@ -492,6 +534,17 @@ a.upload-form {
     border-top: var(--border-thin) solid #9b9b9b;
     padding: 2px 0;
     line-height: 1.2;
+}
+.rule-item-3col {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr auto;
+    align-items: center;
+}
+.rule-card-days {
+    color: var(--color-muted);
+}
+.rule-card-action {
+    text-align: right;
 }
 
 .btn-sm {

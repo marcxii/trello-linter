@@ -233,31 +233,57 @@
       <div class="card" style="margin-top:16px;">
         <div class="findings-title" id="findingsTitle">Findings by Rule</div>
         <div class="findings-summary" role="status" aria-live="polite">
-          <button class="rule-summary" type="button" aria-expanded="true">
-            <span class="rule-title">Past-due cards | 4 cards</span>
-            <span class="rule-toggle" aria-hidden="true">⏵</span>
-          </button>
-          <ul class="rule-list">
-            <li class="rule-item">
-              <span>Create Web Scaffold - 5 days overdue</span>
-            </li>
-            <li class="rule-item">
-              <span>Define Project Scope - 2 days overdue</span>
-            </li>
-            <li class="rule-item">
-              <span>Project Report - Module 3 - 1 day overdue</span>
-            </li>
-            <li class="rule-item">
-              <span>Demo - 3 days overdue</span>
-            </li>
-          </ul>
+          <div class="rule-summary rule-summary-static">
+            <span class="rule-title">Past-due active work | {{ overdue_cards|length }} cards</span>
+          </div>
+          <div class="rule-table">
+            <table class="rule-table-grid">
+              <colgroup>
+                <col style="width: 35%;">
+                <col style="width: 20%;">
+                <col style="width: 25%;">
+                <col style="width: 20%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Card</th>
+                  <th>List</th>
+                  <th>Member(s)</th>
+                  <th class="rule-table-date">Date Due</th>
+                </tr>
+              </thead>
+              <tbody>
+            {% if overdue_cards and (overdue_cards|length) > 0 %}
+              {% for card in overdue_cards %}
+                <tr>
+                  <td>{{ card.name }}</td>
+                  <td>{{ card.list_name or "—" }}</td>
+                  <td class="rule-members">
+                    {% if card.members and (card.members|length) > 0 %}
+                      {% for member in card.members %}
+                        <div class="rule-member">{{ member }}</div>
+                      {% endfor %}
+                    {% else %}
+                      <div class="rule-member">—</div>
+                    {% endif %}
+                  </td>
+                  <td class="rule-table-date">{{ card.due[:10] if card.due else "—" }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="4">No overdue cards.</td>
+              </tr>
+            {% endif %}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div class="findings-summary" role="status" aria-live="polite">
-          <button class="rule-summary" type="button" aria-expanded="true">
+          <div class="rule-summary rule-summary-static">
             <span class="rule-title">Missing owners | 3 cards</span>
-            <span class="rule-toggle" aria-hidden="true">⏵</span>
-          </button>
+          </div>
           <ul class="rule-list">
             <li class="rule-item">
               <span>Transform Mock-ups - no assignee</span>
