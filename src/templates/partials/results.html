@@ -59,7 +59,7 @@
               <span class="rule-card-action">
                 <button
                   class="btn btn-dark btn-sm"
-                  hx-get="/partials/card?run_id={{ run_id }}"
+                  hx-get="/partials/card?run_id={{ run_id }}&card_id={{ card.card_id }}"
                   hx-target="#content"
                   hx-swap="innerHTML"
                   type="button"

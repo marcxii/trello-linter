@@ -113,11 +113,25 @@ def test_partials_results_missing_run_returns_upload_error(client):
     assert b'id="dropZone"' in res.data
 
 
-def test_partials_card_includes_back_to_report_run_id(client):
-    res = client.get("/partials/card?run_id=123")
+def test_partials_card_includes_back_to_report_run_id(client, app):
+    payload = json.dumps(_valid_trello_payload()).encode("utf-8")
+    data = {"file": (io.BytesIO(payload), "board.json")}
+    res = client.post("/partials/analyze", data=data)
+    assert res.status_code == 200
+
+    conn = sqlite3.connect(app.config["SQLITE_DB_PATH"])
+    row = conn.execute(
+        "SELECT run_id, card_id FROM cards ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    conn.close()
+    assert row is not None
+    run_id = row[0]
+    card_id = row[1]
+
+    res = client.get(f"/partials/card?run_id={run_id}&card_id={card_id}")
     assert res.status_code == 200
     assert b"Back to Report" in res.data
-    assert b"run_id=123" in res.data
+    assert f"run_id={run_id}".encode("utf-8") in res.data
 
 
 def test_partials_results_valid_run_renders_board_name(client, app):

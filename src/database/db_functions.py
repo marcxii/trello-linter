@@ -370,6 +370,59 @@ def get_cards_for_run(conn: sqlite3.Connection, run_id: int) -> List[Dict[str, A
     return cards
 
 
+def get_card_for_run(conn: sqlite3.Connection, run_id: int, card_id: str) -> Optional[Dict[str, Any]]:
+    """Get a single card by Trello card_id for a run."""
+    cursor = conn.execute("""
+        SELECT * FROM cards WHERE run_id = ? AND card_id = ? LIMIT 1
+    """, (run_id, card_id))
+
+    row = cursor.fetchone()
+    if not row:
+        return None
+
+    return {
+        'id': row['id'],
+        'card_id': row['card_id'],
+        'card_name': row['card_name'],
+        'card_desc': row['card_desc'],
+        'list_id': row['list_id'],
+        'list_name': row['list_name'],
+        'due': row['due'],
+        'is_closed': row['is_closed'],
+        'members': json.loads(row['members']) if row['members'] else [],
+        'labels': json.loads(row['labels']) if row['labels'] else [],
+        'checklists': json.loads(row['checklists']) if row['checklists'] else [],
+    }
+
+
+def get_findings_for_card(
+    conn: sqlite3.Connection,
+    run_id: int,
+    card_id: str,
+) -> List[Dict[str, Any]]:
+    """Get findings for a specific card in a run."""
+    cursor = conn.execute("""
+        SELECT * FROM findings
+        WHERE run_id = ? AND card_id = ?
+        ORDER BY CASE severity WHEN 'critical' THEN 1 WHEN 'major' THEN 2 ELSE 3 END
+    """, (run_id, card_id))
+
+    findings = []
+    for row in cursor.fetchall():
+        findings.append({
+            'id': row['id'],
+            'card_id': row['card_id'],
+            'card_name': row['card_name'],
+            'rule_name': row['rule_name'],
+            'category': row['category'],
+            'severity': row['severity'],
+            'description': row['description'],
+            'suggestion': row['suggestion'],
+        })
+
+    return findings
+
+
 # -------------------------
 # Cleanup Functions
 # -------------------------

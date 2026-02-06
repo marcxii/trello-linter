@@ -28,9 +28,31 @@ from src.database.db_functions import (
     get_run_summary,
     get_cards_for_run,
     get_members_for_run,
+    get_card_for_run,
+    get_findings_for_card,
 )
 from src.linter.rule_engine import count_overdue_cards
 from src.linter.rules.due_date_rule import evaluate_due_date
+
+
+def _format_due_display(due_value: str | None) -> str | None:
+    """Format due date for display as YYYY-MM-DD HH:MM:SS AM/PM."""
+    if not due_value or not isinstance(due_value, str):
+        return None
+
+    value = due_value.strip()
+    if not value:
+        return None
+
+    if value.endswith("Z"):
+        value = value[:-1] + "+00:00"
+
+    try:
+        dt = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+    return dt.strftime("%Y-%m-%d %I:%M:%S %p")
 from src.linter.scoring_engine import compute_overall_score
 from src.parser.trello_parser import (
     parse_board_summary,
@@ -60,6 +82,7 @@ def _get_overdue_cards(run_id: int) -> list[dict]:
             overdue_cards.append(
                 {
                     "name": card.get("card_name") or "(untitled card)",
+                    "card_id": card.get("card_id"),
                     "days_past_due": result["days_past_due"],
                     "list_name": card.get("list_name") or "",
                     "members": member_names,
@@ -415,6 +438,67 @@ def reset_session_runs():
 
 @partials_bp.get("/partials/card")
 def card_partial():
-    """Return a placeholder single-card view fragment."""
-    run_id = request.args.get("run_id", type=int) or 0
-    return render_template("partials/card.html", run_id=run_id)
+    """Return a single-card view fragment."""
+    run_id = request.args.get("run_id", type=int)
+    card_id = request.args.get("card_id", type=str)
+    if not run_id:
+        return render_template(
+            "partials/error.html",
+            message="Missing card details. Please return to the report.",
+        )
+
+    session_id = get_or_set_session_id()
+    db = get_db()
+    run_row = db.execute(
+        "SELECT id FROM runs WHERE id = ? AND session_id = ?",
+        (run_id, session_id),
+    ).fetchone()
+    if run_row is None:
+        return render_template(
+            "partials/error.html",
+            message="Report not found for this session.",
+        )
+
+    if not card_id:
+        return render_template(
+            "partials/card.html",
+            run_id=run_id,
+            card_name="(unknown card)",
+            list_name="—",
+            members=[],
+            card_id="—",
+            due_date=None,
+            issues=[],
+        )
+
+    card = get_card_for_run(db, run_id, card_id)
+    if card is None:
+        return render_template(
+            "partials/error.html",
+            message="Card not found for this report.",
+        )
+
+    member_map = get_members_for_run(db, run_id)
+    member_names = [member_map.get(member_id, member_id) for member_id in (card.get("members") or [])]
+
+    issues = []
+    due_result = evaluate_due_date(card.get("due"))
+    if due_result["overdue"]:
+        days = due_result["days_past_due"]
+        due_display = _format_due_display(card.get("due")) or "—"
+        issues.append(f"Overdue: Due date: {due_display} | +{days} day{'s' if days != 1 else ''} past due")
+
+    findings = get_findings_for_card(db, run_id, card_id)
+    for finding in findings:
+        issues.append(finding.get("description") or finding.get("rule_name") or "Finding")
+
+    return render_template(
+        "partials/card.html",
+        run_id=run_id,
+        card_name=card.get("card_name") or "(untitled card)",
+        list_name=card.get("list_name") or "—",
+        members=member_names,
+        card_id=card.get("card_id") or "—",
+        due_date=_format_due_display(card.get("due")),
+        issues=issues,
+    )
