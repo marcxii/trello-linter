@@ -33,7 +33,18 @@
 
   <!-- Placeholder grouped findings (replace with real rule output later) -->
   <div class="findings-groups" aria-labelledby="findingsTitle">
-    <div class="findings-title" id="findingsTitle">Findings by Rule</div>
+    <div class="findings-header">
+      <div class="findings-title" id="findingsTitle">Findings by Rule</div>
+      <button
+        class="findings-link"
+        type="button"
+        hx-get="/partials/report-settings?run_id={{ run_id }}"
+        hx-target="#overlay-root"
+        hx-swap="innerHTML"
+      >
+        Change Report Settings
+      </button>
+    </div>
     <div class="findings-summary" role="status" aria-live="polite">
       <button class="rule-summary" type="button" aria-expanded="false">
         <span class="rule-title">Past-due cards | 4 cards</span>

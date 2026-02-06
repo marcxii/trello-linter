@@ -334,6 +334,69 @@ a.upload-form {
     margin-bottom: var(--space-2);
     color: var(--color-text);
 }
+#overlay-root {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    pointer-events: none;
+}
+.report-overlay {
+    pointer-events: auto;
+}
+.report-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background: rgba(0, 0, 0, 0.5);
+}
+.report-backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background: transparent;
+    cursor: default;
+}
+.report-panel {
+    position: relative;
+    width: min(1100px, 100%);
+    max-height: calc(100vh - 2 * var(--space-4));
+    overflow: auto;
+    border-radius: var(--radius-lg);
+    border: var(--border-thin) solid var(--color-border-soft);
+    background: #fff;
+    box-shadow: var(--shadow-lg);
+}
+.report-panel-settings {
+    width: min(720px, 100%);
+}
+.report-settings-page {
+    padding: var(--space-4);
+}
+.findings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+}
+.findings-header .findings-title {
+    margin-bottom: 0;
+}
+.findings-link {
+    background: transparent;
+    border: none;
+    color: var(--color-accent);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+.findings-link:hover {
+    text-decoration: underline;
+}
 
 .score-card {
     background: var(--color-surface-soft);

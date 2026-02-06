@@ -119,7 +119,31 @@ def report_overlay_partial():
         "source_type": "upload",
     }
     report_data = json.loads(row["report_json"] or "{}")
-    return render_template("partials/report_overlay.html", run=run, report=report_data)
+    board = report_data.get("board", {})
+    scores = report_data.get("scores", {})
+    summary = report_data.get("summary", {})
+    return render_template(
+        "partials/report_overlay.html",
+        run=run,
+        report=report_data,
+        overall_score=scores.get("overall_score", 0),
+        total_findings=scores.get("total_findings", 0),
+        critical=scores.get("critical_findings", 0),
+        major=scores.get("major_findings", 0),
+        minor=scores.get("minor_findings", 0),
+        filename=summary.get("filename", "(unknown)"),
+        board_name=board.get("name", "(unknown)"),
+        cards_count=board.get("cards_count", 0),
+        lists_count=board.get("lists_count", 0),
+        members_count=board.get("members_count", 0),
+        generated_at=report_data.get("generated_at", datetime.now(timezone.utc).isoformat()),
+    )
+
+
+@partials_bp.get("/partials/report-settings")
+def report_settings_partial():
+    """Return report settings overlay."""
+    return render_template("partials/report_settings.html")
 
 
 @partials_bp.post("/partials/analyze")

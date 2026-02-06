@@ -9,6 +9,7 @@
     padding: 20px;
     background: rgba(0, 0, 0, 0.5);
   }
+
   .report-backdrop {
     position: absolute;
     inset: 0;
@@ -16,6 +17,7 @@
     background: transparent;
     cursor: default;
   }
+
   .report-panel {
     position: relative;
     width: min(1100px, 100%);
@@ -26,57 +28,168 @@
     background: #fff;
     box-shadow: 0 24px 70px rgba(0, 0, 0, 0.2);
   }
-  .report-overlay .report-page { padding: 16px; }
-  .report-overlay .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-  .report-overlay .meta { color: #444; font-size: 0.95rem; }
-  .report-overlay .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-  .report-overlay .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px 14px; background: #fff; break-inside: avoid; }
-  .report-overlay .card h2 { margin: 0 0 8px 0; font-size: 1.1rem; }
-  .report-overlay .kpi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .report-overlay .kpi .item { border: 1px solid #eee; border-radius: 8px; padding: 10px; }
-  .report-overlay .kpi .label { font-size: 0.85rem; color: #555; }
-  .report-overlay .kpi .value { font-size: 1.35rem; font-weight: 700; }
-  .report-overlay .section { margin-top: 16px; }
-  .report-overlay .findings { margin: 0; padding-left: 18px; }
-  .report-overlay .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid #ddd; font-size: 0.85rem; }
-  .report-overlay .muted { color: #666; }
-  .report-overlay pre { white-space: pre-wrap; word-break: break-word; background: #fafafa; border: 1px solid #eee; padding: 10px; border-radius: 8px; }
-  .report-overlay .actions { display: flex; gap: 10px; justify-content: flex-end; }
-  .report-overlay .btn { display: inline-block; padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer; text-decoration: none; color: #000; }
-  @media (max-width: 900px) {
-    .report-overlay .grid { grid-template-columns: 1fr; }
+
+  .report-overlay .report-page {
+    padding: 16px;
   }
+
+  .report-overlay .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .report-overlay .meta {
+    color: #444;
+    font-size: 0.95rem;
+  }
+
+  .report-overlay .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .report-overlay .card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #fff;
+    break-inside: avoid;
+  }
+
+  .report-overlay .card h2 {
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+  }
+
+  .report-overlay .kpi {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .report-overlay .kpi .item {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .report-overlay .kpi .label {
+    font-size: 0.85rem;
+    color: #555;
+  }
+
+  .report-overlay .kpi .value {
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+
+  .report-overlay .section {
+    margin-top: 16px;
+  }
+
+  .report-overlay .findings {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  .report-overlay .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    font-size: 0.85rem;
+  }
+
+  .report-overlay .muted {
+    color: #666;
+  }
+
+  .report-overlay pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #fafafa;
+    border: 1px solid #eee;
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  .report-overlay .actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .report-overlay .btn {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #f6f6f6;
+    cursor: pointer;
+    text-decoration: none;
+    color: #000;
+  }
+
+  @media (max-width: 900px) {
+    .report-overlay .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
   @media print {
-    body > *:not(#overlay-root) { display: none !important; }
-    #overlay-root, .report-overlay, .report-panel { position: static !important; inset: auto !important; background: #fff !important; box-shadow: none !important; max-height: none !important; overflow: visible !important; padding: 0 !important; }
-    .no-print { display: none !important; }
+    @page {
+      margin: 6mm;
+    }
+
+    body {
+      margin: 0;
+    }
+
+    body>*:not(#overlay-root) {
+      display: none !important;
+    }
+
+    #overlay-root,
+    .report-overlay,
+    .report-panel {
+      position: static !important;
+      inset: auto !important;
+      background: #fff !important;
+      box-shadow: none !important;
+      max-height: none !important;
+      overflow: visible !important;
+      padding: 0 !important;
+    }
+
+    .report-overlay .report-page {
+      padding: 0 !important;
+    }
+
+    .no-print {
+      display: none !important;
+    }
   }
 </style>
 
 <div class="report-overlay" id="report-overlay" role="dialog" aria-modal="true" aria-label="Printable report">
-  <button
-    class="report-backdrop"
-    type="button"
-    aria-label="Close printable report"
-    onclick="document.getElementById('overlay-root').innerHTML=''"
-  ></button>
+  <button class="report-backdrop" type="button" aria-label="Close printable report"
+    onclick="document.getElementById('overlay-root').innerHTML=''"></button>
 
   <div class="report-panel">
     <div class="report-page">
       <div class="header">
         <div>
           <h1 style="margin:0;">TrelloScore Report</h1>
-          <div class="meta">
-            <div><strong>Run ID:</strong> {{ run.id }}</div>
-            <div><strong>Created:</strong> {{ run.created_at }}</div>
-            <div><strong>Board Ref:</strong> {{ run.board_ref }}</div>
-            <div><strong>Source:</strong> <span class="pill">{{ run.source_type }}</span></div>
-          </div>
         </div>
 
         <div class="actions no-print">
           <button class="btn" type="button" onclick="window.print()">Print / Save as PDF</button>
-          <button class="btn" type="button" onclick="document.getElementById('overlay-root').innerHTML=''">Back to Report</button>
+          <button class="btn" type="button" onclick="document.getElementById('overlay-root').innerHTML=''">Back to
+            Report</button>
         </div>
       </div>
 
@@ -96,14 +209,6 @@
               <div class="label">Total findings</div>
               <div class="value">{{ scores.get('total_findings', (findings|length)) }}</div>
             </div>
-            <div class="item">
-              <div class="label">Critical findings</div>
-              <div class="value">{{ scores.get('critical_findings', 0) }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Major findings</div>
-              <div class="value">{{ scores.get('major_findings', 0) }}</div>
-            </div>
           </div>
 
           <div class="section">
@@ -112,59 +217,59 @@
         </div>
 
         <div class="card">
-          <h2>Category Scores</h2>
-          {% set cat = scores.get('category_scores', {}) %}
-          {% if cat %}
-            <ul class="findings">
-              {% for k, v in cat.items() %}
-                <li><strong>{{ k }}:</strong> {{ v }}</li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="muted">No category scores available yet.</p>
-          {% endif %}
+          <div class="quick-title" id="quickStatsTitle">Quick Stats</div>
+          <div class="quick-line"><strong>Board:</strong> {{ board_name }}</div>
+          <div class="quick-line">
+            <strong>Created:</strong>
+            <span class="js-localize-timestamp" data-iso="{{ generated_at }}">{{ generated_at }}</span>
+          </div>
+          <div class="quick-line"><strong>Cards:</strong> {{ cards_count }}</div>
+          <div class="quick-line"><strong>Lists:</strong> {{ lists_count }}</div>
+          <div class="quick-line"><strong>Members:</strong> {{ members_count }}</div>
         </div>
       </div>
 
+      <!-- Findings by Rule (placeholder groups to match results view) -->
       <div class="card" style="margin-top:16px;">
-        <h2>Findings</h2>
-        {% if findings and (findings|length) > 0 %}
-          <p class="muted">Showing {{ findings|length }} finding(s).</p>
-          <ol class="findings">
-            {% for f in findings %}
-              {% if f is mapping %}
-                <li>
-                  <div>
-                    <strong>{{ f.get('title', f.get('rule', 'Finding')) }}</strong>
-                    {% if f.get('severity') %}
-                      <span class="pill">{{ f.get('severity') }}</span>
-                    {% endif %}
-                  </div>
-                  {% if f.get('message') %}
-                    <div class="muted">{{ f.get('message') }}</div>
-                  {% elif f.get('description') %}
-                    <div class="muted">{{ f.get('description') }}</div>
-                  {% endif %}
-                  {% if f.get('card_ids') or f.get('cards') %}
-                    <div class="muted">
-                      <strong>Affected:</strong>
-                      {{ (f.get('card_ids') or f.get('cards')) }}
-                    </div>
-                  {% endif %}
-                </li>
-              {% else %}
-                <li><pre>{{ f }}</pre></li>
-              {% endif %}
-            {% endfor %}
-          </ol>
-        {% else %}
-          <p class="muted">No findings available in this run.</p>
-        {% endif %}
-      </div>
+        <div class="findings-title" id="findingsTitle">Findings by Rule</div>
+        <div class="findings-summary" role="status" aria-live="polite">
+          <button class="rule-summary" type="button" aria-expanded="true">
+            <span class="rule-title">Past-due cards | 4 cards</span>
+            <span class="rule-toggle" aria-hidden="true">⏵</span>
+          </button>
+          <ul class="rule-list">
+            <li class="rule-item">
+              <span>Create Web Scaffold - 5 days overdue</span>
+            </li>
+            <li class="rule-item">
+              <span>Define Project Scope - 2 days overdue</span>
+            </li>
+            <li class="rule-item">
+              <span>Project Report - Module 3 - 1 day overdue</span>
+            </li>
+            <li class="rule-item">
+              <span>Demo - 3 days overdue</span>
+            </li>
+          </ul>
+        </div>
 
-      <div class="card no-print" style="margin-top:16px;">
-        <h2>Raw Report JSON</h2>
-        <pre>{{ report | tojson(indent=2) }}</pre>
+        <div class="findings-summary" role="status" aria-live="polite">
+          <button class="rule-summary" type="button" aria-expanded="true">
+            <span class="rule-title">Missing owners | 3 cards</span>
+            <span class="rule-toggle" aria-hidden="true">⏵</span>
+          </button>
+          <ul class="rule-list">
+            <li class="rule-item">
+              <span>Transform Mock-ups - no assignee</span>
+            </li>
+            <li class="rule-item">
+              <span>Estimation Record - no assignee</span>
+            </li>
+            <li class="rule-item">
+              <span>Use Cases - no assignee</span>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
