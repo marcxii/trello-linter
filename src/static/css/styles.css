@@ -533,10 +533,75 @@ a.upload-form {
 }
 
 .score-number {
+    position: relative;
+    z-index: 1;
     font-size: 4em;
     font-weight: 600;
     margin: 0;
     justify-self: center;
+}
+
+.score-gauge {
+    --size: 160px;
+    --ring-width: 10px;
+    --fill-color: #dff5e6;
+    --ring-color: #1f8a3b;
+    position: relative;
+    width: var(--size);
+    height: var(--size);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.score-gauge::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--fill-color);
+}
+
+.score-gauge::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--ring-color) 0 calc(var(--score) * 1%),
+        transparent 0
+    );
+    transform: scaleX(-1);
+    -webkit-mask: radial-gradient(
+        farthest-side,
+        transparent calc(100% - var(--ring-width)),
+        #000 calc(100% - var(--ring-width))
+    );
+    mask: radial-gradient(
+        farthest-side,
+        transparent calc(100% - var(--ring-width)),
+        #000 calc(100% - var(--ring-width))
+    );
+}
+
+.score-gauge.is-perfect {
+    --fill-color: #dff5e6;
+    --ring-color: #1f8a3b;
+}
+
+.score-gauge.is-great {
+    --fill-color: #edf8e6;
+    --ring-color: #66b54b;
+}
+
+.score-gauge.is-fair {
+    --fill-color: #fff4d6;
+    --ring-color: #d49a1e;
+}
+
+.score-gauge.is-critical {
+    --fill-color: #fde0dc;
+    --ring-color: #c03a2b;
 }
 
 .score-assessment {

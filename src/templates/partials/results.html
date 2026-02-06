@@ -3,7 +3,18 @@
     <div class="score-card" aria-labelledby="overallScoreTitle">
       <div class="score-label" id="overallScoreTitle">Overall Quality Score</div>
       <div class="score-row">
-        <div class="score-number">{{ overall_score }}</div>
+        <div
+          class="score-gauge
+            {% if overall_score >= 95 %}is-perfect
+            {% elif overall_score >= 85 %}is-great
+            {% elif overall_score >= 70 %}is-fair
+            {% else %}is-critical
+            {% endif %}"
+          style="--score: {{ overall_score }};"
+          aria-label="Overall score {{ overall_score }} out of 100"
+        >
+          <div class="score-number">{{ overall_score }}</div>
+        </div>
         <div class="score-assessment">
           {% if overall_score >= 95 %}
             Perfect
