@@ -27,7 +27,8 @@ from src.database.db_functions import (
     get_run_summary,
 )
 from src.linter.rule_engine import count_overdue_cards
-from src.linter.scoring_engine import compute_overall_score
+from src.linter.rule_engine import RuleEngine
+from src.linter.scoring_engine import calculate_overall_score
 from src.parser.trello_parser import (
     parse_board_summary,
     parse_cards,
@@ -159,6 +160,15 @@ def analyze_partial():
     # Cleanup old runs
     ttl_seconds = int(current_app.config.get("RUN_TTL_SECONDS", 21600))
     cleanup_old_runs(db, ttl_seconds)
+
+    # Run rules
+    engine  = RuleEngine()
+    results = engine.run_all_rules(board_data)
+
+    # Calculate scores
+    weights = engine.get_rule_weights()
+    scores = calculate_overall_score(results, weights)
+
 
     # TODO: Replace placeholder with real rule engine
     # For now, using placeholder scores

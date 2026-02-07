@@ -1,15 +1,143 @@
-sprint_structure:
-  required_lists:
-    - Backlog
-    - To Do
-    - In Progress
-    - Done
+# Trello Board Linter - Rules Configuration
+# Based on team's 14-rule specification
+
+# List Detection Keywords
+lists:
+  backlog_keywords:
+    - "backlog"
+    - "to do"
   
-user_story:
-  format_pattern: "^As a .* I want .* so that .*"
+  in_progress_keywords:
+    - "in progress"
+    - "doing"
+    - "development"
   
-acceptance_criteria:
-  min_checklist_items: 3
+  done_keywords:
+    - "done"
+    - "complete"
+    - "deploy"
+
+# Rule Weights (0-100, higher = more important)
+# Total doesn't need to equal 100
+weights:
+  card_ownership: 10.0              # Rule 1
+  card_due_date: 8.0                # Rule 2
+  card_descriptiveness: 7.0         # Rule 3
+  story_point_estimation: 6.0       # Rule 4
+  past_due_violation: 12.0          # Rule 5 - Highest weight
+  progress_threshold: 9.0           # Rule 6
+  progress_monitoring: 8.0          # Rule 7
+  weekly_workload: 7.0              # Rule 8
+  individual_overload: 10.0         # Rule 9
+  near_term_overcommitment: 9.0    # Rule 10
+  unscheduled_work: 6.0             # Rule 11
+  flow_progress_signal: 5.0         # Rule 12
+  card_completion: 8.0              # Rule 13
+  card_effort: 5.0                  # Rule 14
+  description_canonicalization: 4.0 # Rule 15
+
+# Rule 1: Card Ownership
+card_ownership:
+  enabled: true
+  description: "Card has at least one member assigned"
+
+# Rule 2: Card Due Date
+card_due_date:
+  enabled: true
+  description: "Card has a due date present"
+
+# Rule 3: Card Descriptiveness
+card_descriptiveness:
+  enabled: true
+  minimum_desc_char: 20
+  description: "Card has a description length of ≥ 20 characters"
+
+# Rule 4: Story Point Estimation Coverage
+story_point_estimation:
+  enabled: true
+  sp_regex_patterns:
+    - "Story Point[s]?:\\s*(\\d+)"
+    - "SP:\\s*(\\d+)"
+    - "Effort:\\s*(\\d+)"
+    - "Estimation:\\s*(\\d+)"
+  description: "Story points present in description"
+
+# Rule 5: Past Due Violation
+past_due_violation:
+  enabled: true
+  description: "Past-due active work flagged"
+
+# Rule 6: Progress Threshold (WIP per person)
+progress_threshold:
+  enabled: true
+  max_wip_per_member: 3
+  description: "In-Progress work not exceeding threshold per person"
+
+# Rule 7: Progress Monitoring (Stale work)
+progress_monitoring:
+  enabled: true
+  threshold_num_days: 5
+  description: "No stale In-Progress work"
+
+# Rule 8: Weekly Workload
+weekly_workload:
+  enabled: true
+  weekly_sp_threshold: 20
+  description: "Weekly story points within capacity"
+
+# Rule 9: Individual Overload
+individual_overload:
+  enabled: true
+  individual_sp_threshold: 45
+  description: "Individual story points within capacity"
+
+# Rule 10: Near-term Overcommitment
+near_term_overcommitment:
+  enabled: true
+  window_days: 5
+  window_sp_threshold: 30
+  description: "Near-term work within capacity"
+
+# Rule 11: Unscheduled Work
+unscheduled_work:
+  enabled: true
+  description: "Committed work has due dates"
+
+# Rule 12: Flow Progress Signal
+flow_progress_signal:
+  enabled: true
+  lookback_days: 5
+  min_flow_ratio: 0.20
+  description: "Work is flowing (completions vs WIP)"
+
+# Rule 13: Card Completion
+card_completion:
+  enabled: true
+  description: "Completed cards are in Done list"
+
+# Rule 14: Card Effort
+card_effort:
+  enabled: false  # Set to false per spec (n/a)
+  effort_regex_patterns:
+    - "Effort:\\s*(\\d+)"
+    - "Hours:\\s*(\\d+)"
+  description: "Card has effort/hours estimation"
+
+# Rule 15: Description Canonicalization
+description_canonicalization:
+  enabled: true
+  story_formats:
+    - "As a .+, I want .+"
+    - "Given .+, [Ww]hen .+, [Tt]hen .+"
+  description: "Card description follows standard format"
+
+# Scoring
+scoring:
+  grade_thresholds:
+    excellent: 90
+    good: 80
+    needs_improvement: 70
+    poor: 60
   
-ownership:
-  require_assignee: true
+  # Penalty calculation method
+  penalty_method: "weighted_percentage"  # or "binary" or "scaled"
