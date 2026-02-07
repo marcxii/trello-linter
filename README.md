@@ -32,9 +32,12 @@ Environment variables you can set:
 - Upload JSON on the home page to render the results partial.
 - Results page includes:
   - Quick Stats and Overall Quality Score.
-  - Grouped findings (placeholder) with "View Card" buttons.
-- "View Card" opens a card detail partial (placeholder) with a Back to Report button.
+  - Past-due cards populated from stored data with "View Card" buttons.
+  - Filter by member dropdown (multi-select) with Apply to refresh results.
+- "View Card" opens a card detail partial with member/list/due info and a Back to Report button.
 - Back to Report restores the results partial for the same `run_id`.
+- Printable Report opens a modal overlay with report sections; Settings opens a report settings overlay.
+- Full-page report is available at `/report/<run_id>`.
 - Help button opens a slide-up FAQ panel (single item open at a time).
 
 ## Tests
