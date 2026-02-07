@@ -6,35 +6,6 @@
     <title>TrelloScore — Report {{ run.id }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-    <style>
-      /* Print helpers: keep this lightweight and additive. */
-      @media print {
-        .no-print { display: none !important; }
-        body { margin: 0; }
-        .card { break-inside: avoid; }
-      }
-
-      /* Optional print mode via query param ?print=1 */
-      .print-mode .no-print { display: none !important; }
-
-      .page { max-width: 1100px; margin: 0 auto; padding: 16px; }
-      .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-      .meta { color: #444; font-size: 0.95rem; }
-      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-      .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px 14px; background: #fff; }
-      .card h2 { margin: 0 0 8px 0; font-size: 1.1rem; }
-      .kpi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-      .kpi .item { border: 1px solid #eee; border-radius: 8px; padding: 10px; }
-      .kpi .label { font-size: 0.85rem; color: #555; }
-      .kpi .value { font-size: 1.35rem; font-weight: 700; }
-      .section { margin-top: 16px; }
-      .findings { margin: 0; padding-left: 18px; }
-      .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid #ddd; font-size: 0.85rem; }
-      .muted { color: #666; }
-      pre { white-space: pre-wrap; word-break: break-word; background: #fafafa; border: 1px solid #eee; padding: 10px; border-radius: 8px; }
-      .actions { display: flex; gap: 10px; justify-content: flex-end; }
-      .btn { display: inline-block; padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer; text-decoration: none; color: #000; }
-    </style>
   </head>
 
   <body class="report-page {% if is_print %}print-mode{% endif %}">
@@ -75,14 +46,13 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:16px;">
+      <div class="card u-mt-4">
         <h2>Findings</h2>
 
         {% set findings = report.get('findings', []) %}
         {% if findings and (findings|length) > 0 %}
           <p class="muted">Showing {{ findings|length }} finding(s).</p>
 
-          <!-- Render a lightweight list. Findings may be dicts; show useful fields when present. -->
           <ol class="findings">
             {% for f in findings %}
               {% if f is mapping %}
@@ -115,13 +85,13 @@
         {% endif %}
       </div>
 
-      <div class="card" style="margin-top:16px;">
+      <div class="card u-mt-4">
         <h2>Raw Report JSON</h2>
         <p class="muted">This section helps debugging and will be hidden in print mode.</p>
         <div class="no-print">
           <pre>{{ report | tojson(indent=2) }}</pre>
         </div>
-        <div class="muted" style="margin-top: 8px;">
+        <div class="muted u-mt-2">
           Tip: append <code>?print=1</code> to the URL for a cleaner print layout.
         </div>
       </div>
