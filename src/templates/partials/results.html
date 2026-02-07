@@ -77,6 +77,7 @@
           <div class="filter-actions">
             <button type="button" class="filter-action" data-select-all>Select all</button>
             <button type="button" class="filter-action" data-select-none>Select none</button>
+            <span class="filter-separator" aria-hidden="true">|</span>
             <button type="button" class="filter-action" data-apply-filter>Apply</button>
           </div>
         {% if member_names and (member_names|length) > 0 %}
@@ -122,7 +123,7 @@
               <span class="rule-card-days">{{ card.days_past_due }} day{% if card.days_past_due != 1 %}s{% endif %} overdue</span>
               <span class="rule-card-action">
                 <button
-                  class="btn btn-dark btn-sm"
+                  class="btn btn-dark btn-sm btn-view-card"
                   hx-get="/partials/card?run_id={{ run_id }}&card_id={{ card.card_id }}"
                   hx-target="#content"
                   hx-swap="innerHTML"
@@ -144,7 +145,7 @@
   </div>
 
   <div class="export-buttons">
-    <a class="btn" href="/export/findings.csv?run_id={{ run_id }}" aria-label="Export findings CSV">
+    <a class="btn btn-secondary" href="/export/findings.csv?run_id={{ run_id }}" aria-label="Export findings CSV">
       📊 Export CSV
     </a>
     <a
@@ -159,7 +160,7 @@
     </a>
 
     <button
-      class="btn btn-secondary"
+      class="btn"
       hx-post="/reset"
       hx-target="#content"
       hx-swap="innerHTML"

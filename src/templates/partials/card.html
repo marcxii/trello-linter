@@ -19,7 +19,7 @@
 
       <div class="card-actions">
       <button
-        class="btn btn-dark"
+        class="btn btn-secondary"
         hx-get="/partials/results?run_id={{ run_id }}"
         hx-target="#content"
         hx-swap="innerHTML"
@@ -46,13 +46,13 @@
 
   <div class="card-view-footer">
     <button
-      class="btn btn-dark"
+      class="btn"
       hx-post="/reset"
       hx-target="#content"
       hx-swap="innerHTML"
       type="button"
     >
-      Analyze Another Board
+      🔄 Analyze Another Board
     </button>
   </div>
 </div>
