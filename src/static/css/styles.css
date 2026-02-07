@@ -1,3 +1,6 @@
+/* =========================================
+   Base + Tokens
+========================================= */
 * {
     margin: 0;
     padding: 0;
@@ -9,10 +12,9 @@
     --gradient-start: #667eea;
     --gradient-end: #764ba2;
     --gradient-angle: 135deg;
-    --gradient-main:    linear-gradient(var(--gradient-angle),
-                        var(--gradient-start) 0%, 
+    --gradient-main: linear-gradient(var(--gradient-angle),
+                        var(--gradient-start) 0%,
                         var(--gradient-end) 100%);
-
 
     /* Core colors */
     --color-bg: #f6f7fb;
@@ -32,9 +34,9 @@
     --color-accent: var(--gradient-start);
 
     /* Spacing scale */
-    --space-1: 8px;
-    --space-0_75: 5px;
     --space-0_5: 4px;
+    --space-0_75: 5px;
+    --space-1: 8px;
     --space-1_25: 10px;
     --space-2: 12px;
     --space-2_25: 14px;
@@ -44,8 +46,8 @@
     --space-4_5: 30px;
     --space-5: 40px;
     --space-5_5: 50px;
-    --space-7: 32px;
     --space-6: 60px;
+    --space-7: 32px;
 
     /* Radius scale */
     --radius-sm: 6px;
@@ -92,6 +94,9 @@ body {
     color: var(--color-text);
 }
 
+/* =========================================
+   Accessibility + Utilities
+========================================= */
 .sr-only {
     position: absolute;
     width: 1px;
@@ -133,6 +138,13 @@ input:focus-visible {
     outline-offset: 2px;
 }
 
+.is-hidden {
+    display: none;
+}
+
+/* =========================================
+   Layout + Shell
+========================================= */
 .container {
     background: var(--color-surface);
     border-radius: var(--radius-xl);
@@ -167,6 +179,77 @@ input:focus-visible {
     overflow: visible;
 }
 
+#overlay-root {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* =========================================
+   Buttons
+========================================= */
+.btn {
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    border: none;
+    padding: var(--space-2_25) var(--space-7);
+    border-radius: var(--radius-md);
+    font-size: 1.1em;
+    cursor: pointer;
+    margin-top: var(--space-4);
+    transition: var(--transition-fast);
+    display: inline-block;
+}
+
+.btn:hover {
+    transform: translateY(calc(-1 * var(--lift-hover)));
+    box-shadow: var(--btn-hover-shadow);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-accent);
+    border: var(--border-medium) solid var(--color-accent);
+}
+
+.btn-secondary:hover {
+    background: var(--color-surface-soft);
+}
+
+.btn-dark {
+    background: #2f2f2f;
+    color: #fff;
+    border: none;
+}
+
+.btn-dark:hover {
+    background: #222;
+}
+
+.btn-sm {
+    padding: var(--space-0_75) var(--space-2);
+    font-size: 0.9em;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-view-card {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: var(--space-0_5) var(--space-1_25);
+}
+
+/* =========================================
+   Upload
+========================================= */
 .upload-section {
     border: 3px dashed var(--color-border);
     border-radius: var(--radius-lg);
@@ -174,6 +257,7 @@ input:focus-visible {
     text-align: center;
     transition: var(--transition-fast);
     cursor: pointer;
+    user-select: none;
 }
 
 .upload-section:hover {
@@ -205,40 +289,16 @@ input:focus-visible {
 }
 
 a.upload-form {
-  position: relative;
+    position: relative;
 }
 
 #fileInput {
-  position: absolute;
-  left: -9999px;
-}
-
-.btn {
-    background: var(--btn-bg);
-    color: var(--btn-text);
-    border: none;
-    padding: var(--space-2_25) var(--space-7);
-    border-radius: var(--radius-md);
-    font-size: 1.1em;
-    cursor: pointer;
-    margin-top: var(--space-4);
-    transition: var(--transition-fast);
-    display: inline-block;
+    position: absolute;
+    left: -9999px;
 }
 
 .upload-form .actions .btn {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.btn:hover {
-    transform: translateY(calc(-1 * var(--lift-hover)));
-    box-shadow: var(--btn-hover-shadow);
-}
-
-.btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
 }
 
 .file-info {
@@ -264,6 +324,14 @@ a.upload-form {
     font-size: 0.9em;
 }
 
+.actions {
+    pointer-events: auto;
+    margin-top: var(--space-2);
+}
+
+/* =========================================
+   Loading
+========================================= */
 .loading {
     display: none;
     text-align: center;
@@ -289,6 +357,13 @@ a.upload-form {
     100% { transform: rotate(360deg); }
 }
 
+.loading.htmx-request {
+    display: block;
+}
+
+/* =========================================
+   Results Summary
+========================================= */
 .results {
     display: none;
     margin-top: var(--space-7_5);
@@ -304,218 +379,6 @@ a.upload-form {
     gap: var(--space-4);
     margin-bottom: var(--space-4);
     align-items: stretch;
-}
-
-.quick-facts {
-    background: var(--color-surface-soft);
-    border-radius: var(--radius-lg);
-    padding: var(--space-3_25);
-    border: var(--border-thin) solid var(--color-border-soft);
-}
-
-.quick-title {
-    font-size: 1.1em;
-    font-weight: 600;
-    margin-bottom: var(--space-1);
-    color: var(--color-text);
-}
-
-.quick-line {
-    color: var(--color-text);
-    margin: var(--space-0_5) 0;
-}
-
-.findings-groups {
-    background: var(--color-surface-soft);
-    border-radius: var(--radius-lg);
-    padding: var(--space-4);
-    border: var(--border-thin) solid var(--color-border-soft);
-    overflow: visible;
-}
-
-.findings-title {
-    font-size: 1.1em;
-    font-weight: 600;
-    margin-bottom: var(--space-2);
-    color: var(--color-text);
-}
-#overlay-root {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    pointer-events: none;
-}
-.report-overlay {
-    pointer-events: auto;
-}
-.report-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-4);
-    background: rgba(0, 0, 0, 0.5);
-}
-.report-backdrop {
-    position: absolute;
-    inset: 0;
-    border: 0;
-    background: transparent;
-    cursor: default;
-}
-.report-panel {
-    position: relative;
-    width: min(1100px, 100%);
-    max-height: calc(100vh - 2 * var(--space-4));
-    overflow: auto;
-    border-radius: var(--radius-lg);
-    border: var(--border-thin) solid var(--color-border-soft);
-    background: #fff;
-    box-shadow: var(--shadow-lg);
-}
-.report-panel-settings {
-    width: min(720px, 100%);
-}
-.report-settings-page {
-    padding: var(--space-4);
-}
-.findings-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-2);
-    margin-bottom: var(--space-2);
-}
-.findings-header .findings-title {
-    margin-bottom: 0;
-}
-.findings-link {
-    background: transparent;
-    border: none;
-    color: var(--color-accent);
-    font-weight: 600;
-    cursor: pointer;
-    padding: 0;
-}
-.findings-link:hover {
-    text-decoration: underline;
-}
-.findings-filter .filter-label {
-    margin-bottom: var(--space-1);
-}
-.findings-filter {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-}
-.findings-filter .filter-label {
-    margin-bottom: 0;
-}
-.findings-filter .filter-dropdown {
-    position: relative;
-    display: inline-block;
-}
-.findings-filter .filter-trigger {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-0_5);
-    padding: var(--space-0_75) var(--space-2);
-    border-radius: var(--radius-sm);
-    border: var(--border-thin) solid var(--color-border-soft);
-    background: var(--color-surface);
-    cursor: pointer;
-    margin-bottom: var(--space-0_5);
-}
-.findings-filter .filter-menu {
-    position: absolute;
-    top: calc(100% + var(--space-0_5));
-    left: 0;
-    min-width: 220px;
-    max-height: 240px;
-    overflow: auto;
-    display: none;
-    padding: var(--space-2);
-    border-radius: var(--radius-sm);
-    border: var(--border-thin) solid var(--color-border-soft);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-soft);
-    z-index: 2000;
-}
-.findings-filter .filter-dropdown.is-open .filter-menu {
-    display: grid;
-    gap: var(--space-0_5);
-}
-.findings-filter .filter-actions {
-    display: flex;
-    gap: var(--space-1);
-    margin-bottom: var(--space-1);
-    white-space: nowrap;
-    flex-wrap: nowrap;
-}
-.findings-filter .filter-action {
-    background: transparent;
-    border: none;
-    padding: 0;
-    color: var(--color-accent);
-    cursor: pointer;
-    font-weight: 600;
-}
-.findings-filter .filter-action:hover {
-    text-decoration: underline;
-}
-.findings-filter .filter-divider {
-    height: 1px;
-    background: var(--color-border-soft);
-    margin: var(--space-0_5) 0;
-}
-.findings-filter .filter-option {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-0_5);
-}
-.findings-filter .filter-empty {
-    color: var(--color-muted);
-}
-.rule-item-header,
-.rule-item-row {
-    display: grid;
-    grid-template-columns: 2fr 1.2fr 1.4fr 1fr;
-    gap: var(--space-2);
-    align-items: start;
-}
-.rule-item-header {
-    font-weight: 600;
-    color: var(--color-muted);
-}
-.rule-members {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-.rule-table {
-    margin-top: var(--space-2);
-    border-top: 1px solid var(--color-border-soft);
-}
-.rule-table-grid {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
-.rule-table-grid th,
-.rule-table-grid td {
-    text-align: left;
-    vertical-align: top;
-    padding: var(--space-1) 0;
-    border-bottom: 1px solid var(--color-border-soft);
-}
-.rule-table-grid th {
-    font-weight: 600;
-    color: var(--color-text);
-}
-.rule-table-date {
-    text-align: right;
 }
 
 .score-card {
@@ -627,6 +490,157 @@ a.upload-form {
     margin-bottom: var(--space-1);
 }
 
+.quick-facts {
+    background: var(--color-surface-soft);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3_25);
+    border: var(--border-thin) solid var(--color-border-soft);
+}
+
+.quick-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+    color: var(--color-text);
+}
+
+.quick-line {
+    color: var(--color-text);
+    margin: var(--space-0_5) 0;
+}
+
+/* =========================================
+   Findings + Filters
+========================================= */
+.findings-groups {
+    background: var(--color-surface-soft);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    border: var(--border-thin) solid var(--color-border-soft);
+    overflow: visible;
+}
+
+.findings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+}
+
+.findings-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+    color: var(--color-text);
+}
+
+.findings-header .findings-title {
+    margin-bottom: 0;
+}
+
+.findings-link {
+    background: transparent;
+    border: none;
+    color: var(--color-accent);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+
+.findings-link:hover {
+    text-decoration: underline;
+}
+
+.findings-filter {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.findings-filter .filter-label {
+    margin-bottom: 0;
+}
+
+.findings-filter .filter-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.findings-filter .filter-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-0_5);
+    padding: var(--space-0_75) var(--space-2);
+    border-radius: var(--radius-sm);
+    border: var(--border-thin) solid var(--color-border-soft);
+    background: var(--color-surface);
+    cursor: pointer;
+    margin-bottom: var(--space-0_5);
+}
+
+.findings-filter .filter-menu {
+    position: absolute;
+    top: calc(100% + var(--space-0_5));
+    left: 0;
+    min-width: 220px;
+    max-height: 240px;
+    overflow: auto;
+    display: none;
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    border: var(--border-thin) solid var(--color-border-soft);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+    z-index: 2000;
+}
+
+.findings-filter .filter-dropdown.is-open .filter-menu {
+    display: grid;
+    gap: var(--space-0_5);
+}
+
+.findings-filter .filter-actions {
+    display: flex;
+    gap: var(--space-1);
+    margin-bottom: var(--space-1);
+    white-space: nowrap;
+    flex-wrap: nowrap;
+}
+
+.findings-filter .filter-action {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--color-accent);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.findings-filter .filter-action:hover {
+    text-decoration: underline;
+}
+
+.findings-filter .filter-separator {
+    color: var(--color-muted);
+}
+
+.findings-filter .filter-divider {
+    height: 1px;
+    background: var(--color-border-soft);
+    margin: var(--space-0_5) 0;
+}
+
+.findings-filter .filter-option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-0_5);
+}
+
+.findings-filter .filter-empty {
+    color: var(--color-muted);
+}
+
 .findings-summary {
     background: var(--color-surface);
     border-left: var(--border-thick) solid var(--color-muted);
@@ -648,6 +662,7 @@ a.upload-form {
     cursor: pointer;
     text-align: left;
 }
+
 .rule-summary-static {
     cursor: default;
 }
@@ -680,29 +695,19 @@ a.upload-form {
     padding: 2px 0;
     line-height: 1.2;
 }
+
 .rule-item-3col {
     display: grid;
     grid-template-columns: 1.6fr 1fr auto;
     align-items: center;
 }
+
 .rule-card-days {
     color: var(--color-muted);
 }
+
 .rule-card-action {
     text-align: right;
-}
-
-.btn-sm {
-    padding: var(--space-0_75) var(--space-2);
-    font-size: 0.9em;
-    line-height: 1.2;
-    display: inline-flex;
-    align-items: center;
-}
-.btn-view-card {
-    margin-top: 0;
-    margin-bottom: 0;
-    padding: var(--space-0_5) var(--space-1_25);
 }
 
 .export-buttons {
@@ -710,41 +715,105 @@ a.upload-form {
     justify-content: space-between;
 }
 
-.btn-secondary {
-    background: var(--color-surface);
-    color: var(--color-accent);
-    border: var(--border-medium) solid var(--color-accent);
+/* Unused (Findings/Filters)
+   - .rule-item-header
+   - .rule-item-row
+*/
+
+.rule-item-header,
+.rule-item-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1.4fr 1fr;
+    gap: var(--space-2);
+    align-items: start;
 }
 
-.btn-secondary:hover {
-    background: var(--color-surface-soft);
+.rule-item-header {
+    font-weight: 600;
+    color: var(--color-muted);
 }
 
-.btn-dark {
-    background: #2f2f2f;
-    color: #fff;
-    border: none;
+.rule-members {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
-.btn-dark:hover {
-    background: #222;
+.rule-table {
+    margin-top: var(--space-2);
+    border-top: 1px solid var(--color-border-soft);
 }
 
+.rule-table-grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.rule-table-grid th,
+.rule-table-grid td {
+    text-align: left;
+    vertical-align: top;
+    padding: var(--space-1) 0;
+    border-bottom: 1px solid var(--color-border-soft);
+}
+
+.rule-table-grid th {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.rule-table-date {
+    text-align: right;
+}
+
+/* =========================================
+   Report Overlay
+========================================= */
+.report-overlay {
+    pointer-events: auto;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.report-backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background: transparent;
+    cursor: default;
+}
+
+.report-panel {
+    position: relative;
+    width: min(1100px, 100%);
+    max-height: calc(100vh - 2 * var(--space-4));
+    overflow: auto;
+    border-radius: var(--radius-lg);
+    border: var(--border-thin) solid var(--color-border-soft);
+    background: #fff;
+    box-shadow: var(--shadow-lg);
+}
+
+.report-panel-settings {
+    width: min(720px, 100%);
+}
+
+.report-settings-page {
+    padding: var(--space-4);
+}
+
+/* =========================================
+   Card View
+========================================= */
 .card-view {
     display: block;
-}
-
-.card-view-header {
-    background: var(--color-surface-soft);
-    border-radius: var(--radius-lg);
-    padding: var(--space-3) var(--space-4);
-    border: var(--border-thin) solid var(--color-border-soft);
-    margin-bottom: var(--space-4);
-}
-
-.card-view-header h2 {
-    margin: 0;
-    font-size: 1.2em;
 }
 
 .card-panel {
@@ -781,6 +850,7 @@ a.upload-form {
     border-left: var(--border-thick) solid var(--color-muted);
     padding: var(--space-1);
     border-radius: var(--radius-md);
+    color: var(--color-text);
 }
 
 .issues-header {
@@ -796,10 +866,12 @@ a.upload-form {
 .issues-header::-webkit-details-marker {
     display: none;
 }
+
 .issues-header::after {
     content: "⏵";
     transition: transform var(--motion-fast);
 }
+
 .issues-panel[open] .issues-header::after {
     transform: rotate(90deg);
 }
@@ -823,6 +895,27 @@ a.upload-form {
     margin-top: var(--space-4);
 }
 
+/* Unused (Card View)
+   - .card-view-header
+   - .card-view-header h2
+*/
+
+.card-view-header {
+    background: var(--color-surface-soft);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3) var(--space-4);
+    border: var(--border-thin) solid var(--color-border-soft);
+    margin-bottom: var(--space-4);
+}
+
+.card-view-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+/* =========================================
+   Help Panel
+========================================= */
 .help-button {
     position: fixed;
     right: var(--space-4);
@@ -911,6 +1004,9 @@ a.upload-form {
     color: var(--color-text);
 }
 
+/* =========================================
+   Errors
+========================================= */
 .error {
     background: var(--color-error-bg);
     border-left: var(--border-thick) solid var(--color-error-border);
@@ -924,29 +1020,10 @@ a.upload-form {
     display: block;
 }
 
-/* Keep the form from stealing the label click
-(so clicking the drop zone opens the file picker) */
-.upload-form {
-  margin-top: var(--space-4);
-}
+/* =========================================
+   Unused (Global)
+=========================================
+   - .htmx-request
+*/
 
-/* Button row spacing without inline styles */
-.actions {
-  pointer-events: auto;
-  margin-top: var(--space-2);
-}
-
-.is-hidden {
-  display: none;
-}
-
-/* Prevent accidental text selection when clicking the drop area */
-.upload-section {
-  cursor: pointer;
-  user-select: none;
-}
-
-/* HTMX indicator: show loading while request is running */
-.loading.htmx-request {
-  display: block;
-}
+/* .loading.htmx-request is in use; no unused global rules here. */
