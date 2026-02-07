@@ -56,39 +56,12 @@
         </div>
       </div>
 
-      {% set scores = report.get('scores', {}) %}
-      {% set summary = report.get('summary', {}) %}
-      {% set findings = report.get('findings', []) %}
-
       <div class="grid">
-        <div class="card">
-          <h2>Scorecard</h2>
-          <div class="kpi">
-            <div class="item">
-              <div class="label">Overall score</div>
-              <div class="value">{{ scores.get('overall_score', '—') }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Total findings</div>
-              <div class="value">{{ scores.get('total_findings', (findings|length)) }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Critical findings</div>
-              <div class="value">{{ scores.get('critical_findings', 0) }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Major findings</div>
-              <div class="value">{{ scores.get('major_findings', 0) }}</div>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="muted"><strong>Note:</strong> {{ summary.get('note', '—') }}</div>
-          </div>
-        </div>
+        {% include "partials/report_scorecard.html" %}
 
         <div class="card">
           <h2>Category Scores</h2>
+          {% set scores = report.get('scores', {}) %}
           {% set cat = scores.get('category_scores', {}) %}
           {% if cat %}
             <ul class="findings">
@@ -105,6 +78,7 @@
       <div class="card" style="margin-top:16px;">
         <h2>Findings</h2>
 
+        {% set findings = report.get('findings', []) %}
         {% if findings and (findings|length) > 0 %}
           <p class="muted">Showing {{ findings|length }} finding(s).</p>
 
