@@ -66,7 +66,11 @@ def calculate_overall_score(rule_results: List[Dict[str, Any]], weights: Dict[st
     total_eligible = 0
     rules_passed = 0
     rules_failed = 0
+
+    object_type = type(rule_results)
     
+    print(f'object type is + {object_type}')
+
     for result in rule_results:
         rule_id = result.get("rule_id")
         fail_count = result.get("fail_count", 0)
