@@ -198,6 +198,9 @@
 
           dropdown.classList.remove("is-open");
           toggle.setAttribute("aria-expanded", "false");
+          if (applyBtn) {
+            applyBtn.setAttribute("data-loading-text", "Applying filter…");
+          }
           window.htmx.ajax("GET", url, { target: "#content", swap: "innerHTML" });
         });
       }
@@ -398,16 +401,44 @@
     });
   }
 
+  function initLoadingIndicator() {
+    const indicator = document.getElementById("loadingIndicator");
+    const loadingText = document.getElementById("loadingText");
+    if (!indicator) return;
+    indicator.classList.remove("active");
+
+    document.body.addEventListener("htmx:beforeRequest", (evt) => {
+      if (loadingText) {
+        const source = evt.detail.elt;
+        const form = source?.closest?.("form");
+        const text =
+          source?.getAttribute?.("data-loading-text") ||
+          form?.getAttribute?.("data-loading-text") ||
+          "Working…";
+        loadingText.textContent = text;
+      }
+      indicator.classList.add("active");
+    });
+    document.body.addEventListener("htmx:afterSwap", () => {
+      indicator.classList.remove("active");
+    });
+    document.body.addEventListener("htmx:responseError", () => {
+      indicator.classList.remove("active");
+    });
+  }
+
   initDropZone();
   localizeTimestamps();
   initRuleToggles();
   initHelpPanel();
   initFilterDropdowns();
+  initLoadingIndicator();
   document.body.addEventListener("htmx:afterSwap", () => {
     initDropZone();
     localizeTimestamps();
     initRuleToggles();
     initFilterDropdowns();
+    initLoadingIndicator();
   });
 
   // -------------------------
