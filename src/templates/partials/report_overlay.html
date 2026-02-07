@@ -187,8 +187,8 @@
         </div>
 
         <div class="actions no-print">
-          <button class="btn" type="button" onclick="window.print()">Print / Save as PDF</button>
-          <button class="btn" type="button" onclick="document.getElementById('overlay-root').innerHTML=''">Back to
+          <button class="btn-base btn-secondary btn-size-sm" type="button" onclick="window.print()">Print / Save as PDF</button>
+          <button class="btn-base btn-secondary btn-size-sm" type="button" onclick="document.getElementById('overlay-root').innerHTML=''">Back to
             Report</button>
         </div>
       </div>
@@ -249,7 +249,7 @@
                   <th>Card</th>
                   <th>List</th>
                   <th>Member(s)</th>
-                  <th class="rule-table-date">Date Due</th>
+                  <th class="rule-table-date u-text-right">Date Due</th>
                 </tr>
               </thead>
               <tbody>
@@ -267,7 +267,7 @@
                       <div class="rule-member">—</div>
                     {% endif %}
                   </td>
-                  <td class="rule-table-date">{{ card.due[:10] if card.due else "—" }}</td>
+                  <td class="rule-table-date u-text-right">{{ card.due[:10] if card.due else "—" }}</td>
                 </tr>
               {% endfor %}
             {% else %}

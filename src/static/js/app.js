@@ -312,6 +312,7 @@
         clearFileUI();
         if (submitBtn) {
           submitBtn.disabled = true;
+          submitBtn.hidden = true;
           submitBtn.classList.add("is-hidden");
         }
         return;
@@ -323,6 +324,7 @@
         clearFileUI();
         if (submitBtn) {
           submitBtn.disabled = true;
+          submitBtn.hidden = true;
           submitBtn.classList.add("is-hidden");
         }
         return;
@@ -332,6 +334,7 @@
       hidePrompt();
       if (submitBtn) {
         submitBtn.disabled = false;
+        submitBtn.hidden = false;
         submitBtn.classList.remove("is-hidden");
       }
 
@@ -347,6 +350,7 @@
     const submitBtn = dropZone.querySelector("button[type='submit']");
     if (submitBtn) {
       submitBtn.disabled = true;
+      submitBtn.hidden = true;
       submitBtn.classList.add("is-hidden");
 
       // Prevent submit button clicks from being treated as "browse".
@@ -381,6 +385,7 @@
         setError("Invalid file type. Please upload a Trello JSON export.");
         if (submitBtn) {
           submitBtn.disabled = true;
+          submitBtn.hidden = true;
           submitBtn.classList.add("is-hidden");
         }
         return;
@@ -391,6 +396,7 @@
       hidePrompt();
       if (submitBtn) {
         submitBtn.disabled = false;
+        submitBtn.hidden = false;
         submitBtn.classList.remove("is-hidden");
       }
 
