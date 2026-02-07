@@ -1,4 +1,9 @@
-"""CSV exporter for report data."""
+"""CSV exporter for report data.
+
+Uses the report context shape from report_builder to emit a sectioned CSV.
+The "Findings by Rule" section is driven by a normalized rule table so new
+rules can be added without changing export code.
+"""
 
 from __future__ import annotations
 

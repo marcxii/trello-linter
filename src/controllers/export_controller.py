@@ -1,7 +1,9 @@
-"""Export controller.
+"""CSV export controller.
 
-CSV exports are generated from the stored report context for a given run_id.
-This keeps exports aligned with the report UI without duplicating data logic.
+Responsibilities:
+- Validate run_id and session ownership.
+- Build report context and serialize it to CSV.
+- Return a downloadable attachment with a board-name + run-id filename.
 """
 
 from __future__ import annotations

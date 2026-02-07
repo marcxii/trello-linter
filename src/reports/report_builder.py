@@ -1,4 +1,14 @@
-"""Build a normalized report context for HTML and CSV outputs."""
+"""Report context builder for HTML and CSV exports.
+
+Responsibilities:
+- Load a session-scoped run and its stored report JSON.
+- Enrich with derived data (overdue cards, normalized rule rows).
+- Return a stable context shape for multiple renderers.
+
+Returned context keys:
+- run, report, board, scores, summary, generated_at
+- overdue_cards, rule_columns, rule_rows
+"""
 
 from __future__ import annotations
 

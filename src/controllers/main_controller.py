@@ -1,7 +1,8 @@
-"""Main (home) controller.
+"""Main (home) controller for non-report routes.
 
-This module holds routes that are not specific to analysis/report/export workflows.
-Keep this controller thin: it should only render views or return simple health info.
+Responsibilities:
+- Serve the landing page and initial HTMX entrypoint.
+- Provide a simple health check endpoint.
 """
 
 from __future__ import annotations

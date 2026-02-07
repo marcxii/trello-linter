@@ -1,13 +1,9 @@
+"""Report controller for full-page report views.
 
-
-"""Report controller.
-
-This controller will eventually:
-- Load a persisted LintRun by run_id
-- Render the dashboard view (screen + print-friendly)
-
-For Commit 1, keep this as a simple placeholder so routing and MVC structure can
-be reviewed without requiring Postgres or the analysis pipeline.
+Responsibilities:
+- Fetch the stored report JSON for a session-scoped run.
+- Render the full report template (screen or print mode).
+- Provide a placeholder route when no run is selected.
 """
 
 from __future__ import annotations
