@@ -930,6 +930,10 @@ a.upload-form {
     font-weight: 700;
 }
 
+.report-overlay .kpi .value-emphasis {
+    font-size: 1.6rem;
+}
+
 .report-overlay .section {
     margin-top: var(--space-4);
 }
@@ -1070,6 +1074,10 @@ a.upload-form {
 .report-page .kpi .value {
     font-size: 1.35rem;
     font-weight: 700;
+}
+
+.report-page .kpi .value-emphasis {
+    font-size: 1.6rem;
 }
 
 .report-page .section {

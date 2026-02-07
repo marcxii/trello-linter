@@ -29,21 +29,6 @@
 
       <div class="grid">
         {% include "partials/report_scorecard.html" %}
-
-        <div class="card">
-          <h2>Category Scores</h2>
-          {% set scores = report.get('scores', {}) %}
-          {% set cat = scores.get('category_scores', {}) %}
-          {% if cat %}
-            <ul class="findings">
-              {% for k, v in cat.items() %}
-                <li><strong>{{ k }}:</strong> {{ v }}</li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="muted">No category scores available yet.</p>
-          {% endif %}
-        </div>
       </div>
 
       <div class="card u-mt-4">
