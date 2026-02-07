@@ -9,13 +9,7 @@ from __future__ import annotations
 
 import csv
 from io import StringIO
-from typing import Any, Iterable
-
-
-def _join_list(values: Iterable[str] | None) -> str:
-    if not values:
-        return ""
-    return "; ".join([str(v) for v in values if v is not None])
+from typing import Any
 
 
 def build_report_csv(report_ctx: dict[str, Any]) -> str:

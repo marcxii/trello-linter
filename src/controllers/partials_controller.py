@@ -19,23 +19,31 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, current_app, render_template, request
 
-from src.database.sqlite import get_db
 from src.database.db_functions import (
-    save_run,
-    save_cards,
-    save_members,
-    save_findings,
     cleanup_old_runs,
     delete_session_runs,
-    get_run_summary,
-    get_cards_for_run,
-    get_members_for_run,
     get_card_for_run,
+    get_cards_for_run,
     get_findings_for_card,
+    get_members_for_run,
+    get_run_summary,
+    save_cards,
+    save_findings,
+    save_members,
+    save_run,
 )
+from src.database.sqlite import get_db
 from src.linter.rule_engine import RuleEngine, count_overdue_cards
 from src.linter.scoring_engine import calculate_overall_score, get_grade_from_score
 from src.linter.rules.due_date_rule import evaluate_due_date
+from src.linter.scoring_engine import compute_overall_score
+from src.parser.trello_parser import (
+    TrelloParseError,
+    parse_board_summary,
+    parse_cards,
+    parse_full_board,
+)
+from src.utils.session import get_or_set_session_id
 
 
 def _format_due_display(due_value: str | None) -> str | None:
@@ -306,6 +314,8 @@ def analyze_partial():
     5. Save to database (runs, cards, members, findings)
     6. Return results HTML fragment
     """
+    # TODO: If this moves beyond scaffolding, split into helpers
+    # (parse, scoring, persistence, and response building).
     # -------------------------
     # Step 1: Validate file
     # -------------------------
