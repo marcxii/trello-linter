@@ -52,7 +52,7 @@
 
         <div class="actions no-print">
           <button class="btn" type="button" onclick="window.print()">Print / Save as PDF</button>
-          <a class="btn" href="{{ url_for('main.index') }}">Back to Dashboard</a>
+          <a class="btn" href="{{ url_for('main.index', run_id=run.id) }}">Back to Report</a>
         </div>
       </div>
 

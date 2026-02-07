@@ -21,14 +21,41 @@ from src.database.sqlite import get_db
 from src.database.db_functions import (
     save_run,
     save_cards,
+    save_members,
     save_findings,
     cleanup_old_runs,
     delete_session_runs,
     get_run_summary,
+    get_cards_for_run,
+    get_members_for_run,
+    get_card_for_run,
+    get_findings_for_card,
 )
 from src.linter.rule_engine import count_overdue_cards
 from src.linter.rule_engine import RuleEngine
 from src.linter.scoring_engine import calculate_overall_score
+from src.linter.rules.due_date_rule import evaluate_due_date
+
+
+def _format_due_display(due_value: str | None) -> str | None:
+    """Format due date for display as YYYY-MM-DD HH:MM:SS AM/PM."""
+    if not due_value or not isinstance(due_value, str):
+        return None
+
+    value = due_value.strip()
+    if not value:
+        return None
+
+    if value.endswith("Z"):
+        value = value[:-1] + "+00:00"
+
+    try:
+        dt = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+    return dt.strftime("%Y-%m-%d %I:%M:%S %p")
+from src.linter.scoring_engine import compute_overall_score
 from src.parser.trello_parser import (
     parse_board_summary,
     parse_cards,
@@ -38,6 +65,56 @@ from src.parser.trello_parser import (
 from src.utils.session import get_or_set_session_id
 
 partials_bp = Blueprint("partials", __name__)
+
+
+def _get_overdue_cards(run_id: int) -> list[dict]:
+    """Return overdue cards for a run with metadata."""
+    db = get_db()
+    cards = get_cards_for_run(db, run_id)
+    member_map = get_members_for_run(db, run_id)
+    overdue_cards = []
+    for card in cards:
+        if card.get("is_closed"):
+            continue
+        result = evaluate_due_date(card.get("due"))
+        if result["overdue"]:
+            member_names = [
+                member_map.get(member_id, member_id) for member_id in (card.get("members") or [])
+            ]
+            overdue_cards.append(
+                {
+                    "name": card.get("card_name") or "(untitled card)",
+                    "card_id": card.get("card_id"),
+                    "days_past_due": result["days_past_due"],
+                    "list_name": card.get("list_name") or "",
+                    "members": member_names,
+                    "due": card.get("due"),
+                }
+            )
+    overdue_cards.sort(key=lambda item: item["days_past_due"], reverse=True)
+    return overdue_cards
+
+
+def _filter_cards_by_members(cards: list[dict], selected_members: list[str]) -> list[dict]:
+    """Filter cards by selected member names (including Unassigned)."""
+    if not selected_members:
+        return []
+
+    selected_set = set(selected_members)
+    include_unassigned = "Unassigned" in selected_set
+    selected_set.discard("Unassigned")
+
+    filtered = []
+    for card in cards:
+        members = card.get("members") or []
+        if not members:
+            if include_unassigned:
+                filtered.append(card)
+            continue
+        if selected_set and any(member in selected_set for member in members):
+            filtered.append(card)
+
+    return filtered
 
 
 # -------------------------
@@ -64,6 +141,21 @@ def results_partial():
             board = report.get("board", {})
             scores = report.get("scores", {})
             summary = report.get("summary", {})
+            overdue_cards = _get_overdue_cards(run_id)
+            member_names = sorted(set(get_members_for_run(db, run_id).values()))
+            member_names.append("Unassigned")
+            selected_members = request.args.getlist("members")
+            expanded_rule_ids = request.args.getlist("expanded")
+            if selected_members:
+                if selected_members == ["__none__"]:
+                    selected_members = []
+                else:
+                    valid = set(member_names)
+                    selected_members = [m for m in selected_members if m in valid]
+            else:
+                selected_members = member_names
+
+            overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
             return render_template(
                 "partials/results.html",
                 overall_score=scores.get("overall_score", 0),
@@ -78,12 +170,94 @@ def results_partial():
                 members_count=board.get("members_count", 0),
                 generated_at=report.get("generated_at", datetime.now(timezone.utc).isoformat()),
                 run_id=run_id,
+                overdue_cards=overdue_cards,
+                member_names=member_names,
+                selected_members=selected_members,
+                expanded_rule_ids=expanded_rule_ids,
             )
 
     return render_template(
         "partials/upload.html",
         message="Report not found. Please analyze a board.",
     )
+
+
+@partials_bp.get("/partials/report")
+def report_overlay_partial():
+    """Return printable report as an overlay partial for a given run_id."""
+    run_id = request.args.get("run_id", type=int)
+    if not run_id:
+        return render_template(
+            "partials/error.html",
+            message="Missing run ID. Please open a report from results.",
+        )
+
+    session_id = get_or_set_session_id()
+    db = get_db()
+    row = db.execute(
+        """
+        SELECT id, created_at, board_ref, report_json
+        FROM runs
+        WHERE id = ? AND session_id = ?
+        """,
+        (run_id, session_id),
+    ).fetchone()
+
+    if row is None:
+        return render_template(
+            "partials/error.html",
+            message="Report not found for this session.",
+        )
+
+    run = {
+        "id": row["id"],
+        "created_at": row["created_at"],
+        "board_ref": row["board_ref"] or "(unknown)",
+        "source_type": "upload",
+    }
+    report_data = json.loads(row["report_json"] or "{}")
+    board = report_data.get("board", {})
+    scores = report_data.get("scores", {})
+    summary = report_data.get("summary", {})
+    overdue_cards = _get_overdue_cards(run_id)
+    member_names = sorted(set(get_members_for_run(db, run_id).values()))
+    member_names.append("Unassigned")
+    selected_members = member_names
+    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
+    selected_members = request.args.getlist("members")
+    expanded_rule_ids = request.args.getlist("expanded")
+    if selected_members:
+        if selected_members == ["__none__"]:
+            selected_members = []
+        else:
+            valid = set(member_names)
+            selected_members = [m for m in selected_members if m in valid]
+    else:
+        selected_members = member_names
+    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
+    return render_template(
+        "partials/report_overlay.html",
+        run=run,
+        report=report_data,
+        overall_score=scores.get("overall_score", 0),
+        total_findings=scores.get("total_findings", 0),
+        critical=scores.get("critical_findings", 0),
+        major=scores.get("major_findings", 0),
+        minor=scores.get("minor_findings", 0),
+        filename=summary.get("filename", "(unknown)"),
+        board_name=board.get("name", "(unknown)"),
+        cards_count=board.get("cards_count", 0),
+        lists_count=board.get("lists_count", 0),
+        members_count=board.get("members_count", 0),
+        generated_at=report_data.get("generated_at", datetime.now(timezone.utc).isoformat()),
+        overdue_cards=overdue_cards,
+    )
+
+
+@partials_bp.get("/partials/report-settings")
+def report_settings_partial():
+    """Return report settings overlay."""
+    return render_template("partials/report_settings.html")
 
 
 @partials_bp.post("/partials/analyze")
@@ -277,9 +451,31 @@ def analyze_partial():
         list_map=list_map,
     )
 
+    # Save members for name lookups
+    save_members(
+        conn=db,
+        run_id=run_id,
+        members=board_data.get('members', []),
+    )
+
     # Save findings (when rule engine is wired, findings will be populated)
     if findings:
         save_findings(conn=db, run_id=run_id, findings=findings)
+
+    overdue_cards = _get_overdue_cards(run_id)
+    member_names = sorted(set(get_members_for_run(db, run_id).values()))
+    member_names.append("Unassigned")
+    selected_members = request.args.getlist("members")
+    if selected_members:
+        if selected_members == ["__none__"]:
+            selected_members = []
+        else:
+            valid = set(member_names)
+            selected_members = [m for m in selected_members if m in valid]
+    else:
+        selected_members = member_names
+    expanded_rule_ids = []
+    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
 
     # -------------------------
     # Step 6: Return Results
@@ -300,6 +496,10 @@ def analyze_partial():
         "lists_count": lists_count,
         "members_count": summary["members_count"],
         "generated_at": report_data["generated_at"],
+        "overdue_cards": overdue_cards,
+        "member_names": member_names,
+        "selected_members": selected_members,
+        "expanded_rule_ids": expanded_rule_ids,
     }
 
     return render_template("partials/results.html", **context)
@@ -319,6 +519,67 @@ def reset_session_runs():
 
 @partials_bp.get("/partials/card")
 def card_partial():
-    """Return a placeholder single-card view fragment."""
-    run_id = request.args.get("run_id", type=int) or 0
-    return render_template("partials/card.html", run_id=run_id)
+    """Return a single-card view fragment."""
+    run_id = request.args.get("run_id", type=int)
+    card_id = request.args.get("card_id", type=str)
+    if not run_id:
+        return render_template(
+            "partials/error.html",
+            message="Missing card details. Please return to the report.",
+        )
+
+    session_id = get_or_set_session_id()
+    db = get_db()
+    run_row = db.execute(
+        "SELECT id FROM runs WHERE id = ? AND session_id = ?",
+        (run_id, session_id),
+    ).fetchone()
+    if run_row is None:
+        return render_template(
+            "partials/error.html",
+            message="Report not found for this session.",
+        )
+
+    if not card_id:
+        return render_template(
+            "partials/card.html",
+            run_id=run_id,
+            card_name="(unknown card)",
+            list_name="—",
+            members=[],
+            card_id="—",
+            due_date=None,
+            issues=[],
+        )
+
+    card = get_card_for_run(db, run_id, card_id)
+    if card is None:
+        return render_template(
+            "partials/error.html",
+            message="Card not found for this report.",
+        )
+
+    member_map = get_members_for_run(db, run_id)
+    member_names = [member_map.get(member_id, member_id) for member_id in (card.get("members") or [])]
+
+    issues = []
+    due_result = evaluate_due_date(card.get("due"))
+    if due_result["overdue"]:
+        days = due_result["days_past_due"]
+        due_display = _format_due_display(card.get("due")) or "—"
+        issues.append(f"Overdue: Due date: {due_display} | +{days} day{'s' if days != 1 else ''} past due")
+
+    findings = get_findings_for_card(db, run_id, card_id)
+    for finding in findings:
+        issues.append(finding.get("description") or finding.get("rule_name") or "Finding")
+
+    return render_template(
+        "partials/card.html",
+        run_id=run_id,
+        card_name=card.get("card_name") or "(untitled card)",
+        list_name=card.get("list_name") or "—",
+        members=member_names,
+        card_id=card.get("card_id") or "—",
+        due_date=_format_due_display(card.get("due")),
+        issues=issues,
+    )

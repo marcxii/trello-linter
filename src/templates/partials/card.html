@@ -2,10 +2,19 @@
   <div class="card-panel">
     <div class="card-panel-header">
       <div class="card-meta">
-        <div><strong>Card:</strong> Fix login edge case</div>
-        <div><strong>List:</strong> In Progress</div>
-        <div><strong>Member:</strong> Ricky Gervais</div>
-        <div><strong>Link:</strong> www.trello.com/actual_link_to_card</div>
+        <div><strong>Card:</strong> {{ card_name }}</div>
+        <div><strong>List:</strong> {{ list_name }}</div>
+        <div>
+          <strong>Member(s):</strong>
+          {% if members and (members|length) > 0 %}
+            {% for member in members %}
+              <div>{{ member }}</div>
+            {% endfor %}
+          {% else %}
+            <div>—</div>
+          {% endif %}
+        </div>
+        <div><strong>Due:</strong> {{ due_date or "—" }}</div>
       </div>
 
       <div class="card-actions">
@@ -22,11 +31,15 @@
     </div>
 
     <details class="issues-panel" open>
-      <summary class="issues-header">Issues found | 3</summary>
+      <summary class="issues-header">Issues found | {{ issues|length }}</summary>
       <ul class="issues-list">
-        <li>Overdue: Due date: 2026-01-20 | +5 days past due</li>
-        <li>Missing Story Points</li>
-        <li>Another issue</li>
+        {% if issues and (issues|length) > 0 %}
+          {% for issue in issues %}
+            <li>{{ issue }}</li>
+          {% endfor %}
+        {% else %}
+          <li>No issues found.</li>
+        {% endif %}
       </ul>
     </details>
   </div>

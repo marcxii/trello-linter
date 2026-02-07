@@ -131,6 +131,94 @@
     });
   }
 
+  function initFilterDropdowns() {
+    const dropdowns = document.querySelectorAll("[data-dropdown]");
+    if (!dropdowns.length) return;
+
+    dropdowns.forEach((dropdown) => {
+      const toggle = dropdown.querySelector("[data-dropdown-toggle]");
+      const menu = dropdown.querySelector("[data-dropdown-menu]");
+      if (!toggle || !menu) return;
+
+      if (toggle.dataset.dropdownInit === "1") return;
+      toggle.dataset.dropdownInit = "1";
+
+      const selectAll = dropdown.querySelector("[data-select-all]");
+      const selectNone = dropdown.querySelector("[data-select-none]");
+      const applyBtn = dropdown.querySelector("[data-apply-filter]");
+
+      toggle.addEventListener("click", () => {
+        const isOpen = dropdown.classList.toggle("is-open");
+        toggle.setAttribute("aria-expanded", String(isOpen));
+        if (isOpen) {
+          const first = dropdown.querySelector("input[type='checkbox']");
+          if (first) first.focus();
+        }
+      });
+
+      if (selectAll) {
+        selectAll.addEventListener("click", () => {
+          const boxes = dropdown.querySelectorAll("input[type='checkbox']");
+          boxes.forEach((box) => (box.checked = true));
+        });
+      }
+
+      if (selectNone) {
+        selectNone.addEventListener("click", () => {
+          const boxes = dropdown.querySelectorAll("input[type='checkbox']");
+          boxes.forEach((box) => (box.checked = false));
+        });
+      }
+
+      if (applyBtn) {
+        applyBtn.addEventListener("click", () => {
+          const results = document.getElementById("results");
+          const runId = results?.dataset?.runId;
+          if (!runId || !window.htmx) return;
+
+          const expanded = Array.from(
+            results.querySelectorAll(".rule-summary[aria-expanded='true'][data-rule-id]")
+          ).map((btn) => btn.dataset.ruleId);
+
+          const selected = Array.from(
+            dropdown.querySelectorAll("input[type='checkbox']:checked")
+          ).map((box) => box.value);
+
+          let url = `/partials/results?run_id=${encodeURIComponent(runId)}`;
+          expanded.forEach((ruleId) => {
+            url += `&expanded=${encodeURIComponent(ruleId)}`;
+          });
+          if (selected.length === 0) {
+            url += "&members=__none__";
+          } else {
+            selected.forEach((name) => {
+              url += `&members=${encodeURIComponent(name)}`;
+            });
+          }
+
+          dropdown.classList.remove("is-open");
+          toggle.setAttribute("aria-expanded", "false");
+          window.htmx.ajax("GET", url, { target: "#content", swap: "innerHTML" });
+        });
+      }
+
+      document.addEventListener("click", (event) => {
+        if (!dropdown.contains(event.target)) {
+          dropdown.classList.remove("is-open");
+          toggle.setAttribute("aria-expanded", "false");
+        }
+      });
+
+      dropdown.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          dropdown.classList.remove("is-open");
+          toggle.setAttribute("aria-expanded", "false");
+          toggle.focus();
+        }
+      });
+    });
+  }
+
   function initDropZone() {
     const dropZone = getDropZone();
     const fileInput = getFileInput();
@@ -314,10 +402,12 @@
   localizeTimestamps();
   initRuleToggles();
   initHelpPanel();
+  initFilterDropdowns();
   document.body.addEventListener("htmx:afterSwap", () => {
     initDropZone();
     localizeTimestamps();
     initRuleToggles();
+    initFilterDropdowns();
   });
 
   // -------------------------

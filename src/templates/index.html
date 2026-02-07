@@ -23,7 +23,7 @@
     <main
       class="content"
       id="content"
-      hx-get="/partials/upload"
+      hx-get="{{ initial_partial_url }}"
       hx-trigger="load"
       hx-swap="innerHTML"
       role="region"
@@ -33,6 +33,7 @@
       <!-- Upload partial loads here -->
     </main>
   </div>
+  <div id="overlay-root" aria-live="polite"></div>
 
   <button class="help-button" id="helpButton" type="button" aria-expanded="false" aria-controls="helpPanel">
     Help
