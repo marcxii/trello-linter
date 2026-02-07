@@ -43,6 +43,30 @@ def _get_overdue_cards(run_id: int) -> list[dict[str, Any]]:
     return overdue_cards
 
 
+def _build_rule_rows(overdue_cards: list[dict[str, Any]]) -> tuple[list[str], list[list[str]]]:
+    """Return a normalized, flat rule table for CSV/report exports."""
+    columns = ["Rule", "Card", "List", "Members", "Due_date"]
+    rows: list[list[str]] = []
+
+    for card in overdue_cards:
+        members = card.get("members") or []
+        if not members:
+            members = [""]
+        due_date = str(card.get("due", ""))[:10]
+        for member in members:
+            rows.append(
+                [
+                    "Past-due active work",
+                    str(card.get("name", "")),
+                    str(card.get("list_name", "")),
+                    str(member),
+                    due_date,
+                ]
+            )
+
+    return columns, rows
+
+
 def load_report_context(run_id: int, session_id: str) -> dict[str, Any] | None:
     """Load report context shared by HTML and CSV renderers."""
     db = get_db()
@@ -71,6 +95,9 @@ def load_report_context(run_id: int, session_id: str) -> dict[str, Any] | None:
         "source_type": "upload",
     }
 
+    overdue_cards = _get_overdue_cards(run_id)
+    rule_columns, rule_rows = _build_rule_rows(overdue_cards)
+
     return {
         "run": run,
         "report": report,
@@ -78,5 +105,7 @@ def load_report_context(run_id: int, session_id: str) -> dict[str, Any] | None:
         "scores": scores,
         "summary": summary,
         "generated_at": generated_at,
-        "overdue_cards": _get_overdue_cards(run_id),
+        "overdue_cards": overdue_cards,
+        "rule_columns": rule_columns,
+        "rule_rows": rule_rows,
     }

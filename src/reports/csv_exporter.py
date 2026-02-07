@@ -1,5 +1,3 @@
-
-
 """CSV exporter for report data."""
 
 from __future__ import annotations
@@ -70,25 +68,16 @@ def build_report_csv(report_ctx: dict[str, Any]) -> str:
             row([f"{idx}.message", str(finding)])
     spacer()
 
-    # Findings by Rule (Past-due active work)
+    # Findings by Rule (normalized table)
     section("Findings by Rule")
-    row(["Rule", "Card", "List", "Members", "Due_date"])
-    overdue_cards = report_ctx.get("overdue_cards") or []
-    for idx, card in enumerate(overdue_cards, start=1):
-        members = card.get("members") or []
-        if not members:
-            members = [""]
-        for member_index, member in enumerate(members):
-            if member_index == 0:
-                row([
-                    "Past-due active work",
-                    str(card.get("name", "")),
-                    str(card.get("list_name", "")),
-                    str(member),
-                    str(card.get("due", ""))[:10],
-                ])
-            else:
-                row(["", "", "", str(member), ""])
+    rule_columns = report_ctx.get("rule_columns") or ["Rule", "Card", "List", "Members", "Due_date"]
+    rule_rows = report_ctx.get("rule_rows") or []
+    row([str(col) for col in rule_columns])
+    for rule_row in rule_rows:
+        if isinstance(rule_row, (list, tuple)):
+            row([str(cell) for cell in rule_row])
+        elif isinstance(rule_row, dict):
+            row([str(rule_row.get(col, "")) for col in rule_columns])
     spacer()
 
     return output.getvalue()
