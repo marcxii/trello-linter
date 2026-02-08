@@ -5,6 +5,8 @@ Purpose
 Owns the HTML fragment endpoints used by the single-page shell.
 
 Updated to use:
+- Full rule engine with 14 individual rules
+- Individual rule-based scoring
 - New database functions from db_functions.py
 - Full board parsing with parse_full_board()
 - Proper data persistence with separate findings table
@@ -31,7 +33,8 @@ from src.database.db_functions import (
     get_card_for_run,
     get_findings_for_card,
 )
-from src.linter.rule_engine import count_overdue_cards
+from src.linter.rule_engine import RuleEngine, count_overdue_cards
+from src.linter.scoring_engine import calculate_overall_score, get_grade_from_score
 from src.linter.rules.due_date_rule import evaluate_due_date
 
 
@@ -53,7 +56,8 @@ def _format_due_display(due_value: str | None) -> str | None:
         return None
 
     return dt.strftime("%Y-%m-%d %I:%M:%S %p")
-from src.linter.scoring_engine import compute_overall_score
+
+
 from src.parser.trello_parser import (
     parse_board_summary,
     parse_cards,
@@ -115,6 +119,27 @@ def _filter_cards_by_members(cards: list[dict], selected_members: list[str]) -> 
     return filtered
 
 
+def _average_scores(rule_scores: dict, rule_ids: list) -> float:
+    """Calculate average score for a group of rules.
+    
+    Args:
+        rule_scores: Dictionary of all rule scores
+        rule_ids: List of rule IDs to average
+        
+    Returns:
+        Average score (0-100)
+    """
+    scores = []
+    for rule_id in rule_ids:
+        if rule_id in rule_scores and not rule_scores[rule_id].get("skipped", False):
+            scores.append(rule_scores[rule_id]["score"])
+    
+    if not scores:
+        return 100.0  # No applicable rules
+    
+    return round(sum(scores) / len(scores), 2)
+
+
 # -------------------------
 # HTMX partial endpoints
 # -------------------------
@@ -122,6 +147,7 @@ def _filter_cards_by_members(cards: list[dict], selected_members: list[str]) -> 
 def upload_partial():
     """Return the upload UI fragment for the single-page shell."""
     return render_template("partials/upload.html")
+
 
 @partials_bp.get("/partials/results")
 def results_partial():
@@ -157,10 +183,15 @@ def results_partial():
             return render_template(
                 "partials/results.html",
                 overall_score=scores.get("overall_score", 0),
+                grade=scores.get("grade", "F"),
+                grade_description=scores.get("grade_description", "Unknown"),
                 total_findings=scores.get("total_findings", 0),
+                rules_passed=scores.get("rules_passed", 0),
+                rules_failed=scores.get("rules_failed", 0),
                 critical=scores.get("critical_findings", 0),
                 major=scores.get("major_findings", 0),
                 minor=scores.get("minor_findings", 0),
+                category_scores=scores.get("category_scores", {}),
                 filename=summary.get("filename", "(unknown)"),
                 board_name=board.get("name", "(unknown)"),
                 cards_count=board.get("cards_count", 0),
@@ -238,10 +269,15 @@ def report_overlay_partial():
         run=run,
         report=report_data,
         overall_score=scores.get("overall_score", 0),
+        grade=scores.get("grade", "F"),
+        grade_description=scores.get("grade_description", "Unknown"),
         total_findings=scores.get("total_findings", 0),
+        rules_passed=scores.get("rules_passed", 0),
+        rules_failed=scores.get("rules_failed", 0),
         critical=scores.get("critical_findings", 0),
         major=scores.get("major_findings", 0),
         minor=scores.get("minor_findings", 0),
+        category_scores=scores.get("category_scores", {}),
         filename=summary.get("filename", "(unknown)"),
         board_name=board.get("name", "(unknown)"),
         cards_count=board.get("cards_count", 0),
@@ -265,9 +301,9 @@ def analyze_partial():
     Flow:
     1. Validate uploaded file
     2. Parse Trello JSON (board, lists, cards, members, checklists)
-    3. Run linting rules (TODO: wire up full rule engine)
-    4. Calculate scores
-    5. Save to database (runs, cards, findings)
+    3. Run all 14 linting rules via RuleEngine
+    4. Calculate individual rule-based scores
+    5. Save to database (runs, cards, members, findings)
     6. Return results HTML fragment
     """
     # -------------------------
@@ -314,7 +350,7 @@ def analyze_partial():
         summary = parse_board_summary(payload)
         lists_count = len(payload.get("lists") or [])
         
-        # Full parse for rule engine (when we wire it up)
+        # Full parse for rule engine
         board_data = parse_full_board(payload)
         
     except TrelloParseError as e:
@@ -324,7 +360,7 @@ def analyze_partial():
         )
 
     # -------------------------
-    # Step 3: Run Analysis
+    # Step 3: Run Rule Engine
     # -------------------------
     session_id = get_or_set_session_id()
     db = get_db()
@@ -333,68 +369,45 @@ def analyze_partial():
     ttl_seconds = int(current_app.config.get("RUN_TTL_SECONDS", 21600))
     cleanup_old_runs(db, ttl_seconds)
 
-    # TODO: Replace placeholder with real rule engine
-    # For now, using placeholder scores
-    # When ready: 
-    #   from src.linter.rule_engine import RuleEngine
-    #   from src.scoring.scorer import Scorer
-    #   
-    #   rule_engine = RuleEngine()
-    #   findings = rule_engine.run_all_rules(board_data)
-    #   
-    #   scorer = Scorer()
-    #   scores = scorer.calculate_score(findings)
+    # Initialize rule engine and run all rules
+    try:
+        engine = RuleEngine()
+        rule_results = engine.run_all_rules(board_data)
+    except Exception as e:
+        return render_template(
+            "partials/error.html",
+            message=f"Rule engine error: {str(e)}. Please check your config/rules_config.yaml file.",
+        )
+
+    # -------------------------
+    # Step 4: Calculate Scores
+    # -------------------------
+    try:
+        weights = engine.get_rule_weights()
+        scoring_result = calculate_overall_score(rule_results, weights)
+        grade_info = get_grade_from_score(scoring_result["overall_score"])
+    except Exception as e:
+        return render_template(
+            "partials/error.html",
+            message=f"Scoring error: {str(e)}",
+        )
+
+    # -------------------------
+    # Step 5: Build Report JSON
+    # -------------------------
     
-    # Placeholder findings (empty for now)
-    findings = []
-    
-    # Placeholder scores
-    scores = {
-        "overall_score": 100,
-        "category_scores": {
-            "Story Quality": 100,
-            "Acceptance Criteria": 100,
-            "Sprint Management": 100,
-            "Ownership": 100,
-            "Done Evidence": 100,
-        },
-        "total_findings": 0,
-        "critical_findings": 0,
-        "major_findings": 0,
-        "minor_findings": 0,
+    # Group rules into display categories for UI
+    category_scores = {
+        "Assignment & Ownership": _average_scores(scoring_result["rule_scores"], 
+            ["card_ownership", "card_due_date", "unscheduled_work"]),
+        "Quality & Estimation": _average_scores(scoring_result["rule_scores"],
+            ["card_descriptiveness", "story_point_estimation", "description_canonicalization"]),
+        "Capacity Management": _average_scores(scoring_result["rule_scores"],
+            ["progress_threshold", "individual_overload", "weekly_workload", "near_term_overcommitment"]),
+        "Due Dates & Flow": _average_scores(scoring_result["rule_scores"],
+            ["past_due_violation", "progress_monitoring", "flow_progress_signal", "card_completion"]),
     }
-
-    # Calculate overdue count (existing logic)
-    cards = parse_cards(payload)
-    overdue_count = 0
-    if cards:
-        # Temporarily save cards to calculate overdue
-        # (This is a workaround until we refactor count_overdue_cards)
-        temp_cur = db.execute(
-            "INSERT INTO runs (session_id, created_at, board_ref) VALUES (?, ?, ?)",
-            (session_id, datetime.now(timezone.utc).isoformat(), "temp")
-        )
-        temp_run_id = temp_cur.lastrowid
-        
-        db.executemany(
-            "INSERT INTO cards (run_id, card_name, due) VALUES (?, ?, ?)",
-            [(temp_run_id, card["name"], card["due"]) for card in cards],
-        )
-        db.commit()
-        
-        overdue_count = count_overdue_cards(temp_run_id)
-        
-        # Clean up temp run
-        db.execute("DELETE FROM runs WHERE id = ?", (temp_run_id,))
-        db.commit()
-
-    # Adjust overall score based on overdue cards
-    overall_score = compute_overall_score(overdue_count)
-    scores["overall_score"] = overall_score
-
-    # -------------------------
-    # Step 4: Build Report JSON
-    # -------------------------
+    
     report_data = {
         "board": {
             "name": summary["board_name"],
@@ -404,30 +417,44 @@ def analyze_partial():
         },
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "scores": {
-            "overall_score": scores["overall_score"],
-            "total_findings": scores["total_findings"],
-            "critical_findings": scores["critical_findings"],
-            "major_findings": scores["major_findings"],
-            "minor_findings": scores["minor_findings"],
-            "category_scores": scores["category_scores"],
-            "overdue_count": overdue_count,
+            "overall_score": scoring_result["overall_score"],
+            "grade": grade_info["grade"],
+            "grade_description": grade_info["description"],
+            "total_findings": scoring_result["total_failures"],
+            "rules_passed": scoring_result["rules_passed"],
+            "rules_failed": scoring_result["rules_failed"],
+            "critical_findings": 0,  # Not used in individual rule model
+            "major_findings": 0,
+            "minor_findings": 0,
+            "category_scores": category_scores,
         },
         "summary": {
-            "note": "Analysis complete. Connect rule engine to populate findings.",
+            "filename": filename,
+            "note": "Analysis complete using 14-rule engine",
         },
-        "findings": findings,  # Will be populated when rule engine is wired
+        "rule_results": rule_results,  # Full rule results for detailed view
     }
 
     # -------------------------
-    # Step 5: Save to Database
+    # Step 6: Save to Database
     # -------------------------
+    
+    # Prepare scores for database
+    db_scores = {
+        "overall_score": scoring_result["overall_score"],
+        "category_scores": category_scores,
+        "total_findings": scoring_result["total_failures"],
+        "critical_findings": 0,
+        "major_findings": 0,
+        "minor_findings": 0,
+    }
     
     # Save the run
     run_id = save_run(
         conn=db,
         session_id=session_id,
         board_data=board_data,
-        scores=scores,
+        scores=db_scores,
         report_json=report_data,
     )
 
@@ -447,10 +474,25 @@ def analyze_partial():
         members=board_data.get('members', []),
     )
 
-    # Save findings (when rule engine is wired, findings will be populated)
+    # Convert rule results to findings format for database
+    findings = []
+    for rule_result in rule_results:
+        for failure in rule_result.get("failures", []):
+            findings.append({
+                "card_id": failure.get("card_id"),
+                "card_name": failure.get("card_name", failure.get("member_name", "Board-level")),
+                "rule_name": rule_result["rule_name"],
+                "category": "Individual Rule",
+                "severity": "major",  # Default severity for individual rules
+                "description": failure.get("reason", "Rule violation"),
+                "suggestion": f"See rule: {rule_result['rule_name']}",
+            })
+    
+    # Save findings
     if findings:
         save_findings(conn=db, run_id=run_id, findings=findings)
 
+    # Get overdue cards and members for display
     overdue_cards = _get_overdue_cards(run_id)
     member_names = sorted(set(get_members_for_run(db, run_id).values()))
     member_names.append("Unassigned")
@@ -467,18 +509,22 @@ def analyze_partial():
     overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
 
     # -------------------------
-    # Step 6: Return Results
+    # Step 7: Return Results
     # -------------------------
     
     # Build template context
     context = {
         "run_id": run_id,
-        "overall_score": scores["overall_score"],
-        "category_scores": scores["category_scores"],
-        "total_findings": scores["total_findings"],
-        "critical": scores["critical_findings"],
-        "major": scores["major_findings"],
-        "minor": scores["minor_findings"],
+        "overall_score": scoring_result["overall_score"],
+        "grade": grade_info["grade"],
+        "grade_description": grade_info["description"],
+        "category_scores": category_scores,
+        "total_findings": scoring_result["total_failures"],
+        "rules_passed": scoring_result["rules_passed"],
+        "rules_failed": scoring_result["rules_failed"],
+        "critical": 0,
+        "major": 0,
+        "minor": 0,
         "filename": filename,
         "board_name": summary["board_name"],
         "cards_count": summary["cards_count"],
