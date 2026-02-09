@@ -726,6 +726,7 @@ a.upload-form {
     background: var(--color-surface);
     border-left: var(--border-thick) solid var(--color-muted);
     padding: var(--space-1);
+    margin-bottom: var(--space-3);
     border-radius: var(--radius-md);
 }
 

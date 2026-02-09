@@ -173,6 +173,7 @@ def results_partial():
             board = report.get("board", {})
             scores = report.get("scores", {})
             summary = report.get("summary", {})
+            rule_results = report.get("rule_results", [])
             overdue_cards = _get_overdue_cards(run_id)
             member_names = sorted(set(get_members_for_run(db, run_id).values()))
             member_names.append("Unassigned")
@@ -211,6 +212,7 @@ def results_partial():
                 member_names=member_names,
                 selected_members=selected_members,
                 expanded_rule_ids=expanded_rule_ids,
+                rule_results=rule_results,
             )
 
     return render_template(
@@ -545,6 +547,7 @@ def analyze_partial():
         "member_names": member_names,
         "selected_members": selected_members,
         "expanded_rule_ids": expanded_rule_ids,
+        "rule_results": rule_results,
     }
 
     return render_template("partials/results.html", **context)

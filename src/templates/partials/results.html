@@ -13,7 +13,9 @@
           style="--score: {{ overall_score }};"
           aria-label="Overall score {{ overall_score }} out of 100"
         >
-          <div class="score-number">{{ overall_score }}</div>
+          <div class="score-number">
+            <span class="score-number-whole">{{ overall_score|int }}</span>
+          </div>
         </div>
         <div class="score-assessment">
           {% if overall_score >= 95 %}
@@ -66,7 +68,7 @@
           aria-expanded="false"
           aria-controls="memberFilterMenu"
         >
-          Select members
+          Select members  
         </button>
         <div
           class="filter-menu"
@@ -103,6 +105,7 @@
       </div>
     </div>
 
+    <!-- legacy overdue cards section - take out before PR
     <div class="findings-summary" role="status" aria-live="polite">
       <button
         class="rule-summary"
@@ -141,8 +144,69 @@
           </li>
         {% endif %}
       </ul>
-    </div>
+    </div> -->
 
+    {% if rule_results and (rule_results|length) > 0 %}
+      {% set failures = namespace(found=false) %}
+      {% for rule in rule_results %}
+        {% if rule.failures and (rule.failures|length) > 0 %}
+          {% set failures.found = true %}
+          <div class="findings-summary" role="status" aria-live="polite">
+            <button
+              class="rule-summary"
+              type="button"
+              data-rule-id="{{ rule.rule_id }}"
+              aria-expanded="{% if expanded_rule_ids and (rule.rule_id in expanded_rule_ids) %}true{% else %}false{% endif %}"
+            >
+              <span class="rule-title">{{ rule.rule_name }}</span>
+              <span class="rule-meta">{{ rule.fail_count }}/{{ rule.eligible_count }} failed</span>
+              <span class="rule-toggle" aria-hidden="true">⏵</span>
+            </button>
+            <ul
+              class="rule-list {% if expanded_rule_ids and (rule.rule_id in expanded_rule_ids) %}{% else %}is-hidden{% endif %}"
+              data-rule-id="{{ rule.rule_id }}"
+            >
+              {% for failure in rule.failures %}
+                <li class="rule-item rule-item-3col">
+                  <span class="rule-card-name">{{ failure.card_name or failure.member_name or "Board-level" }}</span>
+                  <span class="rule-card-days u-muted">
+                    {{ failure.list_name or "" }}
+                    {% if failure.due %} • Due {{ failure.due }}{% endif %}
+                  </span>
+                  <span class="rule-card-action u-text-right">
+                    {% if failure.card_id %}
+                      <button
+                        class="btn-base btn-secondary btn-size-sm btn-no-shadow btn-hover-bg u-btn-tight u-mt-0 u-mb-0"
+                        hx-get="/partials/card?run_id={{ run_id }}&card_id={{ failure.card_id }}"
+                        hx-target="#content"
+                        hx-swap="innerHTML"
+                        type="button"
+                      >
+                        View Card
+                      </button>
+                    {% else %}
+                      {{ failure.reason }}
+                    {% endif %}
+                  </span>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      {% endfor %}
+      {% if not failures.found %}
+        <div class="findings-summary" role="status" aria-live="polite">
+          <div class="rule-item">
+            <span>No rule failures.</span>
+          </div>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="findings-summary" role="status" aria-live="polite">
+        <div class="rule-item">
+          <span>No rule results available.</span>
+        </div>
+      </div>
+    {% endif %}
   </div>
 
   <div class="export-buttons">
