@@ -5,9 +5,10 @@
       <div class="score-row">
         <div
           class="score-gauge
-            {% if overall_score >= 95 %}is-perfect
-            {% elif overall_score >= 85 %}is-great
+            {% if overall_score >= 90 %}is-perfect
+            {% elif overall_score >= 80 %}is-great
             {% elif overall_score >= 70 %}is-fair
+            {% elif overall_score >= 60 %}is-poor
             {% else %}is-critical
             {% endif %}"
           style="--score: {{ overall_score }};"

@@ -573,6 +573,11 @@ a.upload-form {
     --ring-color: #d49a1e;
 }
 
+.score-gauge.is-poor {
+    --fill-color: #fbe7d1;
+    --ring-color: #c96a1b;
+}
+
 .score-gauge.is-critical {
     --fill-color: #fde0dc;
     --ring-color: #c03a2b;
