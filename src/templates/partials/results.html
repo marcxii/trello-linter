@@ -218,7 +218,11 @@
   </div>
 
   <div class="export-buttons">
-    <a class="btn-base btn-secondary btn-size-md" href="/export/findings.csv?run_id={{ run_id }}" aria-label="Export findings CSV">
+    <a
+      class="btn-base btn-secondary btn-size-md"
+      href="/export/findings.csv?run_id={{ run_id }}{% if selected_members is defined and selected_members|length == 0 %}&members=__none__{% else %}{% for member in selected_members %}&members={{ member|urlencode }}{% endfor %}{% endif %}"
+      aria-label="Export findings CSV"
+    >
       📊 Export CSV
     </a>
     <a

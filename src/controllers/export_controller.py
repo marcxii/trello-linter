@@ -37,7 +37,8 @@ def export_findings_csv():
         return Response("Missing run_id", status=400)
 
     session_id = get_or_set_session_id()
-    report_ctx = load_report_context(run_id, session_id)
+    selected_members = request.args.getlist("members")
+    report_ctx = load_report_context(run_id, session_id, selected_members)
     if report_ctx is None:
         return Response("Not found", status=404)
 
@@ -62,7 +63,8 @@ def export_affected_cards_csv():
         return Response("Missing run_id", status=400)
 
     session_id = get_or_set_session_id()
-    report_ctx = load_report_context(run_id, session_id)
+    selected_members = request.args.getlist("members")
+    report_ctx = load_report_context(run_id, session_id, selected_members)
     if report_ctx is None:
         return Response("Not found", status=404)
 
