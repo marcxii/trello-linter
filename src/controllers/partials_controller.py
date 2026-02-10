@@ -141,6 +141,28 @@ def _build_card_member_map(run_id: int, member_map: dict[str, str]) -> dict[str,
     return card_members
 
 
+def _build_card_lookup(
+    run_id: int,
+    member_map: dict[str, str],
+) -> dict[str, dict[str, object]]:
+    """Return card_id -> card details for a run."""
+    db = get_db()
+    cards = get_cards_for_run(db, run_id)
+    lookup: dict[str, dict[str, object]] = {}
+    for card in cards:
+        member_ids = card.get("members") or []
+        member_names = [member_map.get(member_id, member_id) for member_id in member_ids]
+        card_id = card.get("card_id")
+        if card_id:
+            lookup[card_id] = {
+                "card_name": card.get("card_name"),
+                "list_name": card.get("list_name"),
+                "members": member_names,
+                "due": card.get("due"),
+            }
+    return lookup
+
+
 def _filter_rule_results_by_members(
     rule_results: list[dict],
     selected_members: list[str],
@@ -257,16 +279,6 @@ def results_partial():
             return render_template(
                 "partials/results.html",
                 overall_score=scores.get("overall_score", 0),
-                grade=scores.get("grade", "F"),
-                grade_description=scores.get("grade_description", "Unknown"),
-                total_findings=scores.get("total_findings", 0),
-                rules_passed=scores.get("rules_passed", 0),
-                rules_failed=scores.get("rules_failed", 0),
-                critical=scores.get("critical_findings", 0),
-                major=scores.get("major_findings", 0),
-                minor=scores.get("minor_findings", 0),
-                category_scores=scores.get("category_scores", {}),
-                filename=summary.get("filename", "(unknown)"),
                 board_name=board.get("name", "(unknown)"),
                 cards_count=board.get("cards_count", 0),
                 lists_count=board.get("lists_count", 0),
@@ -324,11 +336,11 @@ def report_overlay_partial():
     board = report_data.get("board", {})
     scores = report_data.get("scores", {})
     summary = report_data.get("summary", {})
+    rule_results = report_data.get("rule_results", [])
     overdue_cards = _get_overdue_cards(run_id)
-    member_names = sorted(set(get_members_for_run(db, run_id).values()))
+    member_map = get_members_for_run(db, run_id)
+    member_names = sorted(set(member_map.values()))
     member_names.append("Unassigned")
-    selected_members = member_names
-    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
     selected_members = request.args.getlist("members")
     expanded_rule_ids = request.args.getlist("expanded")
     if selected_members:
@@ -340,6 +352,15 @@ def report_overlay_partial():
     else:
         selected_members = member_names
     overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
+    filter_active = set(selected_members) != set(member_names)
+    if filter_active:
+        card_member_map = _build_card_member_map(run_id, member_map)
+        rule_results = _filter_rule_results_by_members(
+            rule_results,
+            selected_members,
+            card_member_map,
+        )
+    card_lookup = _build_card_lookup(run_id, member_map)
     return render_template(
         "partials/report_overlay.html",
         run=run,
@@ -361,6 +382,9 @@ def report_overlay_partial():
         members_count=board.get("members_count", 0),
         generated_at=report_data.get("generated_at", datetime.now(timezone.utc).isoformat()),
         overdue_cards=overdue_cards,
+        rule_results=rule_results,
+        filter_active=filter_active,
+        card_lookup=card_lookup,
     )
 
 
