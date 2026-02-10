@@ -265,6 +265,8 @@ def results_partial():
             return render_template(
                 "partials/results.html",
                 overall_score=scores.get("overall_score", 0),
+                grade=scores.get("grade", "F"),
+                grade_description=scores.get("grade_description", "Unknown"),
                 board_name=board.get("name", "(unknown)"),
                 cards_count=board.get("cards_count", 0),
                 lists_count=board.get("lists_count", 0),

@@ -18,15 +18,7 @@
           </div>
         </div>
         <div class="score-assessment">
-          {% if overall_score >= 95 %}
-            Perfect
-          {% elif overall_score >= 85 %}
-            Great
-          {% elif overall_score >= 70 %}
-            Fair
-          {% else %}
-            Critical
-          {% endif %}
+          {{ grade_description or "Unknown" }}
         </div>
       </div>
     </div>
@@ -104,47 +96,6 @@
         </div>
       </div>
     </div>
-
-    <!-- legacy overdue cards section - take out before PR
-    <div class="findings-summary" role="status" aria-live="polite">
-      <button
-        class="rule-summary"
-        type="button"
-        data-rule-id="past-due"
-        aria-expanded="{% if expanded_rule_ids and ('past-due' in expanded_rule_ids) %}true{% else %}false{% endif %}"
-      >
-        <span class="rule-title">Past-due cards | {{ overdue_cards|length }} cards</span>
-        <span class="rule-toggle" aria-hidden="true">⏵</span>
-      </button>
-      <ul
-        class="rule-list {% if expanded_rule_ids and ('past-due' in expanded_rule_ids) %}{% else %}is-hidden{% endif %}"
-        data-rule-id="past-due"
-      >
-        {% if overdue_cards and (overdue_cards|length) > 0 %}
-          {% for card in overdue_cards %}
-            <li class="rule-item rule-item-3col">
-              <span class="rule-card-name">{{ card.name }}</span>
-              <span class="rule-card-days u-muted">{{ card.days_past_due }} day{% if card.days_past_due != 1 %}s{% endif %} overdue</span>
-              <span class="rule-card-action u-text-right">
-                <button
-                  class="btn-base btn-secondary btn-size-sm btn-no-shadow btn-hover-bg u-btn-tight u-mt-0 u-mb-0"
-                  hx-get="/partials/card?run_id={{ run_id }}&card_id={{ card.card_id }}"
-                  hx-target="#content"
-                  hx-swap="innerHTML"
-                  type="button"
-                >
-                  View Card
-                </button>
-              </span>
-            </li>
-          {% endfor %}
-        {% else %}
-          <li class="rule-item">
-            <span>No overdue cards.</span>
-          </li>
-        {% endif %}
-      </ul>
-    </div> -->
 
     {% if rule_results and (rule_results|length) > 0 %}
       {% set failures = namespace(found=false) %}
