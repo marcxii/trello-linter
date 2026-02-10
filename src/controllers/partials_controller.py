@@ -33,16 +33,10 @@ from src.database.db_functions import (
     save_run,
 )
 from src.database.sqlite import get_db
-from src.linter.rule_engine import RuleEngine, count_overdue_cards
+from src.linter.rule_engine import RuleEngine
 from src.linter.scoring_engine import calculate_overall_score, get_grade_from_score
 from src.linter.rules.due_date_rule import evaluate_due_date
-from src.linter.scoring_engine import compute_overall_score
-from src.parser.trello_parser import (
-    TrelloParseError,
-    parse_board_summary,
-    parse_cards,
-    parse_full_board,
-)
+from src.parser.trello_parser import TrelloParseError, parse_board_summary, parse_full_board
 from src.utils.session import get_or_set_session_id
 
 
@@ -65,14 +59,6 @@ def _format_due_display(due_value: str | None) -> str | None:
 
     return dt.strftime("%Y-%m-%d %I:%M:%S %p")
 
-
-from src.parser.trello_parser import (
-    parse_board_summary,
-    parse_cards,
-    parse_full_board,
-    TrelloParseError,
-)
-from src.utils.session import get_or_set_session_id
 
 partials_bp = Blueprint("partials", __name__)
 

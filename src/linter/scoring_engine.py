@@ -130,30 +130,6 @@ def calculate_overall_score(rule_results: List[Dict[str, Any]], weights: Dict[st
     }
 
 
-def compute_overall_score(overdue_count: int, total_active_cards: int = None) -> float:
-    """Legacy function for backward compatibility with existing code.
-    
-    Computes a simple score based on overdue cards.
-    This is a simplified version - use calculate_overall_score for full rule-based scoring.
-    
-    Args:
-        overdue_count: Number of overdue cards
-        total_active_cards: Total number of active cards (optional)
-        
-    Returns:
-        Score from 0-100
-    """
-    if overdue_count == 0:
-        return 100.0
-    
-    if total_active_cards and total_active_cards > 0:
-        fail_rate = overdue_count / total_active_cards
-        return max(0, 100 - (fail_rate * 100))
-    
-    # Simple penalty: -10 points per overdue card, minimum 0
-    return max(0, 100 - (overdue_count * 10))
-
-
 def get_grade_from_score(score: float) -> Dict[str, str]:
     """Convert numeric score to letter grade.
     
