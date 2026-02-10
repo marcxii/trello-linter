@@ -45,30 +45,35 @@
       <button class="help-close" type="button" aria-label="Close help">✕</button>
     </div>
     <ul class="help-list">
-      <li class="help-item">
-        <details class="help-accordion">
-          <summary>What file do I upload?</summary>
-          <div class="help-content">
-            <p>Use a Trello JSON export.</p>
-          </div>
-        </details>
-      </li>
-      <li class="help-item">
-        <details class="help-accordion">
-          <summary>What does the score mean?</summary>
-          <div class="help-content">
-            <p>It summarizes overall board quality.</p>
-          </div>
-        </details>
-      </li>
-      <li class="help-item">
-        <details class="help-accordion">
-          <summary>Can I analyze another board?</summary>
-          <div class="help-content">
-            <p>Yes—use the “Analyze Another Board” button.</p>
-          </div>
-        </details>
-      </li>
+      {% if faqs and (faqs|length) > 0 %}
+        {% for faq in faqs %}
+          <li class="help-item">
+            <details class="help-accordion">
+              <summary>{{ faq.question }}</summary>
+              <div class="help-content">
+                {% if faq.answer is string %}
+                  <p>{{ faq.answer }}</p>
+                {% else %}
+                  <ul>
+                    {% for item in faq.answer %}
+                      <li>{{ item }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+            </details>
+          </li>
+        {% endfor %}
+      {% else %}
+        <li class="help-item">
+          <details class="help-accordion">
+            <summary>No help content yet</summary>
+            <div class="help-content">
+              <p>Add entries to config/help_faqs.yaml.</p>
+            </div>
+          </details>
+        </li>
+      {% endif %}
     </ul>
   </section>
 

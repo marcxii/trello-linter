@@ -120,6 +120,19 @@
       closeBtn.addEventListener("click", () => setOpen(false));
     }
 
+    document.addEventListener("click", (event) => {
+      if (!panel.classList.contains("active")) return;
+      if (panel.contains(event.target) || button.contains(event.target)) return;
+      setOpen(false);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (!panel.classList.contains("active")) return;
+      setOpen(false);
+      button.focus();
+    });
+
     const accordions = panel.querySelectorAll(".help-accordion");
     accordions.forEach((details) => {
       details.addEventListener("toggle", () => {
