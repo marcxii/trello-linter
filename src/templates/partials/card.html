@@ -15,6 +15,14 @@
           {% endif %}
         </div>
         <div><strong>Due:</strong> {{ due_date or "—" }}</div>
+        <div>
+          <strong>URL:</strong>
+          {% if short_url %}
+            <a href="{{ short_url }}" target="_blank" rel="noopener noreferrer">{{ short_url }}</a>
+          {% else %}
+            —
+          {% endif %}
+        </div>
       </div>
 
       <div class="card-actions">

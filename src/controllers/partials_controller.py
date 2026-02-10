@@ -503,6 +503,11 @@ def analyze_partial():
             "lists_count": lists_count,
             "members_count": summary["members_count"],
         },
+        "card_short_urls": {
+            card.get("id"): card.get("short_url")
+            for card in board_data.get("cards", [])
+            if card.get("id") and card.get("short_url")
+        },
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "scores": {
             "overall_score": scoring_result["overall_score"],
@@ -655,7 +660,7 @@ def card_partial():
     session_id = get_or_set_session_id()
     db = get_db()
     run_row = db.execute(
-        "SELECT id FROM runs WHERE id = ? AND session_id = ?",
+        "SELECT id, report_json FROM runs WHERE id = ? AND session_id = ?",
         (run_id, session_id),
     ).fetchone()
     if run_row is None:
@@ -663,6 +668,8 @@ def card_partial():
             "partials/error.html",
             message="Report not found for this session.",
         )
+    report_data = json.loads(run_row["report_json"] or "{}")
+    card_short_urls = report_data.get("card_short_urls", {})
 
     if not card_id:
         return render_template(
@@ -705,5 +712,6 @@ def card_partial():
         members=member_names,
         card_id=card.get("card_id") or "—",
         due_date=_format_due_display(card.get("due")),
+        short_url=card_short_urls.get(card.get("card_id")),
         issues=issues,
     )

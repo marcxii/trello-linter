@@ -1,3 +1,5 @@
+import io
+import json
 import sqlite3
 
 from src.database.db_functions import get_card_for_run, get_findings_for_card
@@ -73,3 +75,33 @@ def test_get_findings_for_card_orders_by_severity(app):
     conn.close()
 
     assert [f["severity"] for f in findings] == ["critical", "major", "minor"]
+
+
+def test_card_partial_shows_short_url(client, app):
+    payload = {
+        "name": "Short URL Board",
+        "cards": [
+            {
+                "id": "c-short",
+                "name": "Card with URL",
+                "idList": "l1",
+                "idMembers": [],
+                "shortUrl": "https://trello.com/c/abcd1234",
+            }
+        ],
+        "lists": [{"id": "l1", "name": "To Do", "closed": False}],
+        "members": [],
+    }
+    data = {"file": (io.BytesIO(json.dumps(payload).encode("utf-8")), "board.json")}
+    res = client.post("/partials/analyze", data=data, content_type="multipart/form-data")
+    assert res.status_code == 200
+
+    conn = sqlite3.connect(app.config["SQLITE_DB_PATH"])
+    row = conn.execute("SELECT id FROM runs ORDER BY id DESC LIMIT 1").fetchone()
+    conn.close()
+    assert row is not None
+    run_id = row[0]
+
+    res = client.get(f"/partials/card?run_id={run_id}&card_id=c-short")
+    assert res.status_code == 200
+    assert b"https://trello.com/c/abcd1234" in res.data
