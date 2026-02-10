@@ -127,6 +127,62 @@ def _filter_cards_by_members(cards: list[dict], selected_members: list[str]) -> 
     return filtered
 
 
+def _build_card_member_map(run_id: int, member_map: dict[str, str]) -> dict[str, list[str]]:
+    """Return card_id -> member names for a run."""
+    db = get_db()
+    cards = get_cards_for_run(db, run_id)
+    card_members: dict[str, list[str]] = {}
+    for card in cards:
+        member_ids = card.get("members") or []
+        member_names = [member_map.get(member_id, member_id) for member_id in member_ids]
+        card_id = card.get("card_id")
+        if card_id:
+            card_members[card_id] = member_names
+    return card_members
+
+
+def _filter_rule_results_by_members(
+    rule_results: list[dict],
+    selected_members: list[str],
+    card_member_map: dict[str, list[str]],
+) -> list[dict]:
+    """Filter rule failures by selected member names."""
+    if not selected_members:
+        return []
+
+    selected_set = set(selected_members)
+    include_unassigned = "Unassigned" in selected_set
+    selected_set.discard("Unassigned")
+
+    filtered_results = []
+    for rule in rule_results:
+        failures = rule.get("failures") or []
+        filtered_failures = []
+        for failure in failures:
+            member_name = failure.get("member_name")
+            if member_name:
+                if member_name in selected_set:
+                    filtered_failures.append(failure)
+                continue
+
+            card_id = failure.get("card_id")
+            if card_id:
+                members = card_member_map.get(card_id, [])
+                if not members:
+                    if include_unassigned:
+                        filtered_failures.append(failure)
+                elif any(member in selected_set for member in members):
+                    filtered_failures.append(failure)
+
+        if filtered_failures:
+            filtered_rule = dict(rule)
+            filtered_rule["failures"] = filtered_failures
+            filtered_rule["fail_count"] = len(filtered_failures)
+            filtered_results.append(filtered_rule)
+
+    return filtered_results
+
+
 def _average_scores(rule_scores: dict, rule_ids: list) -> float:
     """Calculate average score for a group of rules.
     
@@ -175,7 +231,8 @@ def results_partial():
             summary = report.get("summary", {})
             rule_results = report.get("rule_results", [])
             overdue_cards = _get_overdue_cards(run_id)
-            member_names = sorted(set(get_members_for_run(db, run_id).values()))
+            member_map = get_members_for_run(db, run_id)
+            member_names = sorted(set(member_map.values()))
             member_names.append("Unassigned")
             selected_members = request.args.getlist("members")
             expanded_rule_ids = request.args.getlist("expanded")
@@ -189,6 +246,14 @@ def results_partial():
                 selected_members = member_names
 
             overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
+            filter_active = set(selected_members) != set(member_names)
+            if filter_active:
+                card_member_map = _build_card_member_map(run_id, member_map)
+                rule_results = _filter_rule_results_by_members(
+                    rule_results,
+                    selected_members,
+                    card_member_map,
+                )
             return render_template(
                 "partials/results.html",
                 overall_score=scores.get("overall_score", 0),
@@ -211,6 +276,7 @@ def results_partial():
                 overdue_cards=overdue_cards,
                 member_names=member_names,
                 selected_members=selected_members,
+                filter_active=filter_active,
                 expanded_rule_ids=expanded_rule_ids,
                 rule_results=rule_results,
             )

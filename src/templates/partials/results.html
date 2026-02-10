@@ -196,14 +196,22 @@
       {% if not failures.found %}
         <div class="findings-summary" role="status" aria-live="polite">
           <div class="rule-item">
-            <span>No rule failures.</span>
+            {% if filter_active %}
+              <span>No findings match the selected members.</span>
+            {% else %}
+              <span>No rule failures.</span>
+            {% endif %}
           </div>
         </div>
       {% endif %}
     {% else %}
       <div class="findings-summary" role="status" aria-live="polite">
         <div class="rule-item">
-          <span>No rule results available.</span>
+          {% if filter_active %}
+            <span>No findings match the selected members.</span>
+          {% else %}
+            <span>No rule results available.</span>
+          {% endif %}
         </div>
       </div>
     {% endif %}
