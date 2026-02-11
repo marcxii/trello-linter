@@ -35,7 +35,6 @@ from src.database.db_functions import (
 from src.database.sqlite import get_db
 from src.linter.rule_engine import RuleEngine
 from src.linter.scoring_engine import calculate_overall_score, get_grade_from_score
-from src.linter.rules.due_date_rule import evaluate_due_date
 from src.parser.trello_parser import TrelloParseError, parse_board_summary, parse_full_board
 from src.utils.session import get_or_set_session_id
 
@@ -63,28 +62,29 @@ def _format_due_display(due_value: str | None) -> str | None:
 partials_bp = Blueprint("partials", __name__)
 
 
-def _get_overdue_cards(run_id: int) -> list[dict]:
-    """Return overdue cards for a run with metadata."""
-    db = get_db()
-    cards = get_cards_for_run(db, run_id)
-    member_map = get_members_for_run(db, run_id)
+def _build_overdue_cards(
+    rule_results: list[dict],
+    card_lookup: dict[str, dict[str, object]],
+) -> list[dict]:
+    """Return overdue cards derived from rule_results (past_due_violation)."""
     overdue_cards = []
-    for card in cards:
-        if card.get("is_closed"):
+    for rule in rule_results or []:
+        if rule.get("rule_id") != "past_due_violation":
             continue
-        result = evaluate_due_date(card.get("due"))
-        if result["overdue"]:
-            member_names = [
-                member_map.get(member_id, member_id) for member_id in (card.get("members") or [])
-            ]
+        for failure in rule.get("failures") or []:
+            card_id = failure.get("card_id")
+            lookup = card_lookup.get(card_id) if card_id else None
             overdue_cards.append(
                 {
-                    "name": card.get("card_name") or "(untitled card)",
-                    "card_id": card.get("card_id"),
-                    "days_past_due": result["days_past_due"],
-                    "list_name": card.get("list_name") or "",
-                    "members": member_names,
-                    "due": card.get("due"),
+                    "name": failure.get("card_name")
+                    or (lookup.get("card_name") if lookup else None)
+                    or "(untitled card)",
+                    "card_id": card_id,
+                    "days_past_due": failure.get("days_overdue", 0),
+                    "list_name": failure.get("list_name")
+                    or (lookup.get("list_name") if lookup else ""),
+                    "members": (lookup.get("members") if lookup else []) or [],
+                    "due": failure.get("due_date") or (lookup.get("due") if lookup else None),
                 }
             )
     overdue_cards.sort(key=lambda item: item["days_past_due"], reverse=True)
@@ -238,8 +238,9 @@ def results_partial():
             scores = report.get("scores", {})
             summary = report.get("summary", {})
             rule_results = report.get("rule_results", [])
-            overdue_cards = _get_overdue_cards(run_id)
             member_map = get_members_for_run(db, run_id)
+            card_lookup = _build_card_lookup(run_id, member_map)
+            overdue_cards = _build_overdue_cards(rule_results, card_lookup)
             member_names = sorted(set(member_map.values()))
             member_names.append("Unassigned")
             selected_members = request.args.getlist("members")
@@ -325,8 +326,10 @@ def report_overlay_partial():
     scores = report_data.get("scores", {})
     summary = report_data.get("summary", {})
     rule_results = report_data.get("rule_results", [])
-    overdue_cards = _get_overdue_cards(run_id)
+    rule_results = report_data.get("rule_results", [])
     member_map = get_members_for_run(db, run_id)
+    card_lookup = _build_card_lookup(run_id, member_map)
+    overdue_cards = _build_overdue_cards(rule_results, card_lookup)
     member_names = sorted(set(member_map.values()))
     member_names.append("Unassigned")
     selected_members = request.args.getlist("members")
@@ -588,7 +591,8 @@ def analyze_partial():
         save_findings(conn=db, run_id=run_id, findings=findings)
 
     # Get overdue cards and members for display
-    overdue_cards = _get_overdue_cards(run_id)
+    card_lookup = _build_card_lookup(run_id, get_members_for_run(db, run_id))
+    overdue_cards = _build_overdue_cards(rule_results, card_lookup)
     member_names = sorted(set(get_members_for_run(db, run_id).values()))
     member_names.append("Unassigned")
     selected_members = request.args.getlist("members")
@@ -696,11 +700,23 @@ def card_partial():
     member_names = [member_map.get(member_id, member_id) for member_id in (card.get("members") or [])]
 
     issues = []
-    due_result = evaluate_due_date(card.get("due"))
-    if due_result["overdue"]:
-        days = due_result["days_past_due"]
+    rule_results = report_data.get("rule_results", [])
+    overdue_days = None
+    for rule in rule_results:
+        if rule.get("rule_id") != "past_due_violation":
+            continue
+        for failure in rule.get("failures") or []:
+            if failure.get("card_id") == card_id:
+                overdue_days = failure.get("days_overdue")
+                break
+        if overdue_days is not None:
+            break
+
+    if overdue_days is not None:
         due_display = _format_due_display(card.get("due")) or "—"
-        issues.append(f"Overdue: Due date: {due_display} | +{days} day{'s' if days != 1 else ''} past due")
+        issues.append(
+            f"Overdue: Due date: {due_display} | +{overdue_days} day{'s' if overdue_days != 1 else ''} past due"
+        )
 
     findings = get_findings_for_card(db, run_id, card_id)
     for finding in findings:

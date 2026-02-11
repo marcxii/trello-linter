@@ -18,7 +18,6 @@ from typing import Any
 
 from src.database.db_functions import get_cards_for_run, get_members_for_run
 from src.database.sqlite import get_db
-from src.linter.rules.due_date_rule import evaluate_due_date
 
 
 def _filter_rule_results_by_members(
@@ -63,33 +62,31 @@ def _filter_rule_results_by_members(
     return filtered_results
 
 
-def _get_overdue_cards(run_id: int) -> list[dict[str, Any]]:
-    """Return overdue cards for a run with metadata."""
-    db = get_db()
-    cards = get_cards_for_run(db, run_id)
-    member_map = get_members_for_run(db, run_id)
+def _build_overdue_cards(
+    rule_results: list[dict[str, Any]],
+    card_lookup: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Return overdue cards derived from rule_results (past_due_violation)."""
     overdue_cards: list[dict[str, Any]] = []
-
-    for card in cards:
-        if card.get("is_closed"):
+    for rule in rule_results or []:
+        if rule.get("rule_id") != "past_due_violation":
             continue
-        result = evaluate_due_date(card.get("due"))
-        if not result.get("overdue"):
-            continue
-
-        member_names = [
-            member_map.get(member_id, member_id) for member_id in (card.get("members") or [])
-        ]
-        overdue_cards.append(
-            {
-                "name": card.get("card_name") or "(untitled card)",
-                "card_id": card.get("card_id"),
-                "days_past_due": result.get("days_past_due", 0),
-                "list_name": card.get("list_name") or "",
-                "members": member_names,
-                "due": card.get("due"),
-            }
-        )
+        for failure in rule.get("failures") or []:
+            card_id = failure.get("card_id")
+            lookup = card_lookup.get(card_id) if card_id else None
+            overdue_cards.append(
+                {
+                    "name": failure.get("card_name")
+                    or (lookup.get("card_name") if lookup else None)
+                    or "(untitled card)",
+                    "card_id": card_id,
+                    "days_past_due": failure.get("days_overdue", 0),
+                    "list_name": failure.get("list_name")
+                    or (lookup.get("list_name") if lookup else ""),
+                    "members": (lookup.get("members") if lookup else []) or [],
+                    "due": failure.get("due_date") or (lookup.get("due") if lookup else None),
+                }
+            )
 
     overdue_cards.sort(key=lambda item: item.get("days_past_due", 0), reverse=True)
     return overdue_cards
@@ -221,7 +218,6 @@ def load_report_context(
         "source_type": "upload",
     }
 
-    overdue_cards = _get_overdue_cards(run_id)
     rule_results = report.get("rule_results", [])
     member_map = get_members_for_run(db, run_id)
     member_names = sorted(set(member_map.values()))
@@ -235,8 +231,9 @@ def load_report_context(
             valid = set(member_names)
             selected_members = [m for m in selected_members if m in valid]
 
-    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
     card_lookup = _build_card_lookup(run_id, member_map)
+    overdue_cards = _build_overdue_cards(rule_results, card_lookup)
+    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
     if set(selected_members) != set(member_names):
         rule_results = _filter_rule_results_by_members(rule_results, selected_members, card_lookup)
     rule_columns, rule_rows = _build_rule_rows(rule_results, card_lookup)
