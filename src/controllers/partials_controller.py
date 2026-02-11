@@ -26,7 +26,6 @@ from src.database.db_functions import (
     get_cards_for_run,
     get_findings_for_card,
     get_members_for_run,
-    get_run_summary,
     save_cards,
     save_findings,
     save_members,
@@ -113,28 +112,15 @@ def _filter_cards_by_members(cards: list[dict], selected_members: list[str]) -> 
     return filtered
 
 
-def _build_card_member_map(run_id: int, member_map: dict[str, str]) -> dict[str, list[str]]:
-    """Return card_id -> member names for a run."""
-    db = get_db()
-    cards = get_cards_for_run(db, run_id)
-    card_members: dict[str, list[str]] = {}
-    for card in cards:
-        member_ids = card.get("members") or []
-        member_names = [member_map.get(member_id, member_id) for member_id in member_ids]
-        card_id = card.get("card_id")
-        if card_id:
-            card_members[card_id] = member_names
-    return card_members
-
-
-def _build_card_lookup(
+def _build_card_maps(
     run_id: int,
     member_map: dict[str, str],
-) -> dict[str, dict[str, object]]:
-    """Return card_id -> card details for a run."""
+) -> tuple[dict[str, dict[str, object]], dict[str, list[str]]]:
+    """Return card_id -> card details and card_id -> member names for a run."""
     db = get_db()
     cards = get_cards_for_run(db, run_id)
     lookup: dict[str, dict[str, object]] = {}
+    card_members: dict[str, list[str]] = {}
     for card in cards:
         member_ids = card.get("members") or []
         member_names = [member_map.get(member_id, member_id) for member_id in member_ids]
@@ -146,7 +132,22 @@ def _build_card_lookup(
                 "members": member_names,
                 "due": card.get("due"),
             }
-    return lookup
+            card_members[card_id] = member_names
+    return lookup, card_members
+
+
+def _parse_selected_members(
+    args: dict,
+    member_names: list[str],
+) -> list[str]:
+    """Return validated selected member names from request args."""
+    selected_members = args.getlist("members")
+    if selected_members:
+        if selected_members == ["__none__"]:
+            return []
+        valid = set(member_names)
+        return [m for m in selected_members if m in valid]
+    return member_names
 
 
 def _filter_rule_results_by_members(
@@ -239,25 +240,16 @@ def results_partial():
             summary = report.get("summary", {})
             rule_results = report.get("rule_results", [])
             member_map = get_members_for_run(db, run_id)
-            card_lookup = _build_card_lookup(run_id, member_map)
+            card_lookup, card_member_map = _build_card_maps(run_id, member_map)
             overdue_cards = _build_overdue_cards(rule_results, card_lookup)
             member_names = sorted(set(member_map.values()))
             member_names.append("Unassigned")
-            selected_members = request.args.getlist("members")
+            selected_members = _parse_selected_members(request.args, member_names)
             expanded_rule_ids = request.args.getlist("expanded")
-            if selected_members:
-                if selected_members == ["__none__"]:
-                    selected_members = []
-                else:
-                    valid = set(member_names)
-                    selected_members = [m for m in selected_members if m in valid]
-            else:
-                selected_members = member_names
 
             overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
             filter_active = set(selected_members) != set(member_names)
             if filter_active:
-                card_member_map = _build_card_member_map(run_id, member_map)
                 rule_results = _filter_rule_results_by_members(
                     rule_results,
                     selected_members,
@@ -328,30 +320,20 @@ def report_overlay_partial():
     rule_results = report_data.get("rule_results", [])
     rule_results = report_data.get("rule_results", [])
     member_map = get_members_for_run(db, run_id)
-    card_lookup = _build_card_lookup(run_id, member_map)
+    card_lookup, card_member_map = _build_card_maps(run_id, member_map)
     overdue_cards = _build_overdue_cards(rule_results, card_lookup)
     member_names = sorted(set(member_map.values()))
     member_names.append("Unassigned")
-    selected_members = request.args.getlist("members")
+    selected_members = _parse_selected_members(request.args, member_names)
     expanded_rule_ids = request.args.getlist("expanded")
-    if selected_members:
-        if selected_members == ["__none__"]:
-            selected_members = []
-        else:
-            valid = set(member_names)
-            selected_members = [m for m in selected_members if m in valid]
-    else:
-        selected_members = member_names
     overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
     filter_active = set(selected_members) != set(member_names)
     if filter_active:
-        card_member_map = _build_card_member_map(run_id, member_map)
         rule_results = _filter_rule_results_by_members(
             rule_results,
             selected_members,
             card_member_map,
         )
-    card_lookup = _build_card_lookup(run_id, member_map)
     return render_template(
         "partials/report_overlay.html",
         run=run,
@@ -591,19 +573,12 @@ def analyze_partial():
         save_findings(conn=db, run_id=run_id, findings=findings)
 
     # Get overdue cards and members for display
-    card_lookup = _build_card_lookup(run_id, get_members_for_run(db, run_id))
+    member_map = get_members_for_run(db, run_id)
+    card_lookup, _ = _build_card_maps(run_id, member_map)
     overdue_cards = _build_overdue_cards(rule_results, card_lookup)
-    member_names = sorted(set(get_members_for_run(db, run_id).values()))
+    member_names = sorted(set(member_map.values()))
     member_names.append("Unassigned")
-    selected_members = request.args.getlist("members")
-    if selected_members:
-        if selected_members == ["__none__"]:
-            selected_members = []
-        else:
-            valid = set(member_names)
-            selected_members = [m for m in selected_members if m in valid]
-    else:
-        selected_members = member_names
+    selected_members = _parse_selected_members(request.args, member_names)
     expanded_rule_ids = []
     overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
 
