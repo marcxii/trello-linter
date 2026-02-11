@@ -151,69 +151,6 @@ def _parse_selected_members(
     return member_names
 
 
-def _filter_rule_results_by_members(
-    rule_results: list[dict],
-    selected_members: list[str],
-    card_member_map: dict[str, list[str]],
-) -> list[dict]:
-    """Filter rule failures by selected member names."""
-    if not selected_members:
-        return []
-
-    selected_set = set(selected_members)
-    include_unassigned = "Unassigned" in selected_set
-    selected_set.discard("Unassigned")
-
-    filtered_results = []
-    for rule in rule_results:
-        failures = rule.get("failures") or []
-        filtered_failures = []
-        for failure in failures:
-            member_name = failure.get("member_name")
-            if member_name:
-                if member_name in selected_set:
-                    filtered_failures.append(failure)
-                continue
-
-            card_id = failure.get("card_id")
-            if card_id:
-                members = card_member_map.get(card_id, [])
-                if not members:
-                    if include_unassigned:
-                        filtered_failures.append(failure)
-                elif any(member in selected_set for member in members):
-                    filtered_failures.append(failure)
-
-        if filtered_failures:
-            filtered_rule = dict(rule)
-            filtered_rule["failures"] = filtered_failures
-            filtered_rule["fail_count"] = len(filtered_failures)
-            filtered_results.append(filtered_rule)
-
-    return filtered_results
-
-
-def _average_scores(rule_scores: dict, rule_ids: list) -> float:
-    """Calculate average score for a group of rules.
-    
-    Args:
-        rule_scores: Dictionary of all rule scores
-        rule_ids: List of rule IDs to average
-        
-    Returns:
-        Average score (0-100)
-    """
-    scores = []
-    for rule_id in rule_ids:
-        if rule_id in rule_scores and not rule_scores[rule_id].get("skipped", False):
-            scores.append(rule_scores[rule_id]["score"])
-    
-    if not scores:
-        return 100.0  # No applicable rules
-    
-    return round(sum(scores) / len(scores), 2)
-
-
 # -------------------------
 # HTMX partial endpoints
 # -------------------------
@@ -241,7 +178,6 @@ def results_partial():
             return render_template(
                 "partials/results.html",
                 overall_score=scores.get("overall_score", 0),
-                grade=scores.get("grade", "F"),
                 grade_description=scores.get("grade_description", "Unknown"),
                 board_name=board.get("name", "(unknown)"),
                 cards_count=board.get("cards_count", 0),
@@ -249,7 +185,6 @@ def results_partial():
                 members_count=board.get("members_count", 0),
                 generated_at=report_ctx.get("generated_at", datetime.now(timezone.utc).isoformat()),
                 run_id=run_id,
-                overdue_cards=report_ctx.get("overdue_cards", []),
                 member_names=member_names,
                 selected_members=selected_members,
                 filter_active=filter_active,
@@ -284,34 +219,19 @@ def report_overlay_partial():
 
     board = report_ctx.get("board", {})
     scores = report_ctx.get("scores", {})
-    summary = report_ctx.get("summary", {})
     member_names = report_ctx.get("member_names", [])
     selected_members = report_ctx.get("selected_members", [])
     filter_active = set(selected_members) != set(member_names)
     return render_template(
         "partials/report_overlay.html",
-        run=report_ctx.get("run", {}),
         report=report_ctx.get("report", {}),
-        overall_score=scores.get("overall_score", 0),
-        grade=scores.get("grade", "F"),
-        grade_description=scores.get("grade_description", "Unknown"),
-        total_findings=scores.get("total_findings", 0),
-        rules_passed=scores.get("rules_passed", 0),
-        rules_failed=scores.get("rules_failed", 0),
-        critical=scores.get("critical_findings", 0),
-        major=scores.get("major_findings", 0),
-        minor=scores.get("minor_findings", 0),
-        category_scores=scores.get("category_scores", {}),
-        filename=summary.get("filename", "(unknown)"),
         board_name=board.get("name", "(unknown)"),
         cards_count=board.get("cards_count", 0),
         lists_count=board.get("lists_count", 0),
         members_count=board.get("members_count", 0),
         generated_at=report_ctx.get("generated_at", datetime.now(timezone.utc).isoformat()),
-        overdue_cards=report_ctx.get("overdue_cards", []),
         rule_results=report_ctx.get("rule_results", []),
         filter_active=filter_active,
-        card_lookup=report_ctx.get("card_lookup", {}),
     )
 
 
@@ -425,18 +345,6 @@ def analyze_partial():
     # Step 5: Build Report JSON
     # -------------------------
     
-    # Group rules into display categories for UI
-    category_scores = {
-        "Assignment & Ownership": _average_scores(scoring_result["rule_scores"], 
-            ["card_ownership", "card_due_date", "unscheduled_work"]),
-        "Quality & Estimation": _average_scores(scoring_result["rule_scores"],
-            ["card_descriptiveness", "story_point_estimation", "description_canonicalization"]),
-        "Capacity Management": _average_scores(scoring_result["rule_scores"],
-            ["progress_threshold", "individual_overload", "weekly_workload", "near_term_overcommitment"]),
-        "Due Dates & Flow": _average_scores(scoring_result["rule_scores"],
-            ["past_due_violation", "progress_monitoring", "flow_progress_signal", "card_completion"]),
-    }
-    
     report_data = {
         "board": {
             "name": summary["board_name"],
@@ -460,7 +368,6 @@ def analyze_partial():
             "critical_findings": 0,  # Not used in individual rule model
             "major_findings": 0,
             "minor_findings": 0,
-            "category_scores": category_scores,
         },
         "summary": {
             "filename": filename,
@@ -476,7 +383,6 @@ def analyze_partial():
     # Prepare scores for database
     db_scores = {
         "overall_score": scoring_result["overall_score"],
-        "category_scores": category_scores,
         "total_findings": scoring_result["total_failures"],
         "critical_findings": 0,
         "major_findings": 0,
@@ -526,15 +432,12 @@ def analyze_partial():
     if findings:
         save_findings(conn=db, run_id=run_id, findings=findings)
 
-    # Get overdue cards and members for display
+    # Get members for display
     member_map = get_members_for_run(db, run_id)
-    card_lookup, _ = _build_card_maps(run_id, member_map)
-    overdue_cards = _build_overdue_cards(rule_results, card_lookup)
     member_names = sorted(set(member_map.values()))
     member_names.append("Unassigned")
     selected_members = _parse_selected_members(request.args, member_names)
     expanded_rule_ids = []
-    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
 
     # -------------------------
     # Step 7: Return Results
@@ -544,22 +447,12 @@ def analyze_partial():
     context = {
         "run_id": run_id,
         "overall_score": scoring_result["overall_score"],
-        "grade": grade_info["grade"],
         "grade_description": grade_info["description"],
-        "category_scores": category_scores,
-        "total_findings": scoring_result["total_failures"],
-        "rules_passed": scoring_result["rules_passed"],
-        "rules_failed": scoring_result["rules_failed"],
-        "critical": 0,
-        "major": 0,
-        "minor": 0,
-        "filename": filename,
         "board_name": summary["board_name"],
         "cards_count": summary["cards_count"],
         "lists_count": lists_count,
         "members_count": summary["members_count"],
         "generated_at": report_data["generated_at"],
-        "overdue_cards": overdue_cards,
         "member_names": member_names,
         "selected_members": selected_members,
         "expanded_rule_ids": expanded_rule_ids,
