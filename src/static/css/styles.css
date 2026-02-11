@@ -9,12 +9,12 @@
 
 :root {
     /* Gradient theming */
-    --gradient-start: #667eea;
-    --gradient-end: #764ba2;
-    --gradient-angle: 135deg;
+    --gradient-start: #48d5c4;
+    --gradient-end: #202b65;
+    --gradient-angle: 329deg;
     --gradient-main: linear-gradient(var(--gradient-angle),
-                        var(--gradient-start) 0%,
-                        var(--gradient-end) 100%);
+                        var(--gradient-start) 6%,
+                        var(--gradient-end) 99%);
 
     /* Core colors */
     --color-bg: #f6f7fb;
@@ -31,7 +31,7 @@
     --color-error-border: #dc3545;
     --color-error-text: #721c24;
     --color-spinner-track: #f3f3f3;
-    --color-accent: var(--gradient-start);
+    --color-accent: var(--gradient-end);
 
     /* Spacing scale */
     --space-0_5: 4px;
@@ -73,6 +73,7 @@
     --btn-bg: var(--gradient-main);
     --btn-text: #ffffff;
     --btn-hover-shadow: var(--shadow-sm);
+    --btn-accent: var(--gradient-end);
 
     /* Component sizes */
     --size-spinner: 50px;
@@ -308,8 +309,8 @@ input:focus-visible {
 
 .btn-secondary {
     background: var(--color-surface);
-    color: var(--color-accent);
-    border: var(--border-medium) solid var(--color-accent);
+    color: var(--btn-accent);
+    border: var(--border-medium) solid var(--btn-accent);
 }
 
 .btn-secondary:hover {
@@ -331,7 +332,7 @@ input:focus-visible {
 
 .btn-ghost {
     background: transparent;
-    color: var(--color-accent);
+    color: var(--btn-accent);
     border: var(--border-medium) solid transparent;
 }
 
@@ -623,6 +624,7 @@ a.upload-form {
 .findings-groups {
     background: var(--color-surface-soft);
     border-radius: var(--radius-lg);
+    margin: var(--space-4) 0;
     padding: var(--space-4);
     border: var(--border-thin) solid var(--color-border-soft);
     overflow: visible;
