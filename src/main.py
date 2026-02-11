@@ -26,7 +26,7 @@ def create_app() -> Flask:
         static_folder="static",
     )
 
-    #Determine project root
+    # Determine project root
     project_root = Path(__file__).parent.parent
     default_db_path = project_root / "instance" / "trelloscore.db"
     
