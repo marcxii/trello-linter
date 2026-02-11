@@ -470,6 +470,19 @@
     });
   }
 
+  function syncRunIdUrl() {
+    const results = document.getElementById("results");
+    const runId = results?.dataset?.runId;
+    if (!runId) return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("run_id", runId);
+    if (url.pathname !== "/") {
+      url.pathname = "/";
+    }
+    window.history.replaceState({}, "", url);
+  }
+
   initDropZone();
   localizeTimestamps();
   initRuleToggles();
@@ -477,12 +490,14 @@
   initOverlayClose();
   initFilterDropdowns();
   initLoadingIndicator();
+  syncRunIdUrl();
   document.body.addEventListener("htmx:afterSwap", () => {
     initDropZone();
     localizeTimestamps();
     initRuleToggles();
     initFilterDropdowns();
     initLoadingIndicator();
+    syncRunIdUrl();
   });
 
   // -------------------------
