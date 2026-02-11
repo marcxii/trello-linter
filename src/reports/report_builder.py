@@ -62,6 +62,31 @@ def _filter_rule_results_by_members(
     return filtered_results
 
 
+def _enrich_rule_results(
+    rule_results: list[dict[str, Any]],
+    card_lookup: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Enrich rule failures with card metadata for display."""
+    enriched_results = []
+    for rule in rule_results or []:
+        failures = rule.get("failures") or []
+        enriched_failures = []
+        for failure in failures:
+            card_id = failure.get("card_id")
+            lookup = card_lookup.get(card_id) if card_id else None
+            enriched = dict(failure)
+            if lookup:
+                enriched.setdefault("card_name", lookup.get("card_name"))
+                enriched.setdefault("list_name", lookup.get("list_name"))
+                enriched.setdefault("members", lookup.get("members", []))
+                enriched.setdefault("due", lookup.get("due"))
+            enriched_failures.append(enriched)
+        enriched_rule = dict(rule)
+        enriched_rule["failures"] = enriched_failures
+        enriched_results.append(enriched_rule)
+    return enriched_results
+
+
 def _build_overdue_cards(
     rule_results: list[dict[str, Any]],
     card_lookup: dict[str, dict[str, Any]],
@@ -236,6 +261,7 @@ def load_report_context(
     overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
     if set(selected_members) != set(member_names):
         rule_results = _filter_rule_results_by_members(rule_results, selected_members, card_lookup)
+    rule_results = _enrich_rule_results(rule_results, card_lookup)
     rule_columns, rule_rows = _build_rule_rows(rule_results, card_lookup)
 
     return {

@@ -58,7 +58,7 @@ def _seed_run(app, session_id="test-session"):
                 "fail_count": 2,
                 "eligible_count": 2,
                 "failures": [
-                    {"card_id": "c1", "card_name": "Card A", "list_name": "To Do"},
+                    {"card_id": "c1"},
                     {"card_id": "c3", "card_name": "Card C", "list_name": "To Do"},
                 ],
             },
@@ -100,6 +100,10 @@ def test_report_context_filters_rule_rows_by_member(app):
         ctx = load_report_context(run_id, "test-session", ["Alice"])
 
     assert ctx is not None
+    rule_results = ctx.get("rule_results", [])
+    assert rule_results
+    failure = rule_results[0]["failures"][0]
+    assert failure.get("members") == ["Alice"]
     rule_rows = ctx["rule_rows"]
     assert rule_rows
     assert all(row[3] == "Alice" for row in rule_rows)
@@ -117,3 +121,14 @@ def test_report_overlay_uses_card_lookup_for_members_and_due(app, client):
     assert b"Alice" in res.data
     assert b"2000-01-01" in res.data
     assert b"Bob" not in res.data
+
+
+def test_results_findings_use_partial_and_expanded(client, app):
+    run_id = _seed_run(app, session_id="results-session")
+    with client.session_transaction() as session:
+        session["session_id"] = "results-session"
+    res = client.get(f"/partials/results?run_id={run_id}&expanded=rule_one")
+    assert res.status_code == 200
+    assert b"Rule One" in res.data
+    assert b"View Card" in res.data
+    assert b"data-rule-id=\"rule_one\"" in res.data
