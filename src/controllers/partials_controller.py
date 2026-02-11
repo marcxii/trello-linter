@@ -35,6 +35,7 @@ from src.database.sqlite import get_db
 from src.linter.rule_engine import RuleEngine
 from src.linter.scoring_engine import calculate_overall_score, get_grade_from_score
 from src.parser.trello_parser import TrelloParseError, parse_board_summary, parse_full_board
+from src.reports.report_builder import load_report_context
 from src.utils.session import get_or_set_session_id
 
 
@@ -228,33 +229,15 @@ def results_partial():
     run_id = request.args.get("run_id", type=int)
     if run_id:
         session_id = get_or_set_session_id()
-        db = get_db()
-        row = db.execute(
-            "SELECT report_json FROM runs WHERE id = ? AND session_id = ?",
-            (run_id, session_id),
-        ).fetchone()
-        if row:
-            report = json.loads(row["report_json"])
-            board = report.get("board", {})
-            scores = report.get("scores", {})
-            summary = report.get("summary", {})
-            rule_results = report.get("rule_results", [])
-            member_map = get_members_for_run(db, run_id)
-            card_lookup, card_member_map = _build_card_maps(run_id, member_map)
-            overdue_cards = _build_overdue_cards(rule_results, card_lookup)
-            member_names = sorted(set(member_map.values()))
-            member_names.append("Unassigned")
-            selected_members = _parse_selected_members(request.args, member_names)
+        selected_members = request.args.getlist("members")
+        report_ctx = load_report_context(run_id, session_id, selected_members or None)
+        if report_ctx:
+            board = report_ctx.get("board", {})
+            scores = report_ctx.get("scores", {})
+            member_names = report_ctx.get("member_names", [])
+            selected_members = report_ctx.get("selected_members", [])
             expanded_rule_ids = request.args.getlist("expanded")
-
-            overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
             filter_active = set(selected_members) != set(member_names)
-            if filter_active:
-                rule_results = _filter_rule_results_by_members(
-                    rule_results,
-                    selected_members,
-                    card_member_map,
-                )
             return render_template(
                 "partials/results.html",
                 overall_score=scores.get("overall_score", 0),
@@ -264,14 +247,14 @@ def results_partial():
                 cards_count=board.get("cards_count", 0),
                 lists_count=board.get("lists_count", 0),
                 members_count=board.get("members_count", 0),
-                generated_at=report.get("generated_at", datetime.now(timezone.utc).isoformat()),
+                generated_at=report_ctx.get("generated_at", datetime.now(timezone.utc).isoformat()),
                 run_id=run_id,
-                overdue_cards=overdue_cards,
+                overdue_cards=report_ctx.get("overdue_cards", []),
                 member_names=member_names,
                 selected_members=selected_members,
                 filter_active=filter_active,
                 expanded_rule_ids=expanded_rule_ids,
-                rule_results=rule_results,
+                rule_results=report_ctx.get("rule_results", []),
             )
 
     return render_template(
@@ -291,53 +274,24 @@ def report_overlay_partial():
         )
 
     session_id = get_or_set_session_id()
-    db = get_db()
-    row = db.execute(
-        """
-        SELECT id, created_at, board_ref, report_json
-        FROM runs
-        WHERE id = ? AND session_id = ?
-        """,
-        (run_id, session_id),
-    ).fetchone()
-
-    if row is None:
+    selected_members = request.args.getlist("members")
+    report_ctx = load_report_context(run_id, session_id, selected_members or None)
+    if report_ctx is None:
         return render_template(
             "partials/error.html",
             message="Report not found for this session.",
         )
 
-    run = {
-        "id": row["id"],
-        "created_at": row["created_at"],
-        "board_ref": row["board_ref"] or "(unknown)",
-        "source_type": "upload",
-    }
-    report_data = json.loads(row["report_json"] or "{}")
-    board = report_data.get("board", {})
-    scores = report_data.get("scores", {})
-    summary = report_data.get("summary", {})
-    rule_results = report_data.get("rule_results", [])
-    rule_results = report_data.get("rule_results", [])
-    member_map = get_members_for_run(db, run_id)
-    card_lookup, card_member_map = _build_card_maps(run_id, member_map)
-    overdue_cards = _build_overdue_cards(rule_results, card_lookup)
-    member_names = sorted(set(member_map.values()))
-    member_names.append("Unassigned")
-    selected_members = _parse_selected_members(request.args, member_names)
-    expanded_rule_ids = request.args.getlist("expanded")
-    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
+    board = report_ctx.get("board", {})
+    scores = report_ctx.get("scores", {})
+    summary = report_ctx.get("summary", {})
+    member_names = report_ctx.get("member_names", [])
+    selected_members = report_ctx.get("selected_members", [])
     filter_active = set(selected_members) != set(member_names)
-    if filter_active:
-        rule_results = _filter_rule_results_by_members(
-            rule_results,
-            selected_members,
-            card_member_map,
-        )
     return render_template(
         "partials/report_overlay.html",
-        run=run,
-        report=report_data,
+        run=report_ctx.get("run", {}),
+        report=report_ctx.get("report", {}),
         overall_score=scores.get("overall_score", 0),
         grade=scores.get("grade", "F"),
         grade_description=scores.get("grade_description", "Unknown"),
@@ -353,11 +307,11 @@ def report_overlay_partial():
         cards_count=board.get("cards_count", 0),
         lists_count=board.get("lists_count", 0),
         members_count=board.get("members_count", 0),
-        generated_at=report_data.get("generated_at", datetime.now(timezone.utc).isoformat()),
-        overdue_cards=overdue_cards,
-        rule_results=rule_results,
+        generated_at=report_ctx.get("generated_at", datetime.now(timezone.utc).isoformat()),
+        overdue_cards=report_ctx.get("overdue_cards", []),
+        rule_results=report_ctx.get("rule_results", []),
         filter_active=filter_active,
-        card_lookup=card_lookup,
+        card_lookup=report_ctx.get("card_lookup", {}),
     )
 
 

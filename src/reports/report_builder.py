@@ -248,4 +248,8 @@ def load_report_context(
         "overdue_cards": overdue_cards,
         "rule_columns": rule_columns,
         "rule_rows": rule_rows,
+        "rule_results": rule_results,
+        "member_names": member_names,
+        "selected_members": selected_members,
+        "card_lookup": card_lookup,
     }
