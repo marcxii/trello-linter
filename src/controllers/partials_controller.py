@@ -4,6 +4,11 @@ Purpose
 -------
 Owns the HTML fragment endpoints used by the single-page shell.
 
+Notes
+-----
+The analyze flow is decomposed into helper functions for upload parsing, rule
+execution, scoring, report assembly, persistence, and response context.
+
 Updated to use:
 - Full rule engine with 14 individual rules
 - Individual rule-based scoring
@@ -241,110 +246,66 @@ def report_settings_partial():
     return render_template("partials/report_settings.html")
 
 
-@partials_bp.post("/partials/analyze")
-def analyze_partial():
-    """Accept an uploaded Trello JSON export and return a results fragment.
+def _parse_upload(uploaded_file):
+    """Validate and parse an uploaded Trello JSON export."""
+    if uploaded_file is None:
+        raise ValueError("Missing file. Please upload a Trello JSON export.")
 
-    Flow:
-    1. Validate uploaded file
-    2. Parse Trello JSON (board, lists, cards, members, checklists)
-    3. Run all 14 linting rules via RuleEngine
-    4. Calculate individual rule-based scores
-    5. Save to database (runs, cards, members, findings)
-    6. Return results HTML fragment
-    """
-    # TODO: If this moves beyond scaffolding, split into helpers
-    # (parse, scoring, persistence, and response building).
-    # -------------------------
-    # Step 1: Validate file
-    # -------------------------
-    uploaded = request.files.get("file") or request.files.get("trello_file")
-    if uploaded is None:
-        return render_template(
-            "partials/error.html",
-            message="Missing file. Please upload a Trello JSON export.",
-        )
-
-    filename = uploaded.filename or "(unnamed)"
-    name_ok = filename.lower().endswith(".json")
-    type_ok = uploaded.mimetype in {
+    name = uploaded_file.filename or "(unnamed)"
+    name_ok = name.lower().endswith(".json")
+    mimetype = uploaded_file.mimetype
+    type_ok = mimetype in {
         "application/json",
         "text/json",
         "application/octet-stream",
         "",
-    } or uploaded.mimetype is None
-    
+    } or mimetype is None
     if not name_ok or not type_ok:
-        return render_template(
-            "partials/error.html",
-            message="Invalid file type. Please upload a Trello JSON export.",
-        )
+        raise ValueError("Invalid file type. Please upload a Trello JSON export.")
 
-    # -------------------------
-    # Step 2: Parse JSON
-    # -------------------------
     try:
-        payload = json.load(uploaded.stream)
+        payload = json.load(uploaded_file.stream)
     except (json.JSONDecodeError, UnicodeDecodeError):
-        return render_template(
-            "partials/error.html",
-            message="Invalid JSON file. Please export a valid Trello JSON file.",
-        )
+        raise ValueError("Invalid JSON file. Please export a valid Trello JSON file.")
     finally:
-        uploaded.stream.seek(0)
+        uploaded_file.stream.seek(0)
 
-    # Validate it's a Trello export
     try:
-        # Quick summary for immediate counts
         summary = parse_board_summary(payload)
         lists_count = len(payload.get("lists") or [])
-        
-        # Full parse for rule engine
         board_data = parse_full_board(payload)
-        
-    except TrelloParseError as e:
-        return render_template(
-            "partials/error.html",
-            message=f"Invalid Trello export: {str(e)}",
-        )
+    except TrelloParseError as exc:
+        raise ValueError(f"Invalid Trello export: {str(exc)}")
 
-    # -------------------------
-    # Step 3: Run Rule Engine
-    # -------------------------
-    session_id = get_or_set_session_id()
-    db = get_db()
-    
-    # Cleanup old runs
-    ttl_seconds = int(current_app.config.get("RUN_TTL_SECONDS", 21600))
-    cleanup_old_runs(db, ttl_seconds)
+    return name, summary, lists_count, board_data
 
-    # Initialize rule engine and run all rules
+
+def _run_rules(board_data):
+    """Run the rule engine against parsed board data."""
     try:
         engine = RuleEngine()
         rule_results = engine.run_all_rules(board_data)
-    except Exception as e:
-        return render_template(
-            "partials/error.html",
-            message=f"Rule engine error: {str(e)}. Please check your config/rules_config.yaml file.",
+        return engine, rule_results
+    except Exception as exc:
+        raise ValueError(
+            f"Rule engine error: {str(exc)}. Please check your config/rules_config.yaml file."
         )
 
-    # -------------------------
-    # Step 4: Calculate Scores
-    # -------------------------
+
+def _score_rules(engine, rule_results):
+    """Compute overall score and grade metadata for rule results."""
     try:
         weights = engine.get_rule_weights()
         scoring_result = calculate_overall_score(rule_results, weights)
         grade_info = get_grade_from_score(scoring_result["overall_score"])
-    except Exception as e:
-        return render_template(
-            "partials/error.html",
-            message=f"Scoring error: {str(e)}",
-        )
+        return scoring_result, grade_info
+    except Exception as exc:
+        raise ValueError(f"Scoring error: {str(exc)}")
 
-    # -------------------------
-    # Step 5: Build Report JSON
-    # -------------------------
-    
+
+def _build_report(filename, summary, lists_count, board_data, scoring_result, grade_info, rule_results):
+    """Assemble report payload and DB score summary."""
+    generated_at = datetime.now(timezone.utc).isoformat()
     report_data = {
         "board": {
             "name": summary["board_name"],
@@ -357,7 +318,7 @@ def analyze_partial():
             for card in board_data.get("cards", [])
             if card.get("id") and card.get("short_url")
         },
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": generated_at,
         "scores": {
             "overall_score": scoring_result["overall_score"],
             "grade": grade_info["grade"],
@@ -365,86 +326,86 @@ def analyze_partial():
             "total_findings": scoring_result["total_failures"],
             "rules_passed": scoring_result["rules_passed"],
             "rules_failed": scoring_result["rules_failed"],
-            "critical_findings": 0,  # Not used in individual rule model
-            "major_findings": 0,
-            "minor_findings": 0,
         },
         "summary": {
             "filename": filename,
             "note": "Analysis complete using 14-rule engine",
         },
-        "rule_results": rule_results,  # Full rule results for detailed view
+        "rule_results": rule_results,
     }
-
-    # -------------------------
-    # Step 6: Save to Database
-    # -------------------------
-    
-    # Prepare scores for database
     db_scores = {
         "overall_score": scoring_result["overall_score"],
         "total_findings": scoring_result["total_failures"],
-        "critical_findings": 0,
-        "major_findings": 0,
-        "minor_findings": 0,
     }
-    
-    # Save the run
+    return report_data, db_scores, generated_at
+
+
+def _persist_run(db_conn, session_id, board_data, db_scores, report_data, rule_results):
+    """Persist run, cards, members, and findings; return run_id."""
     run_id = save_run(
-        conn=db,
+        conn=db_conn,
         session_id=session_id,
         board_data=board_data,
         scores=db_scores,
         report_json=report_data,
     )
 
-    # Save cards with list mapping
-    list_map = {lst['id']: lst['name'] for lst in board_data.get('lists', [])}
+    list_map = {lst["id"]: lst["name"] for lst in board_data.get("lists", [])}
     save_cards(
-        conn=db,
+        conn=db_conn,
         run_id=run_id,
-        cards=board_data.get('cards', []),
+        cards=board_data.get("cards", []),
         list_map=list_map,
     )
 
-    # Save members for name lookups
     save_members(
-        conn=db,
+        conn=db_conn,
         run_id=run_id,
-        members=board_data.get('members', []),
+        members=board_data.get("members", []),
     )
 
-    # Convert rule results to findings format for database
     findings = []
     for rule_result in rule_results:
+        rule_name = rule_result.get("rule_name")
         for failure in rule_result.get("failures", []):
-            findings.append({
-                "card_id": failure.get("card_id"),
-                "card_name": failure.get("card_name", failure.get("member_name", "Board-level")),
-                "rule_name": rule_result["rule_name"],
-                "category": "Individual Rule",
-                "severity": "major",  # Default severity for individual rules
-                "description": failure.get("reason", "Rule violation"),
-                "suggestion": f"See rule: {rule_result['rule_name']}",
-            })
-    
-    # Save findings
-    if findings:
-        save_findings(conn=db, run_id=run_id, findings=findings)
+            findings.append(
+                {
+                    "card_id": failure.get("card_id"),
+                    "card_name": failure.get(
+                        "card_name",
+                        failure.get("member_name", "Board-level"),
+                    ),
+                    "rule_name": rule_name,
+                    "category": "Individual Rule",
+                    "severity": "major",
+                    "description": failure.get("reason", "Rule violation"),
+                    "suggestion": f"See rule: {rule_name}",
+                }
+            )
 
-    # Get members for display
-    member_map = get_members_for_run(db, run_id)
+    if findings:
+        save_findings(conn=db_conn, run_id=run_id, findings=findings)
+
+    return run_id
+
+
+def _build_results_context(
+    db_conn,
+    run_id,
+    scoring_result,
+    grade_info,
+    summary,
+    lists_count,
+    generated_at,
+    rule_results,
+):
+    """Build template context for the results partial."""
+    member_map = get_members_for_run(db_conn, run_id)
     member_names = sorted(set(member_map.values()))
     member_names.append("Unassigned")
     selected_members = _parse_selected_members(request.args, member_names)
     expanded_rule_ids = []
-
-    # -------------------------
-    # Step 7: Return Results
-    # -------------------------
-    
-    # Build template context
-    context = {
+    return {
         "run_id": run_id,
         "overall_score": scoring_result["overall_score"],
         "grade_description": grade_info["description"],
@@ -452,13 +413,92 @@ def analyze_partial():
         "cards_count": summary["cards_count"],
         "lists_count": lists_count,
         "members_count": summary["members_count"],
-        "generated_at": report_data["generated_at"],
+        "generated_at": generated_at,
         "member_names": member_names,
         "selected_members": selected_members,
         "expanded_rule_ids": expanded_rule_ids,
         "rule_results": rule_results,
     }
 
+
+@partials_bp.post("/partials/analyze")
+def analyze_partial():
+    """Accept an uploaded Trello JSON export and return a results fragment.
+
+    Flow:
+    1. Validate uploaded file
+    2. Parse Trello JSON (board, lists, cards, members, checklists)
+    3. Run all 14 linting rules via RuleEngine
+    4. Calculate individual rule-based scores
+    5. Save to database (runs, cards, members, findings)
+    6. Return results HTML fragment
+    """
+    # -------------------------
+    # Step 1: Validate File & Parse JSON
+    # -------------------------
+    uploaded = request.files.get("file") or request.files.get("trello_file")
+    try:
+        filename, summary, lists_count, board_data = _parse_upload(uploaded)
+    except ValueError as exc:
+        return render_template("partials/error.html", message=str(exc))
+
+    # -------------------------
+    # Step 2: Run Rule Engine
+    # -------------------------
+    session_id = get_or_set_session_id()
+    db = get_db()
+    
+    # Cleanup old runs
+    ttl_seconds = int(current_app.config.get("RUN_TTL_SECONDS", 21600))
+    cleanup_old_runs(db, ttl_seconds)
+
+    try:
+        engine, rule_results = _run_rules(board_data)
+    except ValueError as exc:
+        return render_template("partials/error.html", message=str(exc))
+
+    # -------------------------
+    # Step 3: Calculate Scores
+    # -------------------------
+    try:
+        scoring_result, grade_info = _score_rules(engine, rule_results)
+    except ValueError as exc:
+        return render_template("partials/error.html", message=str(exc))
+
+    # -------------------------
+    # Step 4: Build Report JSON
+    # -------------------------
+    
+    report_data, db_scores, generated_at = _build_report(
+        filename,
+        summary,
+        lists_count,
+        board_data,
+        scoring_result,
+        grade_info,
+        rule_results,
+    )
+
+    # -------------------------
+    # Step 5: Save to Database
+    # -------------------------
+    
+    run_id = _persist_run(db, session_id, board_data, db_scores, report_data, rule_results)
+    context = _build_results_context(
+        db,
+        run_id,
+        scoring_result,
+        grade_info,
+        summary,
+        lists_count,
+        generated_at,
+        rule_results,
+    )
+
+    # -------------------------
+    # Step 6: Return Results
+    # -------------------------
+    
     return render_template("partials/results.html", **context)
 
 
