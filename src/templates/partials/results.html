@@ -3,17 +3,23 @@
     <div class="score-card" aria-labelledby="overallScoreTitle">
       <div class="score-label" id="overallScoreTitle">Overall Quality Score</div>
       <div class="score-row">
-        <div class="score-number">{{ overall_score }}</div>
+        <div
+          class="score-gauge
+            {% if overall_score >= 90 %}is-perfect
+            {% elif overall_score >= 80 %}is-great
+            {% elif overall_score >= 70 %}is-fair
+            {% elif overall_score >= 60 %}is-poor
+            {% else %}is-critical
+            {% endif %}"
+          style="--score: {{ overall_score }};"
+          aria-label="Overall score {{ overall_score }} out of 100"
+        >
+          <div class="score-number">
+            <span class="score-number-whole">{{ overall_score|int }}</span>
+          </div>
+        </div>
         <div class="score-assessment">
-          {% if overall_score >= 95 %}
-            Perfect
-          {% elif overall_score >= 85 %}
-            Great
-          {% elif overall_score >= 70 %}
-            Fair
-          {% else %}
-            Critical
-          {% endif %}
+          {{ grade_description or "Unknown" }}
         </div>
       </div>
     </div>
@@ -33,9 +39,9 @@
 
   <div class="findings-groups" aria-labelledby="findingsTitle">
     <div class="findings-header">
-      <div class="findings-title" id="findingsTitle">Findings by Rule</div>
+      <div class="findings-title u-mb-0" id="findingsTitle">Findings by Rule</div>
       <button
-        class="findings-link"
+        class="findings-link u-underline-hover"
         type="button"
         hx-get="/partials/report-settings?run_id={{ run_id }}"
         hx-target="#overlay-root"
@@ -45,16 +51,17 @@
       </button>
     </div>
     <div class="findings-filter">
-      <div class="filter-label"><strong>Filter by member:</strong></div>
+      <div class="filter-label u-mb-0"><strong>Filter by member:</strong></div>
       <div class="filter-dropdown" data-dropdown data-filter-checkboxes>
         <button
           class="filter-trigger"
           type="button"
           data-dropdown-toggle
+          data-loading-text="Applying filter…"
           aria-expanded="false"
           aria-controls="memberFilterMenu"
         >
-          Select members
+          Select members  
         </button>
         <div
           class="filter-menu"
@@ -64,9 +71,10 @@
           aria-multiselectable="true"
         >
           <div class="filter-actions">
-            <button type="button" class="filter-action" data-select-all>Select all</button>
-            <button type="button" class="filter-action" data-select-none>Select none</button>
-            <button type="button" class="filter-action" data-apply-filter>Apply</button>
+            <button type="button" class="filter-action u-underline-hover" data-select-all>Select all</button>
+            <button type="button" class="filter-action u-underline-hover" data-select-none>Select none</button>
+            <span class="filter-separator u-muted" aria-hidden="true">|</span>
+            <button type="button" class="filter-action u-underline-hover" data-apply-filter>Apply</button>
           </div>
         {% if member_names and (member_names|length) > 0 %}
           {% for name in member_names %}
@@ -84,60 +92,93 @@
             </label>
           {% endfor %}
         {% else %}
-          <span class="filter-empty">No members found.</span>
+          <span class="filter-empty u-muted">No members found.</span>
         {% endif %}
         </div>
       </div>
     </div>
 
-    <div class="findings-summary" role="status" aria-live="polite">
-      <button
-        class="rule-summary"
-        type="button"
-        data-rule-id="past-due"
-        aria-expanded="{% if expanded_rule_ids and ('past-due' in expanded_rule_ids) %}true{% else %}false{% endif %}"
-      >
-        <span class="rule-title">Past-due cards | {{ overdue_cards|length }} cards</span>
-        <span class="rule-toggle" aria-hidden="true">⏵</span>
-      </button>
-      <ul
-        class="rule-list {% if expanded_rule_ids and ('past-due' in expanded_rule_ids) %}{% else %}is-hidden{% endif %}"
-        data-rule-id="past-due"
-      >
-        {% if overdue_cards and (overdue_cards|length) > 0 %}
-          {% for card in overdue_cards %}
-            <li class="rule-item rule-item-3col">
-              <span class="rule-card-name">{{ card.name }}</span>
-              <span class="rule-card-days">{{ card.days_past_due }} day{% if card.days_past_due != 1 %}s{% endif %} overdue</span>
-              <span class="rule-card-action">
-                <button
-                  class="btn btn-dark btn-sm"
-                  hx-get="/partials/card?run_id={{ run_id }}&card_id={{ card.card_id }}"
-                  hx-target="#content"
-                  hx-swap="innerHTML"
-                  type="button"
-                >
-                  View Card
-                </button>
-              </span>
-            </li>
-          {% endfor %}
-        {% else %}
-          <li class="rule-item">
-            <span>No overdue cards.</span>
-          </li>
+    {% if rule_results and (rule_results|length) > 0 %}
+      {% set failures = namespace(found=false) %}
+      {% for rule in rule_results %}
+        {% if rule.failures and (rule.failures|length) > 0 %}
+          {% set failures.found = true %}
+          <div class="findings-summary" role="status" aria-live="polite">
+            <button
+              class="rule-summary"
+              type="button"
+              data-rule-id="{{ rule.rule_id }}"
+              aria-expanded="{% if expanded_rule_ids and (rule.rule_id in expanded_rule_ids) %}true{% else %}false{% endif %}"
+            >
+              <span class="rule-title">{{ rule.rule_name }}</span>
+              <span class="rule-meta">{{ rule.fail_count }}/{{ rule.eligible_count }} failed</span>
+              <span class="rule-toggle" aria-hidden="true">⏵</span>
+            </button>
+            <ul
+              class="rule-list {% if expanded_rule_ids and (rule.rule_id in expanded_rule_ids) %}{% else %}is-hidden{% endif %}"
+              data-rule-id="{{ rule.rule_id }}"
+            >
+              {% for failure in rule.failures %}
+                <li class="rule-item rule-item-3col">
+                  <span class="rule-card-name">{{ failure.card_name or failure.member_name or "Board-level" }}</span>
+                  <span class="rule-card-days u-muted">
+                    {{ failure.list_name or "" }}
+                    {% if failure.due %} • Due {{ failure.due }}{% endif %}
+                  </span>
+                  <span class="rule-card-action u-text-right">
+                    {% if failure.card_id %}
+                      <button
+                        class="btn-base btn-secondary btn-size-sm btn-no-shadow btn-hover-bg u-btn-tight u-mt-0 u-mb-0"
+                        hx-get="/partials/card?run_id={{ run_id }}&card_id={{ failure.card_id }}"
+                        hx-target="#content"
+                        hx-swap="innerHTML"
+                        type="button"
+                      >
+                        View Card
+                      </button>
+                    {% else %}
+                      {{ failure.reason }}
+                    {% endif %}
+                  </span>
+              {% endfor %}
+            </ul>
+          </div>
         {% endif %}
-      </ul>
-    </div>
-
+      {% endfor %}
+      {% if not failures.found %}
+        <div class="findings-summary" role="status" aria-live="polite">
+          <div class="rule-item">
+            {% if filter_active %}
+              <span>No findings match the selected members.</span>
+            {% else %}
+              <span>No rule failures.</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="findings-summary" role="status" aria-live="polite">
+        <div class="rule-item">
+          {% if filter_active %}
+            <span>No findings match the selected members.</span>
+          {% else %}
+            <span>No rule results available.</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
   </div>
 
   <div class="export-buttons">
-    <a class="btn" href="/export/findings.csv?run_id={{ run_id }}" aria-label="Export findings CSV">
+    <a
+      class="btn-base btn-secondary btn-size-md"
+      href="/export/findings.csv?run_id={{ run_id }}{% if selected_members is defined and selected_members|length == 0 %}&members=__none__{% else %}{% for member in selected_members %}&members={{ member|urlencode }}{% endfor %}{% endif %}"
+      aria-label="Export findings CSV"
+    >
       📊 Export CSV
     </a>
     <a
-      class="btn btn-secondary"
+      class="btn-base btn-secondary btn-size-md"
       href="/report/{{ run_id }}"
       hx-get="/partials/report?run_id={{ run_id }}{% if selected_members is defined and selected_members|length == 0 %}&members=__none__{% else %}{% for member in selected_members %}&members={{ member|urlencode }}{% endfor %}{% endif %}"
       hx-target="#overlay-root"
@@ -148,7 +189,7 @@
     </a>
 
     <button
-      class="btn btn-secondary"
+      class="btn-base btn-primary btn-size-md"
       hx-post="/reset"
       hx-target="#content"
       hx-swap="innerHTML"

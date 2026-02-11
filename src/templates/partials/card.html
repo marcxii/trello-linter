@@ -15,11 +15,19 @@
           {% endif %}
         </div>
         <div><strong>Due:</strong> {{ due_date or "—" }}</div>
+        <div>
+          <strong>URL:</strong>
+          {% if short_url %}
+            <a href="{{ short_url }}" target="_blank" rel="noopener noreferrer">{{ short_url }}</a>
+          {% else %}
+            —
+          {% endif %}
+        </div>
       </div>
 
       <div class="card-actions">
       <button
-        class="btn btn-dark"
+        class="btn-base btn-secondary btn-size-md"
         hx-get="/partials/results?run_id={{ run_id }}"
         hx-target="#content"
         hx-swap="innerHTML"
@@ -46,13 +54,13 @@
 
   <div class="card-view-footer">
     <button
-      class="btn btn-dark"
+      class="btn-base btn-primary btn-size-md"
       hx-post="/reset"
       hx-target="#content"
       hx-swap="innerHTML"
       type="button"
     >
-      Analyze Another Board
+      🔄 Analyze Another Board
     </button>
   </div>
 </div>

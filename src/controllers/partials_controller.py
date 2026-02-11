@@ -19,23 +19,25 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, current_app, render_template, request
 
-from src.database.sqlite import get_db
 from src.database.db_functions import (
-    save_run,
-    save_cards,
-    save_members,
-    save_findings,
     cleanup_old_runs,
     delete_session_runs,
-    get_run_summary,
-    get_cards_for_run,
-    get_members_for_run,
     get_card_for_run,
+    get_cards_for_run,
     get_findings_for_card,
+    get_members_for_run,
+    get_run_summary,
+    save_cards,
+    save_findings,
+    save_members,
+    save_run,
 )
-from src.linter.rule_engine import RuleEngine, count_overdue_cards
+from src.database.sqlite import get_db
+from src.linter.rule_engine import RuleEngine
 from src.linter.scoring_engine import calculate_overall_score, get_grade_from_score
 from src.linter.rules.due_date_rule import evaluate_due_date
+from src.parser.trello_parser import TrelloParseError, parse_board_summary, parse_full_board
+from src.utils.session import get_or_set_session_id
 
 
 def _format_due_display(due_value: str | None) -> str | None:
@@ -57,14 +59,6 @@ def _format_due_display(due_value: str | None) -> str | None:
 
     return dt.strftime("%Y-%m-%d %I:%M:%S %p")
 
-
-from src.parser.trello_parser import (
-    parse_board_summary,
-    parse_cards,
-    parse_full_board,
-    TrelloParseError,
-)
-from src.utils.session import get_or_set_session_id
 
 partials_bp = Blueprint("partials", __name__)
 
@@ -119,6 +113,84 @@ def _filter_cards_by_members(cards: list[dict], selected_members: list[str]) -> 
     return filtered
 
 
+def _build_card_member_map(run_id: int, member_map: dict[str, str]) -> dict[str, list[str]]:
+    """Return card_id -> member names for a run."""
+    db = get_db()
+    cards = get_cards_for_run(db, run_id)
+    card_members: dict[str, list[str]] = {}
+    for card in cards:
+        member_ids = card.get("members") or []
+        member_names = [member_map.get(member_id, member_id) for member_id in member_ids]
+        card_id = card.get("card_id")
+        if card_id:
+            card_members[card_id] = member_names
+    return card_members
+
+
+def _build_card_lookup(
+    run_id: int,
+    member_map: dict[str, str],
+) -> dict[str, dict[str, object]]:
+    """Return card_id -> card details for a run."""
+    db = get_db()
+    cards = get_cards_for_run(db, run_id)
+    lookup: dict[str, dict[str, object]] = {}
+    for card in cards:
+        member_ids = card.get("members") or []
+        member_names = [member_map.get(member_id, member_id) for member_id in member_ids]
+        card_id = card.get("card_id")
+        if card_id:
+            lookup[card_id] = {
+                "card_name": card.get("card_name"),
+                "list_name": card.get("list_name"),
+                "members": member_names,
+                "due": card.get("due"),
+            }
+    return lookup
+
+
+def _filter_rule_results_by_members(
+    rule_results: list[dict],
+    selected_members: list[str],
+    card_member_map: dict[str, list[str]],
+) -> list[dict]:
+    """Filter rule failures by selected member names."""
+    if not selected_members:
+        return []
+
+    selected_set = set(selected_members)
+    include_unassigned = "Unassigned" in selected_set
+    selected_set.discard("Unassigned")
+
+    filtered_results = []
+    for rule in rule_results:
+        failures = rule.get("failures") or []
+        filtered_failures = []
+        for failure in failures:
+            member_name = failure.get("member_name")
+            if member_name:
+                if member_name in selected_set:
+                    filtered_failures.append(failure)
+                continue
+
+            card_id = failure.get("card_id")
+            if card_id:
+                members = card_member_map.get(card_id, [])
+                if not members:
+                    if include_unassigned:
+                        filtered_failures.append(failure)
+                elif any(member in selected_set for member in members):
+                    filtered_failures.append(failure)
+
+        if filtered_failures:
+            filtered_rule = dict(rule)
+            filtered_rule["failures"] = filtered_failures
+            filtered_rule["fail_count"] = len(filtered_failures)
+            filtered_results.append(filtered_rule)
+
+    return filtered_results
+
+
 def _average_scores(rule_scores: dict, rule_ids: list) -> float:
     """Calculate average score for a group of rules.
     
@@ -165,8 +237,10 @@ def results_partial():
             board = report.get("board", {})
             scores = report.get("scores", {})
             summary = report.get("summary", {})
+            rule_results = report.get("rule_results", [])
             overdue_cards = _get_overdue_cards(run_id)
-            member_names = sorted(set(get_members_for_run(db, run_id).values()))
+            member_map = get_members_for_run(db, run_id)
+            member_names = sorted(set(member_map.values()))
             member_names.append("Unassigned")
             selected_members = request.args.getlist("members")
             expanded_rule_ids = request.args.getlist("expanded")
@@ -180,19 +254,19 @@ def results_partial():
                 selected_members = member_names
 
             overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
+            filter_active = set(selected_members) != set(member_names)
+            if filter_active:
+                card_member_map = _build_card_member_map(run_id, member_map)
+                rule_results = _filter_rule_results_by_members(
+                    rule_results,
+                    selected_members,
+                    card_member_map,
+                )
             return render_template(
                 "partials/results.html",
                 overall_score=scores.get("overall_score", 0),
                 grade=scores.get("grade", "F"),
                 grade_description=scores.get("grade_description", "Unknown"),
-                total_findings=scores.get("total_findings", 0),
-                rules_passed=scores.get("rules_passed", 0),
-                rules_failed=scores.get("rules_failed", 0),
-                critical=scores.get("critical_findings", 0),
-                major=scores.get("major_findings", 0),
-                minor=scores.get("minor_findings", 0),
-                category_scores=scores.get("category_scores", {}),
-                filename=summary.get("filename", "(unknown)"),
                 board_name=board.get("name", "(unknown)"),
                 cards_count=board.get("cards_count", 0),
                 lists_count=board.get("lists_count", 0),
@@ -202,7 +276,9 @@ def results_partial():
                 overdue_cards=overdue_cards,
                 member_names=member_names,
                 selected_members=selected_members,
+                filter_active=filter_active,
                 expanded_rule_ids=expanded_rule_ids,
+                rule_results=rule_results,
             )
 
     return render_template(
@@ -248,11 +324,11 @@ def report_overlay_partial():
     board = report_data.get("board", {})
     scores = report_data.get("scores", {})
     summary = report_data.get("summary", {})
+    rule_results = report_data.get("rule_results", [])
     overdue_cards = _get_overdue_cards(run_id)
-    member_names = sorted(set(get_members_for_run(db, run_id).values()))
+    member_map = get_members_for_run(db, run_id)
+    member_names = sorted(set(member_map.values()))
     member_names.append("Unassigned")
-    selected_members = member_names
-    overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
     selected_members = request.args.getlist("members")
     expanded_rule_ids = request.args.getlist("expanded")
     if selected_members:
@@ -264,6 +340,15 @@ def report_overlay_partial():
     else:
         selected_members = member_names
     overdue_cards = _filter_cards_by_members(overdue_cards, selected_members)
+    filter_active = set(selected_members) != set(member_names)
+    if filter_active:
+        card_member_map = _build_card_member_map(run_id, member_map)
+        rule_results = _filter_rule_results_by_members(
+            rule_results,
+            selected_members,
+            card_member_map,
+        )
+    card_lookup = _build_card_lookup(run_id, member_map)
     return render_template(
         "partials/report_overlay.html",
         run=run,
@@ -285,6 +370,9 @@ def report_overlay_partial():
         members_count=board.get("members_count", 0),
         generated_at=report_data.get("generated_at", datetime.now(timezone.utc).isoformat()),
         overdue_cards=overdue_cards,
+        rule_results=rule_results,
+        filter_active=filter_active,
+        card_lookup=card_lookup,
     )
 
 
@@ -306,6 +394,8 @@ def analyze_partial():
     5. Save to database (runs, cards, members, findings)
     6. Return results HTML fragment
     """
+    # TODO: If this moves beyond scaffolding, split into helpers
+    # (parse, scoring, persistence, and response building).
     # -------------------------
     # Step 1: Validate file
     # -------------------------
@@ -414,6 +504,11 @@ def analyze_partial():
             "cards_count": summary["cards_count"],
             "lists_count": lists_count,
             "members_count": summary["members_count"],
+        },
+        "card_short_urls": {
+            card.get("id"): card.get("short_url")
+            for card in board_data.get("cards", [])
+            if card.get("id") and card.get("short_url")
         },
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "scores": {
@@ -535,6 +630,7 @@ def analyze_partial():
         "member_names": member_names,
         "selected_members": selected_members,
         "expanded_rule_ids": expanded_rule_ids,
+        "rule_results": rule_results,
     }
 
     return render_template("partials/results.html", **context)
@@ -566,7 +662,7 @@ def card_partial():
     session_id = get_or_set_session_id()
     db = get_db()
     run_row = db.execute(
-        "SELECT id FROM runs WHERE id = ? AND session_id = ?",
+        "SELECT id, report_json FROM runs WHERE id = ? AND session_id = ?",
         (run_id, session_id),
     ).fetchone()
     if run_row is None:
@@ -574,6 +670,8 @@ def card_partial():
             "partials/error.html",
             message="Report not found for this session.",
         )
+    report_data = json.loads(run_row["report_json"] or "{}")
+    card_short_urls = report_data.get("card_short_urls", {})
 
     if not card_id:
         return render_template(
@@ -616,5 +714,6 @@ def card_partial():
         members=member_names,
         card_id=card.get("card_id") or "—",
         due_date=_format_due_display(card.get("due")),
+        short_url=card_short_urls.get(card.get("card_id")),
         issues=issues,
     )

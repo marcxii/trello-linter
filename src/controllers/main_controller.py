@@ -1,11 +1,15 @@
-"""Main (home) controller.
+"""Main (home) controller for non-report routes.
 
-This module holds routes that are not specific to analysis/report/export workflows.
-Keep this controller thin: it should only render views or return simple health info.
+Responsibilities:
+- Serve the landing page and initial HTMX entrypoint.
+- Provide a simple health check endpoint.
 """
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import yaml
 from flask import Blueprint, render_template, request, url_for
 
 # Blueprint name: "main"; import name: __name__
@@ -25,7 +29,16 @@ def index():
         if run_id
         else url_for("partials.upload_partial")
     )
-    return render_template("index.html", initial_partial_url=initial_partial_url)
+    faqs = []
+    faqs_path = Path(__file__).parent.parent.parent / "config" / "help_faqs.yaml"
+    if faqs_path.exists():
+        try:
+            with faqs_path.open("r", encoding="utf-8") as handle:
+                faqs = yaml.safe_load(handle) or []
+        except yaml.YAMLError:
+            faqs = []
+
+    return render_template("index.html", initial_partial_url=initial_partial_url, faqs=faqs)
 
 
 @main_bp.get("/health")

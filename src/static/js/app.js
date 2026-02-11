@@ -120,6 +120,19 @@
       closeBtn.addEventListener("click", () => setOpen(false));
     }
 
+    document.addEventListener("click", (event) => {
+      if (!panel.classList.contains("active")) return;
+      if (panel.contains(event.target) || button.contains(event.target)) return;
+      setOpen(false);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (!panel.classList.contains("active")) return;
+      setOpen(false);
+      button.focus();
+    });
+
     const accordions = panel.querySelectorAll(".help-accordion");
     accordions.forEach((details) => {
       details.addEventListener("toggle", () => {
@@ -198,6 +211,9 @@
 
           dropdown.classList.remove("is-open");
           toggle.setAttribute("aria-expanded", "false");
+          if (applyBtn) {
+            applyBtn.setAttribute("data-loading-text", "Applying filter…");
+          }
           window.htmx.ajax("GET", url, { target: "#content", swap: "innerHTML" });
         });
       }
@@ -309,6 +325,7 @@
         clearFileUI();
         if (submitBtn) {
           submitBtn.disabled = true;
+          submitBtn.hidden = true;
           submitBtn.classList.add("is-hidden");
         }
         return;
@@ -320,6 +337,7 @@
         clearFileUI();
         if (submitBtn) {
           submitBtn.disabled = true;
+          submitBtn.hidden = true;
           submitBtn.classList.add("is-hidden");
         }
         return;
@@ -329,6 +347,7 @@
       hidePrompt();
       if (submitBtn) {
         submitBtn.disabled = false;
+        submitBtn.hidden = false;
         submitBtn.classList.remove("is-hidden");
       }
 
@@ -344,6 +363,7 @@
     const submitBtn = dropZone.querySelector("button[type='submit']");
     if (submitBtn) {
       submitBtn.disabled = true;
+      submitBtn.hidden = true;
       submitBtn.classList.add("is-hidden");
 
       // Prevent submit button clicks from being treated as "browse".
@@ -378,6 +398,7 @@
         setError("Invalid file type. Please upload a Trello JSON export.");
         if (submitBtn) {
           submitBtn.disabled = true;
+          submitBtn.hidden = true;
           submitBtn.classList.add("is-hidden");
         }
         return;
@@ -388,6 +409,7 @@
       hidePrompt();
       if (submitBtn) {
         submitBtn.disabled = false;
+        submitBtn.hidden = false;
         submitBtn.classList.remove("is-hidden");
       }
 
@@ -398,16 +420,44 @@
     });
   }
 
+  function initLoadingIndicator() {
+    const indicator = document.getElementById("loadingIndicator");
+    const loadingText = document.getElementById("loadingText");
+    if (!indicator) return;
+    indicator.classList.remove("active");
+
+    document.body.addEventListener("htmx:beforeRequest", (evt) => {
+      if (loadingText) {
+        const source = evt.detail.elt;
+        const form = source?.closest?.("form");
+        const text =
+          source?.getAttribute?.("data-loading-text") ||
+          form?.getAttribute?.("data-loading-text") ||
+          "Working…";
+        loadingText.textContent = text;
+      }
+      indicator.classList.add("active");
+    });
+    document.body.addEventListener("htmx:afterSwap", () => {
+      indicator.classList.remove("active");
+    });
+    document.body.addEventListener("htmx:responseError", () => {
+      indicator.classList.remove("active");
+    });
+  }
+
   initDropZone();
   localizeTimestamps();
   initRuleToggles();
   initHelpPanel();
   initFilterDropdowns();
+  initLoadingIndicator();
   document.body.addEventListener("htmx:afterSwap", () => {
     initDropZone();
     localizeTimestamps();
     initRuleToggles();
     initFilterDropdowns();
+    initLoadingIndicator();
   });
 
   // -------------------------

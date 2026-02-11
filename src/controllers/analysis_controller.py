@@ -1,14 +1,12 @@
-"""Analysis controller.
+"""Analysis controller for non-HTMX analysis endpoints.
 
-Purpose
--------
-Owns analysis-related endpoints that are not HTMX partials.
+Responsibilities:
+- Provide a temporary alias endpoint during refactor.
+- Expose a JSON API stub for future clients.
 
-Scaffold behavior (Commit 1 / early scaffold)
---------------------------------------------
-- Do NOT import or run the real analysis pipeline yet.
-- Do NOT persist anything yet.
-- Provide a minimal JSON API stub and an optional alias during refactor.
+Scaffold behavior:
+- Does not run the analysis pipeline.
+- Does not persist analysis results.
 """
 
 from __future__ import annotations

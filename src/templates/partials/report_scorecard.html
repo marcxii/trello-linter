@@ -1,0 +1,18 @@
+{% set scores = report.get('scores', {}) %}
+{% set summary = report.get('summary', {}) %}
+{% set findings = report.get('findings', []) %}
+
+<div class="card">
+  <h2>Scorecard</h2>
+  <div class="kpi">
+    <div class="item">
+      <div class="label">Overall score</div>
+      <div class="value value-emphasis">{{ scores.get('overall_score', '—') }}</div>
+    </div>
+    <div class="item">
+      <div class="label">Total findings</div>
+      <div class="value value-emphasis">{{ scores.get('total_findings', (findings|length)) }}</div>
+    </div>
+  </div>
+
+</div>

@@ -151,33 +151,4 @@ class RuleEngine:
         return self.config.get('weights', {})
 
 
-# Legacy compatibility function (for existing code that uses count_overdue_cards)
-def count_overdue_cards(run_id: int) -> int:
-    """Legacy function for backward compatibility.
-    
-    Counts overdue cards from database for a specific run.
-    This is maintained for compatibility with existing controller code.
-    
-    Args:
-        run_id: Database run ID
-        
-    Returns:
-        Count of overdue cards
-    """
-    from src.database.sqlite import get_db
-    from datetime import datetime, timezone
-    
-    db = get_db()
-    now = datetime.now(timezone.utc).isoformat()
-    
-    cursor = db.execute("""
-        SELECT COUNT(*) as count
-        FROM cards
-        WHERE run_id = ?
-        AND due IS NOT NULL
-        AND due < ?
-    """, (run_id, now))
-    
-    row = cursor.fetchone()
-    return row['count'] if row else 0
 
