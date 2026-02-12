@@ -10,6 +10,7 @@
             type="button"
             data-rule-id="{{ rule.rule_id }}"
             aria-expanded="{% if expanded_rule_ids and (rule.rule_id in expanded_rule_ids) %}true{% else %}false{% endif %}"
+            data-tooltip="{{ rule.description }}"
           >
             <span class="rule-title">{{ rule.rule_name }}</span>
             <span class="rule-meta">{{ rule.fail_count }}/{{ rule.eligible_count }} failed</span>
@@ -44,7 +45,7 @@
             {% endfor %}
           </ul>
         {% else %}
-          <div class="rule-summary rule-summary-static">
+          <div class="rule-summary rule-summary-static" data-tooltip="{{ rule.description }}">
             <span class="rule-title">{{ rule.rule_name }}</span>
             <span class="rule-meta">{{ rule.fail_count }}/{{ rule.eligible_count }} failed</span>
           </div>

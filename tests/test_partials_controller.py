@@ -95,6 +95,13 @@ def test_analyze_happy_path_persists_run(client, app):
     assert row is not None
 
 
+def test_analyze_includes_rule_description_tooltip(client):
+    res = _post_analyze(client, _make_payload())
+    assert res.status_code == 200
+    html = res.data.decode("utf-8")
+    assert 'data-tooltip="Card has a description length of ≥ 20 characters"' in html
+
+
 def test_analyze_saves_findings(client, monkeypatch):
     captured = {}
 
