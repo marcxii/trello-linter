@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
-from flask import Blueprint, current_app, render_template, request
+from flask import Blueprint, current_app, render_template, request, session
 
 from src.database.db_functions import (
     cleanup_old_runs,
@@ -243,7 +243,34 @@ def report_overlay_partial():
 @partials_bp.get("/partials/report-settings")
 def report_settings_partial():
     """Return report settings overlay."""
-    return render_template("partials/report_settings.html")
+    config = _load_rules_config()
+    settings = _merge_rule_settings(config, _get_rule_settings_overrides())
+    return render_template(
+        "partials/report_settings.html",
+        rules=settings["rules"],
+        card_descriptiveness=settings["card_descriptiveness"],
+        progress_threshold=settings["progress_threshold"],
+        progress_monitoring=settings["progress_monitoring"],
+        message=settings.get("message"),
+    )
+
+
+@partials_bp.post("/partials/report-settings")
+def report_settings_save():
+    """Persist rule settings overrides in the session."""
+    config = _load_rules_config()
+    overrides = _parse_rule_settings_form(request.form, config)
+    session["rule_settings_overrides"] = overrides
+    settings = _merge_rule_settings(config, overrides)
+    settings["message"] = "Settings saved. These will apply to future analyses."
+    return render_template(
+        "partials/report_settings.html",
+        rules=settings["rules"],
+        card_descriptiveness=settings["card_descriptiveness"],
+        progress_threshold=settings["progress_threshold"],
+        progress_monitoring=settings["progress_monitoring"],
+        message=settings.get("message"),
+    )
 
 
 def _parse_upload(uploaded_file):
@@ -280,10 +307,10 @@ def _parse_upload(uploaded_file):
     return name, summary, lists_count, board_data
 
 
-def _run_rules(board_data):
+def _run_rules(board_data, config=None):
     """Run the rule engine against parsed board data."""
     try:
-        engine = RuleEngine()
+        engine = RuleEngine(config=config)
         rule_results = engine.run_all_rules(board_data)
         return engine, rule_results
     except Exception as exc:
@@ -421,6 +448,138 @@ def _build_results_context(
     }
 
 
+def _load_rules_config():
+    engine = RuleEngine()
+    return engine.config or {}
+
+
+def _get_rule_settings_overrides():
+    return session.get("rule_settings_overrides") or {}
+
+
+def _merge_rule_settings(config, overrides):
+    deprecated = {
+        "weekly_workload",
+        "individual_overload",
+        "near_term_overcommitment",
+        "unscheduled_work",
+        "flow_progress_signal",
+    }
+    rule_labels = {
+        "card_ownership": "Card Ownership",
+        "card_due_date": "Card Due Date",
+        "card_descriptiveness": "Card Descriptiveness",
+        "story_point_estimation": "Story Point Estimation Coverage",
+        "past_due_violation": "Past Due Violation",
+        "progress_threshold": "Progress Threshold",
+        "progress_monitoring": "Progress Monitoring",
+        "card_completion": "Card Completion",
+        "card_effort": "Card Effort",
+        "description_canonicalization": "Description Canonicalization",
+    }
+
+    rules = []
+    for rule_id, label in rule_labels.items():
+        if rule_id in deprecated:
+            continue
+        base = config.get(rule_id, {})
+        enabled = base.get("enabled", True)
+        override_enabled = overrides.get("rules", {}).get(rule_id)
+        if override_enabled is not None:
+            enabled = override_enabled
+        rules.append(
+            {
+                "id": rule_id,
+                "name": label,
+                "description": base.get("description", ""),
+                "enabled": enabled,
+            }
+        )
+
+    def _with_override(section, key, default):
+        value = config.get(section, {}).get(key, default)
+        value = overrides.get(section, {}).get(key, value)
+        return value
+
+    return {
+        "rules": rules,
+        "card_descriptiveness": {
+            "minimum_desc_char": _with_override("card_descriptiveness", "minimum_desc_char", 20),
+        },
+        "progress_threshold": {
+            "max_wip_per_member": _with_override("progress_threshold", "max_wip_per_member", 3),
+        },
+        "progress_monitoring": {
+            "threshold_num_days": _with_override("progress_monitoring", "threshold_num_days", 5),
+        },
+    }
+
+
+def _parse_rule_settings_form(form, config):
+    rule_ids = [
+        "card_ownership",
+        "card_due_date",
+        "card_descriptiveness",
+        "story_point_estimation",
+        "past_due_violation",
+        "progress_threshold",
+        "progress_monitoring",
+        "card_completion",
+        "card_effort",
+        "description_canonicalization",
+    ]
+    overrides = {"rules": {}}
+
+    for rule_id in rule_ids:
+        key = f"rule_{rule_id}"
+        overrides["rules"][rule_id] = key in form
+
+    def _parse_int(name, section, key, default):
+        raw = form.get(name, "").strip()
+        if raw == "":
+            return
+        try:
+            value = int(raw)
+        except ValueError:
+            value = default
+        overrides.setdefault(section, {})[key] = max(0, value)
+
+    _parse_int(
+        "minimum_desc_char",
+        "card_descriptiveness",
+        "minimum_desc_char",
+        config.get("card_descriptiveness", {}).get("minimum_desc_char", 20),
+    )
+    _parse_int(
+        "max_wip_per_member",
+        "progress_threshold",
+        "max_wip_per_member",
+        config.get("progress_threshold", {}).get("max_wip_per_member", 3),
+    )
+    _parse_int(
+        "threshold_num_days",
+        "progress_monitoring",
+        "threshold_num_days",
+        config.get("progress_monitoring", {}).get("threshold_num_days", 5),
+    )
+    return overrides
+
+
+def _apply_rule_settings_overrides(base_config, overrides):
+    if not overrides:
+        return base_config
+
+    config = json.loads(json.dumps(base_config))
+    for rule_id, enabled in overrides.get("rules", {}).items():
+        config.setdefault(rule_id, {})["enabled"] = bool(enabled)
+
+    for section in ("card_descriptiveness", "progress_threshold", "progress_monitoring"):
+        if section in overrides:
+            config.setdefault(section, {}).update(overrides[section])
+
+    return config
+
+
 @partials_bp.post("/partials/analyze")
 def analyze_partial():
     """Accept an uploaded Trello JSON export and return a results fragment.
@@ -453,7 +612,11 @@ def analyze_partial():
     cleanup_old_runs(db, ttl_seconds)
 
     try:
-        engine, rule_results = _run_rules(board_data)
+        base_config = _load_rules_config()
+        effective_config = _apply_rule_settings_overrides(
+            base_config, _get_rule_settings_overrides()
+        )
+        engine, rule_results = _run_rules(board_data, effective_config)
     except ValueError as exc:
         return render_template("partials/error.html", message=str(exc))
 

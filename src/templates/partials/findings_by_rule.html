@@ -23,9 +23,8 @@
             {% for failure in rule.failures %}
               <li class="rule-item rule-item-3col">
                 <span class="rule-card-name">{{ failure.card_name or failure.member_name or "Board-level" }}</span>
-                <span class="rule-card-days u-muted">
+                <span class="rule-card-list u-muted">
                   {{ failure.list_name or "" }}
-                  {% if failure.due %} • Due {{ failure.due }}{% endif %}
                 </span>
                 <span class="rule-card-action u-text-right">
                   {% if failure.card_id %}
