@@ -117,7 +117,7 @@ card_completion:
 
 # Rule 14: Card Effort
 card_effort:
-  enabled: false  # Set to false per spec (n/a)
+  enabled: true
   effort_regex_patterns:
     - "Effort:\\s*(\\d+)"
     - "Hours:\\s*(\\d+)"

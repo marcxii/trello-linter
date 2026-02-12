@@ -1,4 +1,4 @@
-# Trello Board Linter - Project Skeleton
+# Trello Board Linter
 
 ## A tool to analyze Trello board exports and generate quality reports
 
@@ -28,6 +28,8 @@ Environment variables you can set:
 - `RUN_TTL_SECONDS` (defaults to 21600 seconds / 6 hours)
 - `MAX_CONTENT_LENGTH` (defaults to 10 MB)
 
+Default rule definitions live in `config/rules_config.yaml`. User rule settings are stored per-session.
+
 ## UI flows (current)
 - Upload JSON on the home page to render the results partial.
 - Results page includes:
@@ -37,6 +39,8 @@ Environment variables you can set:
 - "View Card" opens a card detail partial with member/list/due info and a Back to Report button.
 - Back to Report restores the results partial for the same `run_id`.
 - Printable Report opens a modal overlay with report sections; Settings opens a report settings overlay.
+- Report settings allow toggling rules and adjusting thresholds. Disabled rules are hidden and not scored.
+- Settings persist for the session and apply to new analyses. Saving settings refreshes the report view.
 - Full-page report is available at `/report/<run_id>`.
 - Help button opens a slide-up FAQ panel (single item open at a time).
 
