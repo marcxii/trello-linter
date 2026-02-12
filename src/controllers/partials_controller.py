@@ -752,6 +752,7 @@ def card_partial():
         )
     report_data = json.loads(run_row["report_json"] or "{}")
     card_short_urls = report_data.get("card_short_urls", {})
+    rule_settings = report_data.get("rule_settings") or {}
 
     if not card_id:
         return render_template(
@@ -795,8 +796,35 @@ def card_partial():
         )
 
     findings = get_findings_for_card(db, run_id, card_id)
+    rule_results = report_data.get("rule_results", [])
+    rule_name_to_id = {
+        rule.get("rule_name"): rule.get("rule_id")
+        for rule in rule_results
+        if rule.get("rule_name") and rule.get("rule_id")
+    }
+    disabled_rules = {
+        rule_id
+        for rule_id, enabled in (rule_settings.get("rules") or {}).items()
+        if not enabled
+    }
+    min_desc = (rule_settings.get("card_descriptiveness") or {}).get("minimum_desc_char")
+
     for finding in findings:
-        issues.append(finding.get("description") or finding.get("rule_name") or "Finding")
+        rule_name = finding.get("rule_name")
+        rule_id = rule_name_to_id.get(rule_name)
+        if rule_id in disabled_rules:
+            continue
+
+        description = finding.get("description") or rule_name or "Finding"
+        if rule_id == "card_descriptiveness" and min_desc is not None:
+            desc_len = len((card.get("card_desc") or "").strip())
+            if desc_len >= min_desc:
+                continue
+            description = (
+                f"Description too short ({desc_len} chars, minimum {min_desc})"
+            )
+
+        issues.append(description)
 
     return render_template(
         "partials/card.html",
