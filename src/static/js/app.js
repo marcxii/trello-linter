@@ -290,30 +290,20 @@
 
     function hidePrompt() {
       promptEls.forEach((el) => el.classList.add("is-hidden"));
-      dropZone.classList.add("has-file");
+      dropZone.classList.add("is-hidden");
     }
 
     function showPrompt() {
       promptEls.forEach((el) => el.classList.remove("is-hidden"));
-      dropZone.classList.remove("has-file");
+      dropZone.classList.remove("is-hidden");
     }
 
-    // Ensure file info container exists (optional UI)
-    let fileInfo = dropZone.querySelector(".file-info");
-    if (!fileInfo) {
-      fileInfo = document.createElement("div");
-      fileInfo.className = "file-info";
-      fileInfo.innerHTML = `
-        <div class="file-name" id="fileName"></div>
-        <div class="file-size" id="fileSize"></div>
-      `;
-      dropZone.appendChild(fileInfo);
-    }
-
+    const form = fileInput.closest("form");
+    const fileInfo = form?.querySelector(".file-info");
     const fileNameEl = document.getElementById("fileName");
     const fileSizeEl = document.getElementById("fileSize");
-    const submitBtn = dropZone.querySelector("button[type='submit']");
-    const settingsBtn = dropZone.querySelector("[data-report-settings]");
+    const submitBtn = form?.querySelector("button[type='submit']");
+    const settingsBtn = form?.querySelector("[data-report-settings]");
 
     if (submitBtn) {
       submitBtn.disabled = true;
@@ -365,8 +355,7 @@
     }
 
     function getForm() {
-      // Find the form inside the dropZone label
-      return dropZone.querySelector("form");
+      return form;
     }
 
     function setFileToInput(file) {
@@ -457,7 +446,7 @@
       }
     });
 
-    const removeBtn = dropZone.querySelector(".file-remove");
+    const removeBtn = form?.querySelector(".file-remove");
     if (removeBtn) {
       removeBtn.addEventListener("click", (e) => {
         e.stopPropagation();

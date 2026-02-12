@@ -364,24 +364,17 @@ input:focus-visible {
     user-select: none;
 }
 
-.u-text-left {
-    text-align: left;
+.upload-section.is-hidden {
+    display: none;
 }
 
-.upload-section.has-file {
-    border: none;
-    padding: 0;
-    background: transparent;
+.u-text-left {
+    text-align: left;
 }
 
 .upload-section:hover {
     border-color: var(--color-accent);
     background: var(--color-surface-soft);
-}
-
-.upload-section.has-file:hover {
-    border-color: transparent;
-    background: transparent;
 }
 
 .upload-section.dragover {
