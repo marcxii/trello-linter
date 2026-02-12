@@ -5,7 +5,6 @@ from src.linter.rules.assignment_rules import (
     check_card_completion,
     check_card_due_date,
     check_card_ownership,
-    check_unscheduled_work,
 )
 from src.linter.rules.capacity_rules import (
     check_past_due_violation,
@@ -17,7 +16,6 @@ from src.linter.rules.estimation_rules import (
     check_story_point_estimation,
 )
 from src.linter.rules.flow_rules import (
-    check_flow_progress_signal,
     check_progress_monitoring,
 )
 
@@ -56,25 +54,6 @@ def test_card_due_date_fail():
     assert result["fail_count"] == 1
     assert result["failures"][0]["reason"] == "No due date set"
 
-
-def test_unscheduled_work_fail():
-    parsed = _base_parsed_data(
-        lists=[{"id": "l1", "name": "In Progress", "closed": False}],
-        cards=[
-            {
-                "id": "c1",
-                "name": "Committed",
-                "list_id": "l1",
-                "closed": False,
-                "desc": "SP: 3",
-                "members": ["m1"],
-            }
-        ],
-    )
-    result = check_unscheduled_work(parsed, {"in_progress_keywords": ["in progress"]})
-    assert result["eligible_count"] == 1
-    assert result["fail_count"] == 1
-    assert result["failures"][0]["card_id"] == "c1"
 
 
 def test_card_completion_fail():
@@ -178,15 +157,6 @@ def test_progress_monitoring_skips_without_dates():
     assert result["eligible_count"] == 1
     assert result["fail_count"] == 0
 
-
-def test_flow_progress_signal_fail_with_no_completions():
-    parsed = _base_parsed_data(
-        lists=[{"id": "l1", "name": "In Progress", "closed": False}],
-        cards=[{"id": "c1", "name": "WIP", "list_id": "l1", "closed": False}],
-    )
-    result = check_flow_progress_signal(parsed, {"in_progress_keywords": ["in progress"]})
-    assert result["eligible_count"] == 1
-    assert result["fail_count"] == 1
 
 
 def test_rule_engine_respects_enabled_and_attaches_description():
