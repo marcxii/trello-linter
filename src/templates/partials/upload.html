@@ -24,11 +24,25 @@
     <input type="file" id="fileInput" name="file" accept=".json" required />
 
     <div class="file-info">
+      <button class="file-remove" type="button" aria-label="Remove selected file">
+        <span aria-hidden="true">×</span>
+      </button>
       <div class="file-name" id="fileName"></div>
       <div class="file-size" id="fileSize"></div>
     </div>
 
     <div class="actions">
+      <button
+        class="findings-link u-underline-hover is-hidden"
+        type="button"
+        hx-get="/partials/report-settings"
+        hx-target="#overlay-root"
+        hx-swap="innerHTML"
+        hidden
+        data-report-settings
+      >
+        Change Report Settings
+      </button>
       <button class="btn-base btn-primary btn-size-md is-hidden" type="submit" hidden>Analyze Board</button>
     </div>
   </form>

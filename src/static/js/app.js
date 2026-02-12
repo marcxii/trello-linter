@@ -290,10 +290,12 @@
 
     function hidePrompt() {
       promptEls.forEach((el) => el.classList.add("is-hidden"));
+      dropZone.classList.add("has-file");
     }
 
     function showPrompt() {
       promptEls.forEach((el) => el.classList.remove("is-hidden"));
+      dropZone.classList.remove("has-file");
     }
 
     // Ensure file info container exists (optional UI)
@@ -310,6 +312,21 @@
 
     const fileNameEl = document.getElementById("fileName");
     const fileSizeEl = document.getElementById("fileSize");
+    const submitBtn = dropZone.querySelector("button[type='submit']");
+    const settingsBtn = dropZone.querySelector("[data-report-settings]");
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.hidden = true;
+      submitBtn.classList.add("is-hidden");
+      // Prevent submit button clicks from being treated as "browse".
+      submitBtn.addEventListener("click", (e) => e.stopPropagation());
+    }
+    if (settingsBtn) {
+      settingsBtn.hidden = true;
+      settingsBtn.classList.add("is-hidden");
+      settingsBtn.addEventListener("click", (e) => e.stopPropagation());
+    }
 
     function updateFileUI(file) {
       if (!fileInfo || !fileNameEl || !fileSizeEl) return;
@@ -317,6 +334,16 @@
       fileNameEl.textContent = file.name || "(unnamed)";
       fileSizeEl.textContent = formatBytes(file.size || 0);
       fileInfo.classList.add("active");
+      hidePrompt();
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.hidden = false;
+        submitBtn.classList.remove("is-hidden");
+      }
+      if (settingsBtn) {
+        settingsBtn.hidden = false;
+        settingsBtn.classList.remove("is-hidden");
+      }
     }
 
     function clearFileUI() {
@@ -326,6 +353,15 @@
       fileSizeEl.textContent = "";
       fileInfo.classList.remove("active");
       showPrompt();
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.hidden = true;
+        submitBtn.classList.add("is-hidden");
+      }
+      if (settingsBtn) {
+        settingsBtn.hidden = true;
+        settingsBtn.classList.add("is-hidden");
+      }
     }
 
     function getForm() {
@@ -362,11 +398,6 @@
       const file = fileInput.files && fileInput.files[0];
       if (!file) {
         clearFileUI();
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.hidden = true;
-          submitBtn.classList.add("is-hidden");
-        }
         return;
       }
 
@@ -374,21 +405,10 @@
         setError("Invalid file type. Please upload a Trello JSON export.");
         fileInput.value = "";
         clearFileUI();
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.hidden = true;
-          submitBtn.classList.add("is-hidden");
-        }
         return;
       }
 
       updateFileUI(file);
-      hidePrompt();
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.hidden = false;
-        submitBtn.classList.remove("is-hidden");
-      }
 
       if (AUTO_SUBMIT_ON_SELECT) {
         const form = getForm();
@@ -399,16 +419,6 @@
     // -------------------------
     // Drag & drop support
     // -------------------------
-    const submitBtn = dropZone.querySelector("button[type='submit']");
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.hidden = true;
-      submitBtn.classList.add("is-hidden");
-
-      // Prevent submit button clicks from being treated as "browse".
-      submitBtn.addEventListener("click", (e) => e.stopPropagation());
-    }
-
     ["dragenter", "dragover"].forEach((evt) => {
       dropZone.addEventListener(evt, (e) => {
         e.preventDefault();
@@ -435,28 +445,35 @@
 
       if (!isJsonFile(file)) {
         setError("Invalid file type. Please upload a Trello JSON export.");
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.hidden = true;
-          submitBtn.classList.add("is-hidden");
-        }
         return;
       }
 
       setFileToInput(file);
       updateFileUI(file);
-      hidePrompt();
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.hidden = false;
-        submitBtn.classList.remove("is-hidden");
-      }
 
       if (AUTO_SUBMIT_ON_SELECT) {
         const form = getForm();
         if (form) form.requestSubmit();
       }
     });
+
+    const removeBtn = dropZone.querySelector(".file-remove");
+    if (removeBtn) {
+      removeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        fileInput.value = "";
+        clearFileUI();
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.hidden = true;
+        submitBtn.classList.add("is-hidden");
+      }
+      if (settingsBtn) {
+        settingsBtn.hidden = true;
+        settingsBtn.classList.add("is-hidden");
+      }
+    });
+    }
   }
 
   function initLoadingIndicator() {
