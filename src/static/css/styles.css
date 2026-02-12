@@ -364,6 +364,10 @@ input:focus-visible {
     user-select: none;
 }
 
+.u-text-left {
+    text-align: left;
+}
+
 .upload-section.has-file {
     border: none;
     padding: 0;
@@ -963,6 +967,10 @@ a.upload-form {
     border: var(--border-thin) solid var(--color-border-soft);
     background: #fff;
     box-shadow: var(--shadow-lg);
+}
+
+.report-settings-title {
+    text-align: left;
 }
 
 .report-overlay .report-page {
