@@ -80,7 +80,13 @@
                         <div class="rule-member">—</div>
                       {% endif %}
                     </td>
-                    <td class="rule-table-date u-text-right">{{ failure.due[:10] if failure.due else "—" }}</td>
+                    <td class="rule-table-date u-text-right">
+                      {% if failure.due %}
+                        <span class="js-localize-datetime" data-iso="{{ failure.due }}">{{ failure.due }}</span>
+                      {% else %}
+                        —
+                      {% endif %}
+                    </td>
                   </tr>
                 {% endfor %}
               </tbody>

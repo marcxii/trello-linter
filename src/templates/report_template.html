@@ -15,7 +15,7 @@
           <h1 style="margin:0;">TrelloScore Report</h1>
           <div class="meta">
             <div><strong>Run ID:</strong> {{ run.id }}</div>
-            <div><strong>Created:</strong> {{ run.created_at }}</div>
+            <div><strong>Created:</strong> {{ run.created_at_display or run.created_at }}</div>
             <div><strong>Board Ref:</strong> {{ run.board_ref }}</div>
             <div><strong>Source:</strong> <span class="pill">{{ run.source_type }}</span></div>
           </div>

@@ -9,6 +9,7 @@ Responsibilities:
 from __future__ import annotations
 
 import json
+from datetime import datetime
 
 from flask import Blueprint, render_template, request, session
 
@@ -53,6 +54,7 @@ def report(run_id: str):
         "board_ref": row["board_ref"] or "(unknown)",
         "source_type": "upload",
     }
+    run["created_at_display"] = _format_display_date(run.get("created_at"))
 
     report_data = json.loads(row["report_json"] or "{}")
     overrides = session.get("rule_settings_overrides") or {}
@@ -106,3 +108,14 @@ def _apply_rule_settings_overrides(base_config, overrides):
             config.setdefault(section, {}).update(overrides[section])
 
     return config
+
+
+def _format_display_date(value: str | None) -> str:
+    if not value:
+        return ""
+    try:
+        iso = value.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(iso)
+    except ValueError:
+        return str(value)
+    return f"{dt.strftime('%b')} {dt.day}, {dt.year}"

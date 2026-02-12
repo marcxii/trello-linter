@@ -45,7 +45,7 @@ from src.utils.session import get_or_set_session_id
 
 
 def _format_due_display(due_value: str | None) -> str | None:
-    """Format due date for display as YYYY-MM-DD HH:MM:SS AM/PM."""
+    """Format due date for display as Mon D, YYYY HH:MM:SS AM/PM."""
     if not due_value or not isinstance(due_value, str):
         return None
 
@@ -61,7 +61,7 @@ def _format_due_display(due_value: str | None) -> str | None:
     except ValueError:
         return None
 
-    return dt.strftime("%Y-%m-%d %I:%M:%S %p")
+    return f"{dt.strftime('%b')} {dt.day}, {dt.year} {dt.strftime('%I:%M:%S %p')}"
 
 
 partials_bp = Blueprint("partials", __name__)

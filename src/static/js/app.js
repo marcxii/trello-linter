@@ -56,22 +56,37 @@
       const date = new Date(iso);
       if (Number.isNaN(date.getTime())) return;
 
-      const parts = new Intl.DateTimeFormat("en-US", {
+      const formatted = new Intl.DateTimeFormat("en-US", {
         year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
+        month: "short",
+        day: "numeric",
+      }).format(date);
+
+      node.textContent = formatted;
+    });
+  }
+
+  function localizeDateTimes() {
+    const nodes = document.querySelectorAll(".js-localize-datetime");
+    if (!nodes.length) return;
+
+    nodes.forEach((node) => {
+      const iso = node.getAttribute("data-iso");
+      if (!iso) return;
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return;
+
+      const formatted = new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
         hour12: true,
-      }).formatToParts(date);
+      }).format(date);
 
-      const part = (type) => parts.find((p) => p.type === type)?.value || "";
-      const formatted = `${part("year")}-${part("month")}-${part("day")} ${part(
-        "hour"
-      )}:${part("minute")}:${part("second")} ${part("dayPeriod")}`;
-
-      node.textContent = formatted.trim();
+      node.textContent = formatted;
     });
   }
 
@@ -485,6 +500,7 @@
 
   initDropZone();
   localizeTimestamps();
+  localizeDateTimes();
   initRuleToggles();
   initHelpPanel();
   initOverlayClose();
@@ -494,6 +510,7 @@
   document.body.addEventListener("htmx:afterSwap", () => {
     initDropZone();
     localizeTimestamps();
+    localizeDateTimes();
     initRuleToggles();
     initFilterDropdowns();
     initLoadingIndicator();
