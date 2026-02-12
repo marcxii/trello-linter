@@ -175,15 +175,22 @@ def results_partial():
         report_ctx = load_report_context(run_id, session_id, selected_members or None)
         if report_ctx:
             board = report_ctx.get("board", {})
-            scores = report_ctx.get("scores", {})
             member_names = report_ctx.get("member_names", [])
             selected_members = report_ctx.get("selected_members", [])
             expanded_rule_ids = request.args.getlist("expanded")
             filter_active = set(selected_members) != set(member_names)
+            overrides = _get_rule_settings_overrides()
+            rule_results = _filter_rule_results_by_overrides(
+                report_ctx.get("rule_results", []), overrides
+            )
+            base_config = _load_rules_config()
+            scoring_result, grade_info = _apply_overrides_to_scores(
+                rule_results, base_config, overrides
+            )
             return render_template(
                 "partials/results.html",
-                overall_score=scores.get("overall_score", 0),
-                grade_description=scores.get("grade_description", "Unknown"),
+                overall_score=scoring_result.get("overall_score", 0),
+                grade_description=grade_info.get("description", "Unknown"),
                 board_name=board.get("name", "(unknown)"),
                 cards_count=board.get("cards_count", 0),
                 lists_count=board.get("lists_count", 0),
@@ -194,7 +201,7 @@ def results_partial():
                 selected_members=selected_members,
                 filter_active=filter_active,
                 expanded_rule_ids=expanded_rule_ids,
-                rule_results=report_ctx.get("rule_results", []),
+                rule_results=rule_results,
             )
 
     return render_template(
@@ -223,19 +230,30 @@ def report_overlay_partial():
         )
 
     board = report_ctx.get("board", {})
-    scores = report_ctx.get("scores", {})
     member_names = report_ctx.get("member_names", [])
     selected_members = report_ctx.get("selected_members", [])
     filter_active = set(selected_members) != set(member_names)
+    overrides = _get_rule_settings_overrides()
+    rule_results = _filter_rule_results_by_overrides(
+        report_ctx.get("rule_results", []), overrides
+    )
+    base_config = _load_rules_config()
+    scoring_result, _ = _apply_overrides_to_scores(rule_results, base_config, overrides)
+    report = dict(report_ctx.get("report", {}))
+    report["scores"] = {
+        **(report.get("scores", {}) or {}),
+        "overall_score": scoring_result.get("overall_score", 0),
+        "total_findings": scoring_result.get("total_failures", 0),
+    }
     return render_template(
         "partials/report_overlay.html",
-        report=report_ctx.get("report", {}),
+        report=report,
         board_name=board.get("name", "(unknown)"),
         cards_count=board.get("cards_count", 0),
         lists_count=board.get("lists_count", 0),
         members_count=board.get("members_count", 0),
         generated_at=report_ctx.get("generated_at", datetime.now(timezone.utc).isoformat()),
-        rule_results=report_ctx.get("rule_results", []),
+        rule_results=rule_results,
         filter_active=filter_active,
     )
 
@@ -245,12 +263,14 @@ def report_settings_partial():
     """Return report settings overlay."""
     config = _load_rules_config()
     settings = _merge_rule_settings(config, _get_rule_settings_overrides())
+    run_id = request.args.get("run_id", type=int)
     return render_template(
         "partials/report_settings.html",
         rules=settings["rules"],
         card_descriptiveness=settings["card_descriptiveness"],
         progress_threshold=settings["progress_threshold"],
         progress_monitoring=settings["progress_monitoring"],
+        run_id=run_id,
         message=settings.get("message"),
     )
 
@@ -263,12 +283,15 @@ def report_settings_save():
     session["rule_settings_overrides"] = overrides
     settings = _merge_rule_settings(config, overrides)
     settings["message"] = "Settings saved. These will apply to future analyses."
+    run_id = request.form.get("run_id")
+    run_id = int(run_id) if run_id and run_id.isdigit() else None
     return render_template(
         "partials/report_settings.html",
         rules=settings["rules"],
         card_descriptiveness=settings["card_descriptiveness"],
         progress_threshold=settings["progress_threshold"],
         progress_monitoring=settings["progress_monitoring"],
+        run_id=run_id,
         message=settings.get("message"),
     )
 
@@ -330,7 +353,16 @@ def _score_rules(engine, rule_results):
         raise ValueError(f"Scoring error: {str(exc)}")
 
 
-def _build_report(filename, summary, lists_count, board_data, scoring_result, grade_info, rule_results):
+def _build_report(
+    filename,
+    summary,
+    lists_count,
+    board_data,
+    scoring_result,
+    grade_info,
+    rule_results,
+    rule_settings=None,
+):
     """Assemble report payload and DB score summary."""
     generated_at = datetime.now(timezone.utc).isoformat()
     report_data = {
@@ -359,6 +391,7 @@ def _build_report(filename, summary, lists_count, board_data, scoring_result, gr
             "note": "Analysis complete using 14-rule engine",
         },
         "rule_results": rule_results,
+        "rule_settings": rule_settings or {},
     }
     db_scores = {
         "overall_score": scoring_result["overall_score"],
@@ -446,6 +479,23 @@ def _build_results_context(
         "expanded_rule_ids": expanded_rule_ids,
         "rule_results": rule_results,
     }
+
+
+def _filter_rule_results_by_overrides(rule_results, overrides):
+    rules_overrides = overrides.get("rules") or {}
+    disabled = {rule_id for rule_id, enabled in rules_overrides.items() if not enabled}
+    if not disabled:
+        return rule_results
+    return [rule for rule in rule_results if rule.get("rule_id") not in disabled]
+
+
+def _apply_overrides_to_scores(rule_results, base_config, overrides):
+    effective_config = _apply_rule_settings_overrides(base_config, overrides)
+    engine = RuleEngine(config=effective_config)
+    weights = engine.get_rule_weights()
+    scoring_result = calculate_overall_score(rule_results, weights)
+    grade_info = get_grade_from_score(scoring_result["overall_score"])
+    return scoring_result, grade_info
 
 
 def _load_rules_config():
@@ -640,6 +690,7 @@ def analyze_partial():
         scoring_result,
         grade_info,
         rule_results,
+        rule_settings=_get_rule_settings_overrides(),
     )
 
     # -------------------------

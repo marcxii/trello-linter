@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import json
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, session
 
 from src.database.sqlite import get_db
+from src.linter.rule_engine import RuleEngine
+from src.linter.scoring_engine import calculate_overall_score
 from src.utils.session import get_or_set_session_id
 
 report_bp = Blueprint("report", __name__)
@@ -53,6 +55,22 @@ def report(run_id: str):
     }
 
     report_data = json.loads(row["report_json"] or "{}")
+    overrides = session.get("rule_settings_overrides") or {}
+    rules_overrides = overrides.get("rules") or {}
+    disabled = {rule_id for rule_id, enabled in rules_overrides.items() if not enabled}
+    if disabled and report_data.get("rule_results"):
+        rule_results = [
+            rule for rule in report_data.get("rule_results", [])
+            if rule.get("rule_id") not in disabled
+        ]
+        base_config = RuleEngine().config or {}
+        effective_config = _apply_rule_settings_overrides(base_config, overrides)
+        weights = RuleEngine(config=effective_config).get_rule_weights()
+        scoring_result = calculate_overall_score(rule_results, weights)
+        report_data["rule_results"] = rule_results
+        report_data.setdefault("scores", {})
+        report_data["scores"]["overall_score"] = scoring_result.get("overall_score", 0)
+        report_data["scores"]["total_findings"] = scoring_result.get("total_failures", 0)
 
     return render_template(
         "report_template.html",
@@ -73,3 +91,18 @@ def report_latest_placeholder():
         "No report selected. Run an analysis first, then open /report/<run_id>.",
         400,
     )
+
+
+def _apply_rule_settings_overrides(base_config, overrides):
+    if not overrides:
+        return base_config
+
+    config = json.loads(json.dumps(base_config))
+    for rule_id, enabled in overrides.get("rules", {}).items():
+        config.setdefault(rule_id, {})["enabled"] = bool(enabled)
+
+    for section in ("card_descriptiveness", "progress_threshold", "progress_monitoring"):
+        if section in overrides:
+            config.setdefault(section, {}).update(overrides[section])
+
+    return config

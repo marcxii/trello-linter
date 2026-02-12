@@ -18,7 +18,7 @@
 
       <div class="card" style="margin-top:16px;">
         <h2>Rule Settings</h2>
-        <p class="muted">Disable rules or adjust thresholds. Settings apply to future analyses.</p>
+        <p class="muted">Disable rules by unchecking boxes or adjust thresholds.</p>
 
         {% if message %}
           <p class="muted" style="margin-top:12px;"><strong>{{ message }}</strong></p>
@@ -28,11 +28,14 @@
           style="margin-top:16px;"
           hx-post="/partials/report-settings"
           hx-target="#overlay-root"
-          hx-swap="innerHTML"
-          hx-on::after-request="document.getElementById('overlay-root').innerHTML=''"
+          hx-swap="none"
+          hx-on::after-request="document.getElementById('overlay-root').innerHTML=''; if (this.dataset.runId && window.htmx) { const url = `/partials/results?run_id=${encodeURIComponent(this.dataset.runId)}`; window.htmx.ajax('GET', url, { target: '#content', swap: 'innerHTML' }); }"
+          data-run-id="{{ run_id or '' }}"
         >
+          {% if run_id %}
+            <input type="hidden" name="run_id" value="{{ run_id }}">
+          {% endif %}
           <div class="field" style="margin-top:16px;">
-            <strong>Enable rules</strong>
             <div style="margin-top:8px;">
               {% for rule in rules %}
                 <label style="display:block; margin-top:6px;">
@@ -85,7 +88,7 @@
           </div>
 
           <div class="actions" style="margin-top:16px;">
-            <button class="btn-base btn-primary btn-size-sm" type="submit">Save settings</button>
+            <button class="btn-base btn-primary btn-size-sm" type="submit">Apply settings</button>
             <button
               class="btn-base btn-secondary btn-size-sm"
               type="button"
