@@ -25,11 +25,11 @@ DEFAULT_RULE_WEIGHTS = {
     "past_due_violation": 12.0,          # Rule 5: Critical - late work is severe
     "progress_threshold": 9.0,           # Rule 6: Important - prevent overload
     "progress_monitoring": 8.0,          # Rule 7: Important - prevent stale work
-    "weekly_workload": 7.0,              # Rule 8: Moderate - weekly capacity
-    "individual_overload": 10.0,         # Rule 9: Critical - individual capacity
-    "near_term_overcommitment": 9.0,     # Rule 10: Important - short-term planning
-    "unscheduled_work": 6.0,             # Rule 11: Moderate - committed work needs dates
-    "flow_progress_signal": 5.0,         # Rule 12: Low - flow metrics
+    "weekly_workload": 7.0,              # Rule 8 (deprecated): Moderate - weekly capacity
+    "individual_overload": 10.0,         # Rule 9 (deprecated): Critical - individual capacity
+    "near_term_overcommitment": 9.0,     # Rule 10 (deprecated): Important - short-term planning
+    "unscheduled_work": 6.0,             # Rule 11 (deprecated): Moderate - committed work needs dates
+    "flow_progress_signal": 5.0,         # Rule 12 (deprecated): Low - flow metrics
     "card_completion": 8.0,              # Rule 13: Important - proper completion
     "card_effort": 5.0,                  # Rule 14: Low - effort estimation
     "description_canonicalization": 4.0, # Rule 15: Low - formatting standard

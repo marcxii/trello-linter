@@ -27,11 +27,11 @@ weights:
   past_due_violation: 12.0          # Rule 5 - Highest weight
   progress_threshold: 9.0           # Rule 6
   progress_monitoring: 8.0          # Rule 7
-  weekly_workload: 7.0              # Rule 8
-  individual_overload: 10.0         # Rule 9
-  near_term_overcommitment: 9.0    # Rule 10
-  unscheduled_work: 6.0             # Rule 11
-  flow_progress_signal: 5.0         # Rule 12
+  weekly_workload: 7.0              # Rule 8 (deprecated)
+  individual_overload: 10.0         # Rule 9 (deprecated)
+  near_term_overcommitment: 9.0    # Rule 10 (deprecated)
+  unscheduled_work: 6.0             # Rule 11 (deprecated)
+  flow_progress_signal: 5.0         # Rule 12 (deprecated)
   card_completion: 8.0              # Rule 13
   card_effort: 5.0                  # Rule 14
   description_canonicalization: 4.0 # Rule 15
@@ -79,33 +79,33 @@ progress_monitoring:
   threshold_num_days: 5
   description: "No stale In-Progress work"
 
-# Rule 8: Weekly Workload
+# Deprecated: Rule 8: Weekly Workload
 weekly_workload:
-  enabled: true
+  enabled: false
   weekly_sp_threshold: 20
   description: "Weekly story points within capacity"
 
-# Rule 9: Individual Overload
+# Deprecated: Rule 9: Individual Overload
 individual_overload:
-  enabled: true
+  enabled: false
   individual_sp_threshold: 45
   description: "Individual story points within capacity"
 
-# Rule 10: Near-term Overcommitment
+# Deprecated: Rule 10: Near-term Overcommitment
 near_term_overcommitment:
-  enabled: true
+  enabled: false
   window_days: 5
   window_sp_threshold: 30
   description: "Near-term work within capacity"
 
-# Rule 11: Unscheduled Work
+# Deprecated: Rule 11: Unscheduled Work
 unscheduled_work:
-  enabled: true
+  enabled: false
   description: "Committed work has due dates"
 
-# Rule 12: Flow Progress Signal
+# Deprecated: Rule 12: Flow Progress Signal
 flow_progress_signal:
-  enabled: true
+  enabled: false
   lookback_days: 5
   min_flow_ratio: 0.20
   description: "Work is flowing (completions vs WIP)"
@@ -117,7 +117,7 @@ card_completion:
 
 # Rule 14: Card Effort
 card_effort:
-  enabled: false  # Set to false per spec (n/a)
+  enabled: true
   effort_regex_patterns:
     - "Effort:\\s*(\\d+)"
     - "Hours:\\s*(\\d+)"
@@ -127,8 +127,25 @@ card_effort:
 description_canonicalization:
   enabled: true
   story_formats:
-    - "As a .+, I want .+"
-    - "Given .+, [Ww]hen .+, [Tt]hen .+"
+    # As ... I/we ... (need/have/must/want/would like to) ... (so that/so I can/so we can/to/in order to) ...
+    - "^\\s*As\\s+(?:a|an|the)\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    # As member(s) of/part of/team ... we ... (need/plan/will/can) ... so ...
+    - "^\\s*As\\s+(?:a\\s+member of|members of|part of)\\s+[^,]+,\\s*we\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+(?:a\\s+team|a\\s+development\\s+team|the\\s+project\\s+team|[^,]+\\s+members),\\s*we\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    # As we (the <team/group>) ... we ...
+    - "^\\s*As\\s+we\\s+\\([^\\)]+\\),\\s*we\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    # As someone responsible/accountable/owner/stakeholder/user of ... I/we ...
+    - "^\\s*As\\s+someone\\s+responsible\\s+for\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+the\\s+person\\s+accountable\\s+for\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+the\\s+owner\\s+of\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+(?:a\\s+stakeholder\\s+in|a\\s+user\\s+of)\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    # As ... I/we am/are responsible/accountable/tasked with ... so ...
+    - "^\\s*As\\s+[^,]+,\\s*(?:I|we)\\s+['’]?(?:m|am|are)\\s+(?:responsible|accountable|tasked)\\s+with\\s+.+?,\\s*(?:so that|so (?:I|we) can|so the team can|so our team can|to|in order to)\\s+.+\\.?$"
+    # As ... I/we should be able to ... so ...
+    - "^\\s*As\\s+[^,]+,\\s*(?:I|we)\\s+should\\s+be\\s+able\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    # Given/When/Then canonical form
+    - "^\\s*Given\\s+.+,\\s*[Ww]hen\\s+.+,\\s*[Tt]hen\\s+.+$"
   description: "Card description follows standard format"
 
 # Scoring

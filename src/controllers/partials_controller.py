@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
-from flask import Blueprint, current_app, render_template, request
+from flask import Blueprint, current_app, render_template, request, session
 
 from src.database.db_functions import (
     cleanup_old_runs,
@@ -45,7 +45,7 @@ from src.utils.session import get_or_set_session_id
 
 
 def _format_due_display(due_value: str | None) -> str | None:
-    """Format due date for display as YYYY-MM-DD HH:MM:SS AM/PM."""
+    """Format due date for display as Mon D, YYYY HH:MM:SS AM/PM."""
     if not due_value or not isinstance(due_value, str):
         return None
 
@@ -61,7 +61,7 @@ def _format_due_display(due_value: str | None) -> str | None:
     except ValueError:
         return None
 
-    return dt.strftime("%Y-%m-%d %I:%M:%S %p")
+    return f"{dt.strftime('%b')} {dt.day}, {dt.year} {dt.strftime('%I:%M:%S %p')}"
 
 
 partials_bp = Blueprint("partials", __name__)
@@ -175,15 +175,22 @@ def results_partial():
         report_ctx = load_report_context(run_id, session_id, selected_members or None)
         if report_ctx:
             board = report_ctx.get("board", {})
-            scores = report_ctx.get("scores", {})
             member_names = report_ctx.get("member_names", [])
             selected_members = report_ctx.get("selected_members", [])
             expanded_rule_ids = request.args.getlist("expanded")
             filter_active = set(selected_members) != set(member_names)
+            overrides = _get_rule_settings_overrides()
+            rule_results = _filter_rule_results_by_overrides(
+                report_ctx.get("rule_results", []), overrides
+            )
+            base_config = _load_rules_config()
+            scoring_result, grade_info = _apply_overrides_to_scores(
+                rule_results, base_config, overrides
+            )
             return render_template(
                 "partials/results.html",
-                overall_score=scores.get("overall_score", 0),
-                grade_description=scores.get("grade_description", "Unknown"),
+                overall_score=scoring_result.get("overall_score", 0),
+                grade_description=grade_info.get("description", "Unknown"),
                 board_name=board.get("name", "(unknown)"),
                 cards_count=board.get("cards_count", 0),
                 lists_count=board.get("lists_count", 0),
@@ -223,19 +230,30 @@ def report_overlay_partial():
         )
 
     board = report_ctx.get("board", {})
-    scores = report_ctx.get("scores", {})
     member_names = report_ctx.get("member_names", [])
     selected_members = report_ctx.get("selected_members", [])
     filter_active = set(selected_members) != set(member_names)
+    overrides = _get_rule_settings_overrides()
+    rule_results = _filter_rule_results_by_overrides(
+        report_ctx.get("rule_results", []), overrides
+    )
+    base_config = _load_rules_config()
+    scoring_result, _ = _apply_overrides_to_scores(rule_results, base_config, overrides)
+    report = dict(report_ctx.get("report", {}))
+    report["scores"] = {
+        **(report.get("scores", {}) or {}),
+        "overall_score": scoring_result.get("overall_score", 0),
+        "total_findings": scoring_result.get("total_failures", 0),
+    }
     return render_template(
         "partials/report_overlay.html",
-        report=report_ctx.get("report", {}),
+        report=report,
         board_name=board.get("name", "(unknown)"),
         cards_count=board.get("cards_count", 0),
         lists_count=board.get("lists_count", 0),
         members_count=board.get("members_count", 0),
         generated_at=report_ctx.get("generated_at", datetime.now(timezone.utc).isoformat()),
-        rule_results=report_ctx.get("rule_results", []),
+        rule_results=rule_results,
         filter_active=filter_active,
     )
 
@@ -243,7 +261,39 @@ def report_overlay_partial():
 @partials_bp.get("/partials/report-settings")
 def report_settings_partial():
     """Return report settings overlay."""
-    return render_template("partials/report_settings.html")
+    config = _load_rules_config()
+    settings = _merge_rule_settings(config, _get_rule_settings_overrides())
+    run_id = request.args.get("run_id", type=int)
+    return render_template(
+        "partials/report_settings.html",
+        rules=settings["rules"],
+        card_descriptiveness=settings["card_descriptiveness"],
+        progress_threshold=settings["progress_threshold"],
+        progress_monitoring=settings["progress_monitoring"],
+        run_id=run_id,
+        message=settings.get("message"),
+    )
+
+
+@partials_bp.post("/partials/report-settings")
+def report_settings_save():
+    """Persist rule settings overrides in the session."""
+    config = _load_rules_config()
+    overrides = _parse_rule_settings_form(request.form, config)
+    session["rule_settings_overrides"] = overrides
+    settings = _merge_rule_settings(config, overrides)
+    settings["message"] = "Settings saved. These will apply to future analyses."
+    run_id = request.form.get("run_id")
+    run_id = int(run_id) if run_id and run_id.isdigit() else None
+    return render_template(
+        "partials/report_settings.html",
+        rules=settings["rules"],
+        card_descriptiveness=settings["card_descriptiveness"],
+        progress_threshold=settings["progress_threshold"],
+        progress_monitoring=settings["progress_monitoring"],
+        run_id=run_id,
+        message=settings.get("message"),
+    )
 
 
 def _parse_upload(uploaded_file):
@@ -280,10 +330,10 @@ def _parse_upload(uploaded_file):
     return name, summary, lists_count, board_data
 
 
-def _run_rules(board_data):
+def _run_rules(board_data, config=None):
     """Run the rule engine against parsed board data."""
     try:
-        engine = RuleEngine()
+        engine = RuleEngine(config=config)
         rule_results = engine.run_all_rules(board_data)
         return engine, rule_results
     except Exception as exc:
@@ -303,7 +353,16 @@ def _score_rules(engine, rule_results):
         raise ValueError(f"Scoring error: {str(exc)}")
 
 
-def _build_report(filename, summary, lists_count, board_data, scoring_result, grade_info, rule_results):
+def _build_report(
+    filename,
+    summary,
+    lists_count,
+    board_data,
+    scoring_result,
+    grade_info,
+    rule_results,
+    rule_settings=None,
+):
     """Assemble report payload and DB score summary."""
     generated_at = datetime.now(timezone.utc).isoformat()
     report_data = {
@@ -332,6 +391,7 @@ def _build_report(filename, summary, lists_count, board_data, scoring_result, gr
             "note": "Analysis complete using 14-rule engine",
         },
         "rule_results": rule_results,
+        "rule_settings": rule_settings or {},
     }
     db_scores = {
         "overall_score": scoring_result["overall_score"],
@@ -421,6 +481,155 @@ def _build_results_context(
     }
 
 
+def _filter_rule_results_by_overrides(rule_results, overrides):
+    rules_overrides = overrides.get("rules") or {}
+    disabled = {rule_id for rule_id, enabled in rules_overrides.items() if not enabled}
+    if not disabled:
+        return rule_results
+    return [rule for rule in rule_results if rule.get("rule_id") not in disabled]
+
+
+def _apply_overrides_to_scores(rule_results, base_config, overrides):
+    effective_config = _apply_rule_settings_overrides(base_config, overrides)
+    engine = RuleEngine(config=effective_config)
+    weights = engine.get_rule_weights()
+    scoring_result = calculate_overall_score(rule_results, weights)
+    grade_info = get_grade_from_score(scoring_result["overall_score"])
+    return scoring_result, grade_info
+
+
+def _load_rules_config():
+    engine = RuleEngine()
+    return engine.config or {}
+
+
+def _get_rule_settings_overrides():
+    return session.get("rule_settings_overrides") or {}
+
+
+def _merge_rule_settings(config, overrides):
+    deprecated = {
+        "weekly_workload",
+        "individual_overload",
+        "near_term_overcommitment",
+        "unscheduled_work",
+        "flow_progress_signal",
+    }
+    rule_labels = {
+        "card_ownership": "Card Ownership",
+        "card_due_date": "Card Due Date",
+        "card_descriptiveness": "Card Descriptiveness",
+        "story_point_estimation": "Story Point Estimation Coverage",
+        "past_due_violation": "Past Due Violation",
+        "progress_threshold": "Progress Threshold",
+        "progress_monitoring": "Progress Monitoring",
+        "card_completion": "Card Completion",
+        "card_effort": "Card Effort",
+        "description_canonicalization": "Description Canonicalization",
+    }
+
+    rules = []
+    for rule_id, label in rule_labels.items():
+        if rule_id in deprecated:
+            continue
+        base = config.get(rule_id, {})
+        enabled = base.get("enabled", True)
+        override_enabled = overrides.get("rules", {}).get(rule_id)
+        if override_enabled is not None:
+            enabled = override_enabled
+        rules.append(
+            {
+                "id": rule_id,
+                "name": label,
+                "description": base.get("description", ""),
+                "enabled": enabled,
+            }
+        )
+
+    def _with_override(section, key, default):
+        value = config.get(section, {}).get(key, default)
+        value = overrides.get(section, {}).get(key, value)
+        return value
+
+    return {
+        "rules": rules,
+        "card_descriptiveness": {
+            "minimum_desc_char": _with_override("card_descriptiveness", "minimum_desc_char", 20),
+        },
+        "progress_threshold": {
+            "max_wip_per_member": _with_override("progress_threshold", "max_wip_per_member", 3),
+        },
+        "progress_monitoring": {
+            "threshold_num_days": _with_override("progress_monitoring", "threshold_num_days", 5),
+        },
+    }
+
+
+def _parse_rule_settings_form(form, config):
+    rule_ids = [
+        "card_ownership",
+        "card_due_date",
+        "card_descriptiveness",
+        "story_point_estimation",
+        "past_due_violation",
+        "progress_threshold",
+        "progress_monitoring",
+        "card_completion",
+        "card_effort",
+        "description_canonicalization",
+    ]
+    overrides = {"rules": {}}
+
+    for rule_id in rule_ids:
+        key = f"rule_{rule_id}"
+        overrides["rules"][rule_id] = key in form
+
+    def _parse_int(name, section, key, default):
+        raw = form.get(name, "").strip()
+        if raw == "":
+            return
+        try:
+            value = int(raw)
+        except ValueError:
+            value = default
+        overrides.setdefault(section, {})[key] = max(0, value)
+
+    _parse_int(
+        "minimum_desc_char",
+        "card_descriptiveness",
+        "minimum_desc_char",
+        config.get("card_descriptiveness", {}).get("minimum_desc_char", 20),
+    )
+    _parse_int(
+        "max_wip_per_member",
+        "progress_threshold",
+        "max_wip_per_member",
+        config.get("progress_threshold", {}).get("max_wip_per_member", 3),
+    )
+    _parse_int(
+        "threshold_num_days",
+        "progress_monitoring",
+        "threshold_num_days",
+        config.get("progress_monitoring", {}).get("threshold_num_days", 5),
+    )
+    return overrides
+
+
+def _apply_rule_settings_overrides(base_config, overrides):
+    if not overrides:
+        return base_config
+
+    config = json.loads(json.dumps(base_config))
+    for rule_id, enabled in overrides.get("rules", {}).items():
+        config.setdefault(rule_id, {})["enabled"] = bool(enabled)
+
+    for section in ("card_descriptiveness", "progress_threshold", "progress_monitoring"):
+        if section in overrides:
+            config.setdefault(section, {}).update(overrides[section])
+
+    return config
+
+
 @partials_bp.post("/partials/analyze")
 def analyze_partial():
     """Accept an uploaded Trello JSON export and return a results fragment.
@@ -453,7 +662,11 @@ def analyze_partial():
     cleanup_old_runs(db, ttl_seconds)
 
     try:
-        engine, rule_results = _run_rules(board_data)
+        base_config = _load_rules_config()
+        effective_config = _apply_rule_settings_overrides(
+            base_config, _get_rule_settings_overrides()
+        )
+        engine, rule_results = _run_rules(board_data, effective_config)
     except ValueError as exc:
         return render_template("partials/error.html", message=str(exc))
 
@@ -477,6 +690,7 @@ def analyze_partial():
         scoring_result,
         grade_info,
         rule_results,
+        rule_settings=_get_rule_settings_overrides(),
     )
 
     # -------------------------
@@ -538,6 +752,7 @@ def card_partial():
         )
     report_data = json.loads(run_row["report_json"] or "{}")
     card_short_urls = report_data.get("card_short_urls", {})
+    rule_settings = report_data.get("rule_settings") or {}
 
     if not card_id:
         return render_template(
@@ -581,8 +796,35 @@ def card_partial():
         )
 
     findings = get_findings_for_card(db, run_id, card_id)
+    rule_results = report_data.get("rule_results", [])
+    rule_name_to_id = {
+        rule.get("rule_name"): rule.get("rule_id")
+        for rule in rule_results
+        if rule.get("rule_name") and rule.get("rule_id")
+    }
+    disabled_rules = {
+        rule_id
+        for rule_id, enabled in (rule_settings.get("rules") or {}).items()
+        if not enabled
+    }
+    min_desc = (rule_settings.get("card_descriptiveness") or {}).get("minimum_desc_char")
+
     for finding in findings:
-        issues.append(finding.get("description") or finding.get("rule_name") or "Finding")
+        rule_name = finding.get("rule_name")
+        rule_id = rule_name_to_id.get(rule_name)
+        if rule_id in disabled_rules:
+            continue
+
+        description = finding.get("description") or rule_name or "Finding"
+        if rule_id == "card_descriptiveness" and min_desc is not None:
+            desc_len = len((card.get("card_desc") or "").strip())
+            if desc_len >= min_desc:
+                continue
+            description = (
+                f"Description too short ({desc_len} chars, minimum {min_desc})"
+            )
+
+        issues.append(description)
 
     return render_template(
         "partials/card.html",

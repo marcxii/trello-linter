@@ -23,9 +23,8 @@
             {% for failure in rule.failures %}
               <li class="rule-item rule-item-3col">
                 <span class="rule-card-name">{{ failure.card_name or failure.member_name or "Board-level" }}</span>
-                <span class="rule-card-days u-muted">
+                <span class="rule-card-list u-muted">
                   {{ failure.list_name or "" }}
-                  {% if failure.due %} • Due {{ failure.due }}{% endif %}
                 </span>
                 <span class="rule-card-action u-text-right">
                   {% if failure.card_id %}
@@ -81,7 +80,13 @@
                         <div class="rule-member">—</div>
                       {% endif %}
                     </td>
-                    <td class="rule-table-date u-text-right">{{ failure.due[:10] if failure.due else "—" }}</td>
+                    <td class="rule-table-date u-text-right">
+                      {% if failure.due %}
+                        <span class="js-localize-datetime" data-iso="{{ failure.due }}">{{ failure.due }}</span>
+                      {% else %}
+                        —
+                      {% endif %}
+                    </td>
                   </tr>
                 {% endfor %}
               </tbody>

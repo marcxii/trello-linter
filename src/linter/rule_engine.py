@@ -145,8 +145,10 @@ class RuleEngine:
         rule_ids = [
             'card_ownership', 'card_due_date', 'card_descriptiveness',
             'story_point_estimation', 'past_due_violation', 'progress_threshold',
-            'progress_monitoring', 'weekly_workload', 'individual_overload',
-            'near_term_overcommitment', 'unscheduled_work', 'flow_progress_signal',
+            'progress_monitoring',
+            # Deprecated rules (disabled in config by default)
+            'weekly_workload', 'individual_overload', 'near_term_overcommitment',
+            'unscheduled_work', 'flow_progress_signal',
             'card_completion', 'card_effort', 'description_canonicalization'
         ]
         

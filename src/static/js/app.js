@@ -56,22 +56,58 @@
       const date = new Date(iso);
       if (Number.isNaN(date.getTime())) return;
 
-      const parts = new Intl.DateTimeFormat("en-US", {
+      const formatted = new Intl.DateTimeFormat("en-US", {
         year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
+        month: "short",
+        day: "numeric",
+      }).format(date);
+
+      node.textContent = formatted;
+    });
+  }
+
+  function localizeDateTimes() {
+    const nodes = document.querySelectorAll(".js-localize-datetime");
+    if (!nodes.length) return;
+
+    nodes.forEach((node) => {
+      const iso = node.getAttribute("data-iso");
+      if (!iso) return;
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return;
+
+      const formatted = new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
         hour12: true,
-      }).formatToParts(date);
+      }).format(date);
 
-      const part = (type) => parts.find((p) => p.type === type)?.value || "";
-      const formatted = `${part("year")}-${part("month")}-${part("day")} ${part(
-        "hour"
-      )}:${part("minute")}:${part("second")} ${part("dayPeriod")}`;
+      node.textContent = formatted;
+    });
+  }
 
-      node.textContent = formatted.trim();
+  function bindOutsideClickClose(panel, toggle, onClose) {
+    document.addEventListener("click", (event) => {
+      if (!panel.classList.contains("active") && !panel.classList.contains("is-open")) {
+        return;
+      }
+      if (panel.contains(event.target) || toggle.contains(event.target)) return;
+      onClose();
+    });
+  }
+
+  function bindEscapeClose(panel, onClose, focusTarget) {
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (!panel.classList.contains("active") && !panel.classList.contains("is-open")) {
+        return;
+      }
+      onClose();
+      if (focusTarget) focusTarget.focus();
     });
   }
 
@@ -275,26 +311,33 @@
 
     function hidePrompt() {
       promptEls.forEach((el) => el.classList.add("is-hidden"));
+      dropZone.classList.add("is-hidden");
     }
 
     function showPrompt() {
       promptEls.forEach((el) => el.classList.remove("is-hidden"));
+      dropZone.classList.remove("is-hidden");
     }
 
-    // Ensure file info container exists (optional UI)
-    let fileInfo = dropZone.querySelector(".file-info");
-    if (!fileInfo) {
-      fileInfo = document.createElement("div");
-      fileInfo.className = "file-info";
-      fileInfo.innerHTML = `
-        <div class="file-name" id="fileName"></div>
-        <div class="file-size" id="fileSize"></div>
-      `;
-      dropZone.appendChild(fileInfo);
-    }
-
+    const form = fileInput.closest("form");
+    const fileInfo = form?.querySelector(".file-info");
     const fileNameEl = document.getElementById("fileName");
     const fileSizeEl = document.getElementById("fileSize");
+    const submitBtn = form?.querySelector("button[type='submit']");
+    const settingsBtn = form?.querySelector("[data-report-settings]");
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.hidden = true;
+      submitBtn.classList.add("is-hidden");
+      // Prevent submit button clicks from being treated as "browse".
+      submitBtn.addEventListener("click", (e) => e.stopPropagation());
+    }
+    if (settingsBtn) {
+      settingsBtn.hidden = true;
+      settingsBtn.classList.add("is-hidden");
+      settingsBtn.addEventListener("click", (e) => e.stopPropagation());
+    }
 
     function updateFileUI(file) {
       if (!fileInfo || !fileNameEl || !fileSizeEl) return;
@@ -302,6 +345,16 @@
       fileNameEl.textContent = file.name || "(unnamed)";
       fileSizeEl.textContent = formatBytes(file.size || 0);
       fileInfo.classList.add("active");
+      hidePrompt();
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.hidden = false;
+        submitBtn.classList.remove("is-hidden");
+      }
+      if (settingsBtn) {
+        settingsBtn.hidden = false;
+        settingsBtn.classList.remove("is-hidden");
+      }
     }
 
     function clearFileUI() {
@@ -311,11 +364,19 @@
       fileSizeEl.textContent = "";
       fileInfo.classList.remove("active");
       showPrompt();
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.hidden = true;
+        submitBtn.classList.add("is-hidden");
+      }
+      if (settingsBtn) {
+        settingsBtn.hidden = true;
+        settingsBtn.classList.add("is-hidden");
+      }
     }
 
     function getForm() {
-      // Find the form inside the dropZone label
-      return dropZone.querySelector("form");
+      return form;
     }
 
     function setFileToInput(file) {
@@ -347,11 +408,6 @@
       const file = fileInput.files && fileInput.files[0];
       if (!file) {
         clearFileUI();
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.hidden = true;
-          submitBtn.classList.add("is-hidden");
-        }
         return;
       }
 
@@ -359,21 +415,10 @@
         setError("Invalid file type. Please upload a Trello JSON export.");
         fileInput.value = "";
         clearFileUI();
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.hidden = true;
-          submitBtn.classList.add("is-hidden");
-        }
         return;
       }
 
       updateFileUI(file);
-      hidePrompt();
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.hidden = false;
-        submitBtn.classList.remove("is-hidden");
-      }
 
       if (AUTO_SUBMIT_ON_SELECT) {
         const form = getForm();
@@ -384,16 +429,6 @@
     // -------------------------
     // Drag & drop support
     // -------------------------
-    const submitBtn = dropZone.querySelector("button[type='submit']");
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.hidden = true;
-      submitBtn.classList.add("is-hidden");
-
-      // Prevent submit button clicks from being treated as "browse".
-      submitBtn.addEventListener("click", (e) => e.stopPropagation());
-    }
-
     ["dragenter", "dragover"].forEach((evt) => {
       dropZone.addEventListener(evt, (e) => {
         e.preventDefault();
@@ -420,28 +455,35 @@
 
       if (!isJsonFile(file)) {
         setError("Invalid file type. Please upload a Trello JSON export.");
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.hidden = true;
-          submitBtn.classList.add("is-hidden");
-        }
         return;
       }
 
       setFileToInput(file);
       updateFileUI(file);
-      hidePrompt();
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.hidden = false;
-        submitBtn.classList.remove("is-hidden");
-      }
 
       if (AUTO_SUBMIT_ON_SELECT) {
         const form = getForm();
         if (form) form.requestSubmit();
       }
     });
+
+    const removeBtn = form?.querySelector(".file-remove");
+    if (removeBtn) {
+      removeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        fileInput.value = "";
+        clearFileUI();
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.hidden = true;
+        submitBtn.classList.add("is-hidden");
+      }
+      if (settingsBtn) {
+        settingsBtn.hidden = true;
+        settingsBtn.classList.add("is-hidden");
+      }
+    });
+    }
   }
 
   function initLoadingIndicator() {
@@ -485,6 +527,7 @@
 
   initDropZone();
   localizeTimestamps();
+  localizeDateTimes();
   initRuleToggles();
   initHelpPanel();
   initOverlayClose();
@@ -494,6 +537,7 @@
   document.body.addEventListener("htmx:afterSwap", () => {
     initDropZone();
     localizeTimestamps();
+    localizeDateTimes();
     initRuleToggles();
     initFilterDropdowns();
     initLoadingIndicator();

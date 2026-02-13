@@ -8,6 +8,7 @@ rules can be added without changing export code.
 from __future__ import annotations
 
 import csv
+from datetime import datetime
 from io import StringIO
 from typing import Any
 
@@ -23,6 +24,16 @@ def build_report_csv(report_ctx: dict[str, Any]) -> str:
     scores = report_ctx.get("scores", {})
     generated_at = report_ctx.get("generated_at", "")
 
+    def format_date(value: str) -> str:
+        if not value:
+            return ""
+        try:
+            iso = value.replace("Z", "+00:00")
+            dt = datetime.fromisoformat(iso)
+        except ValueError:
+            return str(value)
+        return f"{dt.strftime('%b')} {dt.day}, {dt.year}"
+
     def row(cells: list[str]) -> None:
         writer.writerow(cells)
 
@@ -35,13 +46,13 @@ def build_report_csv(report_ctx: dict[str, Any]) -> str:
     # Run metadata (minimal)
     section("Run Info")
     row(["run_id", str(run.get("id", ""))])
-    row(["created_at", str(run.get("created_at", ""))])
+    row(["created_at", format_date(str(run.get("created_at", "")))])
     spacer()
 
     # Quick stats (report section)
     section("Quick Stats")
     row(["board", str(board.get("name", ""))])
-    row(["created", str(generated_at)])
+    row(["created", format_date(str(generated_at))])
     row(["cards", str(board.get("cards_count", ""))])
     row(["lists", str(board.get("lists_count", ""))])
     row(["members", str(board.get("members_count", ""))])
