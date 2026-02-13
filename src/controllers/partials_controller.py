@@ -201,7 +201,7 @@ def results_partial():
                 selected_members=selected_members,
                 filter_active=filter_active,
                 expanded_rule_ids=expanded_rule_ids,
-                rule_results=rule_results,
+                rule_results=report_ctx.get("rule_results", []),
             )
 
     return render_template(

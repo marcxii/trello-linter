@@ -111,6 +111,27 @@
     });
   }
 
+  function bindOutsideClickClose(panel, toggle, onClose) {
+    document.addEventListener("click", (event) => {
+      if (!panel.classList.contains("active") && !panel.classList.contains("is-open")) {
+        return;
+      }
+      if (panel.contains(event.target) || toggle.contains(event.target)) return;
+      onClose();
+    });
+  }
+
+  function bindEscapeClose(panel, onClose, focusTarget) {
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (!panel.classList.contains("active") && !panel.classList.contains("is-open")) {
+        return;
+      }
+      onClose();
+      if (focusTarget) focusTarget.focus();
+    });
+  }
+
   function initRuleToggles() {
     const buttons = document.querySelectorAll(".rule-summary");
     if (!buttons.length) return;
