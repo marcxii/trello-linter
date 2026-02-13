@@ -75,6 +75,27 @@
     });
   }
 
+  function bindOutsideClickClose(panel, toggle, onClose) {
+    document.addEventListener("click", (event) => {
+      if (!panel.classList.contains("active") && !panel.classList.contains("is-open")) {
+        return;
+      }
+      if (panel.contains(event.target) || toggle.contains(event.target)) return;
+      onClose();
+    });
+  }
+
+  function bindEscapeClose(panel, onClose, focusTarget) {
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (!panel.classList.contains("active") && !panel.classList.contains("is-open")) {
+        return;
+      }
+      onClose();
+      if (focusTarget) focusTarget.focus();
+    });
+  }
+
   function initRuleToggles() {
     const buttons = document.querySelectorAll(".rule-summary");
     if (!buttons.length) return;
@@ -120,18 +141,8 @@
       closeBtn.addEventListener("click", () => setOpen(false));
     }
 
-    document.addEventListener("click", (event) => {
-      if (!panel.classList.contains("active")) return;
-      if (panel.contains(event.target) || button.contains(event.target)) return;
-      setOpen(false);
-    });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape") return;
-      if (!panel.classList.contains("active")) return;
-      setOpen(false);
-      button.focus();
-    });
+    bindOutsideClickClose(panel, button, () => setOpen(false));
+    bindEscapeClose(panel, () => setOpen(false), button);
 
     const accordions = panel.querySelectorAll(".help-accordion");
     accordions.forEach((details) => {
@@ -141,6 +152,17 @@
           if (other !== details) other.open = false;
         });
       });
+    });
+  }
+
+  function initOverlayClose() {
+    const overlayRoot = document.getElementById("overlay-root");
+    if (!overlayRoot) return;
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (!overlayRoot.innerHTML.trim()) return;
+      overlayRoot.innerHTML = "";
     });
   }
 
@@ -218,12 +240,14 @@
         });
       }
 
-      document.addEventListener("click", (event) => {
-        if (!dropdown.contains(event.target)) {
-          dropdown.classList.remove("is-open");
-          toggle.setAttribute("aria-expanded", "false");
-        }
+      bindOutsideClickClose(dropdown, toggle, () => {
+        dropdown.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
       });
+      bindEscapeClose(dropdown, () => {
+        dropdown.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
+      }, toggle);
 
       dropdown.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
@@ -446,18 +470,34 @@
     });
   }
 
+  function syncRunIdUrl() {
+    const results = document.getElementById("results");
+    const runId = results?.dataset?.runId;
+    if (!runId) return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("run_id", runId);
+    if (url.pathname !== "/") {
+      url.pathname = "/";
+    }
+    window.history.replaceState({}, "", url);
+  }
+
   initDropZone();
   localizeTimestamps();
   initRuleToggles();
   initHelpPanel();
+  initOverlayClose();
   initFilterDropdowns();
   initLoadingIndicator();
+  syncRunIdUrl();
   document.body.addEventListener("htmx:afterSwap", () => {
     initDropZone();
     localizeTimestamps();
     initRuleToggles();
     initFilterDropdowns();
     initLoadingIndicator();
+    syncRunIdUrl();
   });
 
   // -------------------------

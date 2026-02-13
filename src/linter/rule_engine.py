@@ -104,8 +104,22 @@ class RuleEngine:
         # Run flow rules (Rules 7, 12)
         flow_results = run_all_flow_rules(parsed_data, self.config)
         all_results.extend(flow_results)
-        
-        return all_results
+
+        return self._attach_rule_descriptions(all_results)
+
+    def _attach_rule_descriptions(self, rule_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Attach rule descriptions from config onto rule results."""
+        if not rule_results:
+            return []
+
+        for result in rule_results:
+            rule_id = result.get("rule_id")
+            if not rule_id:
+                continue
+            description = self.config.get(rule_id, {}).get("description")
+            if description:
+                result["description"] = description
+        return rule_results
     
     def run_specific_rules(self, parsed_data: Dict[str, Any], rule_ids: List[str]) -> List[Dict[str, Any]]:
         """Run only specific rules by their IDs.

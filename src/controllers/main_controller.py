@@ -7,10 +7,11 @@ Responsibilities:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import yaml
-from flask import Blueprint, render_template, request, url_for
+from flask import Blueprint, current_app, render_template, request, url_for
 
 # Blueprint name: "main"; import name: __name__
 main_bp = Blueprint("main", __name__)
@@ -30,7 +31,8 @@ def index():
         else url_for("partials.upload_partial")
     )
     faqs = []
-    faqs_path = Path(__file__).parent.parent.parent / "config" / "help_faqs.yaml"
+    faqs_override = current_app.config.get("HELP_FAQS_PATH") or os.getenv("HELP_FAQS_PATH")
+    faqs_path = Path(faqs_override) if faqs_override else Path(__file__).parent.parent.parent / "config" / "help_faqs.yaml"
     if faqs_path.exists():
         try:
             with faqs_path.open("r", encoding="utf-8") as handle:

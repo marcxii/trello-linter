@@ -1,0 +1,115 @@
+{% if rule_results and (rule_results|length) > 0 %}
+  {% set failures = namespace(found=false) %}
+  {% for rule in rule_results %}
+    {% if rule.failures and (rule.failures|length) > 0 %}
+      {% set failures.found = true %}
+      <div class="findings-summary" role="status" aria-live="polite">
+        {% if view_mode == "results" %}
+          <button
+            class="rule-summary"
+            type="button"
+            data-rule-id="{{ rule.rule_id }}"
+            aria-expanded="{% if expanded_rule_ids and (rule.rule_id in expanded_rule_ids) %}true{% else %}false{% endif %}"
+            data-tooltip="{{ rule.description }}"
+          >
+            <span class="rule-title">{{ rule.rule_name }}</span>
+            <span class="rule-meta">{{ rule.fail_count }}/{{ rule.eligible_count }} failed</span>
+            <span class="rule-toggle" aria-hidden="true">⏵</span>
+          </button>
+          <ul
+            class="rule-list {% if expanded_rule_ids and (rule.rule_id in expanded_rule_ids) %}{% else %}is-hidden{% endif %}"
+            data-rule-id="{{ rule.rule_id }}"
+          >
+            {% for failure in rule.failures %}
+              <li class="rule-item rule-item-3col">
+                <span class="rule-card-name">{{ failure.card_name or failure.member_name or "Board-level" }}</span>
+                <span class="rule-card-days u-muted">
+                  {{ failure.list_name or "" }}
+                  {% if failure.due %} • Due {{ failure.due }}{% endif %}
+                </span>
+                <span class="rule-card-action u-text-right">
+                  {% if failure.card_id %}
+                    <button
+                      class="btn-base btn-secondary btn-size-sm btn-no-shadow btn-hover-bg u-btn-tight u-mt-0 u-mb-0"
+                      hx-get="/partials/card?run_id={{ run_id }}&card_id={{ failure.card_id }}"
+                      hx-target="#content"
+                      hx-swap="innerHTML"
+                      type="button"
+                    >
+                      View Card
+                    </button>
+                  {% else %}
+                    {{ failure.reason }}
+                  {% endif %}
+                </span>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="rule-summary rule-summary-static" data-tooltip="{{ rule.description }}">
+            <span class="rule-title">{{ rule.rule_name }}</span>
+            <span class="rule-meta">{{ rule.fail_count }}/{{ rule.eligible_count }} failed</span>
+          </div>
+          <div class="rule-table">
+            <table class="rule-table-grid">
+              <colgroup>
+                <col style="width: 35%;">
+                <col style="width: 20%;">
+                <col style="width: 25%;">
+                <col style="width: 20%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Card</th>
+                  <th>List</th>
+                  <th>Member(s)</th>
+                  <th class="rule-table-date u-text-right">Date Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for failure in rule.failures %}
+                  <tr>
+                    <td>{{ failure.card_name or failure.member_name or "Board-level" }}</td>
+                    <td>{{ failure.list_name or "—" }}</td>
+                    <td class="rule-members">
+                      {% if failure.member_name %}
+                        <div class="rule-member">{{ failure.member_name }}</div>
+                      {% elif failure.members and (failure.members|length) > 0 %}
+                        {% for member in failure.members %}
+                          <div class="rule-member">{{ member }}</div>
+                        {% endfor %}
+                      {% else %}
+                        <div class="rule-member">—</div>
+                      {% endif %}
+                    </td>
+                    <td class="rule-table-date u-text-right">{{ failure.due[:10] if failure.due else "—" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+  {% if not failures.found %}
+    <div class="findings-summary" role="status" aria-live="polite">
+      <div class="rule-item">
+        {% if filter_active %}
+          <span>No findings match the selected members.</span>
+        {% else %}
+          <span>No rule failures.</span>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+{% else %}
+  <div class="findings-summary" role="status" aria-live="polite">
+    <div class="rule-item">
+      {% if filter_active %}
+        <span>No findings match the selected members.</span>
+      {% else %}
+        <span>No rule results available.</span>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}

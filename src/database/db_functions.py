@@ -42,7 +42,7 @@ def save_run(
         conn: SQLite connection
         session_id: User session ID
         board_data: Parsed board data (from parse_full_board)
-        scores: Calculated scores (from scorer)
+        scores: Calculated scores (from scoring_engine)
         report_json: Optional full report JSON for exports
         
     Returns:
