@@ -1,3 +1,8 @@
+"""Rule-level tests for description_canonicalization matching.
+
+These tests validate rule behavior directly; engine wiring stays in tests/test_rules.py.
+"""
+
 from pathlib import Path
 
 import yaml

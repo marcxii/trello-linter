@@ -1,3 +1,8 @@
+"""Rule-level tests for card_effort matching.
+
+These tests validate rule behavior directly; engine wiring stays in tests/test_rules.py.
+"""
+
 from pathlib import Path
 
 import yaml
