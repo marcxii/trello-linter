@@ -56,10 +56,12 @@ card_descriptiveness:
 story_point_estimation:
   enabled: true
   sp_regex_patterns:
-    - "Story Point[s]?:\\s*(\\d+)"
-    - "SP:\\s*(\\d+)"
-    - "Effort:\\s*(\\d+)"
-    - "Estimation:\\s*(\\d+)"
+    - "\\bStory[\\s_-]*Point[s]?\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
+    - "\\bSP\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
+    - "\\bPts?\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
+    - "\\bPoints?\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
+    - "\\bPoint[\\s_-]*Value\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
+    - "\\bSize\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
   description: "Story points present in description"
 
 # Rule 5: Past Due Violation
@@ -119,8 +121,11 @@ card_completion:
 card_effort:
   enabled: true
   effort_regex_patterns:
-    - "Effort:\\s*(\\d+)"
-    - "Hours:\\s*(\\d+)"
+    - "\\bEffort(?:[\\s_-]*(?:Hours?|Minutes?))?\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:h|hr|hrs|hours?|m|min|mins|minutes?)?"
+    - "\\b(?:Estimate|Estimation|Estimated[\\s_-]*Hours?|Estimated[\\s_-]*Time|Time[\\s_-]*Estimate|Est)\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:h|hr|hrs|hours?|m|min|mins|minutes?)?"
+    - "\\bHours?\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
+    - "\\bMinutes?\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
+    - "\\b(?:Dev|Engineering)[\\s_-]*Effort\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
   description: "Card has effort/hours estimation"
 
 # Rule 15: Description Canonicalization
@@ -128,22 +133,32 @@ description_canonicalization:
   enabled: true
   story_formats:
     # As ... I/we ... (need/have/must/want/would like to) ... (so that/so I can/so we can/to/in order to) ...
-    - "^\\s*As\\s+(?:a|an|the)\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
-    - "^\\s*As\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+(?:a|an|the)\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+(?:need|have|want|would like)\\s+to\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+(?:need|have|want|would like)\\s+to\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+must\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+want\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+plan\\s+to\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+(?:a|an|the)\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+(?:will|can)\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+(?:will|can)\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
     # As member(s) of/part of/team ... we ... (need/plan/will/can) ... so ...
-    - "^\\s*As\\s+(?:a\\s+member of|members of|part of)\\s+[^,]+,\\s*we\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
-    - "^\\s*As\\s+(?:a\\s+team|a\\s+development\\s+team|the\\s+project\\s+team|[^,]+\\s+members),\\s*we\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+(?:a\\s+member of|members of|part of)\\s+[^,]+\\s*,?\\s*we\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?\\s*,?\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+(?:a\\s+team|a\\s+development\\s+team|the\\s+project\\s+team|[^,]+\\s+members)\\s*,?\\s*we\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?\\s*,?\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+(?:a\\s+member of|members of|part of)\\s+[^,]+\\s*,?\\s*we\\s+(?:will|can)\\s+.+?\\s*,?\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+(?:a\\s+team|a\\s+development\\s+team|the\\s+project\\s+team|[^,]+\\s+members)\\s*,?\\s*we\\s+(?:will|can)\\s+.+?\\s*,?\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
     # As we (the <team/group>) ... we ...
-    - "^\\s*As\\s+we\\s+\\([^\\)]+\\),\\s*we\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+we\\s+\\([^\\)]+\\)\\s*,?\\s*we\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?\\s*,?\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+we\\s+\\([^\\)]+\\)\\s*,?\\s*we\\s+(?:will|can)\\s+.+?\\s*,?\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
     # As someone responsible/accountable/owner/stakeholder/user of ... I/we ...
-    - "^\\s*As\\s+someone\\s+responsible\\s+for\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
-    - "^\\s*As\\s+the\\s+person\\s+accountable\\s+for\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
-    - "^\\s*As\\s+the\\s+owner\\s+of\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
-    - "^\\s*As\\s+(?:a\\s+stakeholder\\s+in|a\\s+user\\s+of)\\s+[^,]+,\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+someone\\s+responsible\\s+for\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+the\\s+person\\s+accountable\\s+for\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+the\\s+owner\\s+of\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+(?:a\\s+stakeholder\\s+in|a\\s+user\\s+of)\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+stakeholders\\s+in\\s+[^,]+\\s*,?\\s*we\\s+(?:need|have|must|want|would like|plan|will|can)\\s+to\\s+.+?\\s*,?\\s*(?:so that|so we can|so the team can|so our team can|so everyone can|to|in order to)\\s+.+\\.?$"
     # As ... I/we am/are responsible/accountable/tasked with ... so ...
-    - "^\\s*As\\s+[^,]+,\\s*(?:I|we)\\s+['’]?(?:m|am|are)\\s+(?:responsible|accountable|tasked)\\s+with\\s+.+?,\\s*(?:so that|so (?:I|we) can|so the team can|so our team can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+[^,]+\\s*,?\\s*(?:I|we)\\s*(?:['’]?(?:m|am)|are|['’]?re)\\s+(?:responsible|accountable|tasked)\\s+with\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|so the team can|so our team can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+[^,]+\\s*,?\\s*(?:I|we)\\s*(?:['’]?(?:m|am)|are|['’]?re)\\s+(?:responsible|accountable)\\s+for\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|so the team can|so our team can|to|in order to)\\s+.+\\.?$"
     # As ... I/we should be able to ... so ...
-    - "^\\s*As\\s+[^,]+,\\s*(?:I|we)\\s+should\\s+be\\s+able\\s+to\\s+.+?,\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
+    - "^\\s*As\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+should\\s+be\\s+able\\s+to\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
     # Given/When/Then canonical form
     - "^\\s*Given\\s+.+,\\s*[Ww]hen\\s+.+,\\s*[Tt]hen\\s+.+$"
   description: "Card description follows standard format"
