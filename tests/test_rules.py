@@ -11,6 +11,7 @@ from src.linter.rules.capacity_rules import (
     check_progress_threshold,
 )
 from src.linter.rules.estimation_rules import (
+    check_card_effort,
     check_card_descriptiveness,
     check_description_canonicalization,
     check_story_point_estimation,
@@ -91,11 +92,28 @@ def test_story_point_estimation_pass_and_fail():
         lists=[{"id": "l1", "name": "In Progress", "closed": False}],
         cards=[
             {"id": "c1", "name": "No SP", "list_id": "l1", "closed": False, "desc": "No points"},
-            {"id": "c2", "name": "With SP", "list_id": "l1", "closed": False, "desc": "SP: 5"},
+            {"id": "c2", "name": "With SP Only", "list_id": "l1", "closed": False, "desc": "SP 5"},
+            {"id": "c3", "name": "With Effort Only", "list_id": "l1", "closed": False, "desc": "Hours 3"},
+            {"id": "c4", "name": "With Both", "list_id": "l1", "closed": False, "desc": "SP 5, Hours 3"},
         ],
     )
     result = check_story_point_estimation(parsed, {"in_progress_keywords": ["in progress"]})
-    assert result["eligible_count"] == 2
+    assert result["eligible_count"] == 4
+    assert result["fail_count"] == 2
+    assert result["failures"][0]["card_id"] == "c1"
+
+
+def test_card_effort_pass_and_fail():
+    parsed = _base_parsed_data(
+        lists=[{"id": "l1", "name": "In Progress", "closed": False}],
+        cards=[
+            {"id": "c1", "name": "No Effort", "list_id": "l1", "closed": False, "desc": "No estimate"},
+            {"id": "c2", "name": "With Effort", "list_id": "l1", "closed": False, "desc": "Effort 3"},
+            {"id": "c3", "name": "With Est", "list_id": "l1", "closed": False, "desc": "est 2"},
+        ],
+    )
+    result = check_card_effort(parsed, {"in_progress_keywords": ["in progress"]})
+    assert result["eligible_count"] == 3
     assert result["fail_count"] == 1
     assert result["failures"][0]["card_id"] == "c1"
 

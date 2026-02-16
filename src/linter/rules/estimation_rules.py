@@ -30,7 +30,7 @@ def extract_story_points(description: str, patterns: List[str]) -> Optional[int]
         match = re.search(pattern, description, re.IGNORECASE)
         if match:
             try:
-                return int(match.group(1))
+                return int(float(match.group(1)))
             except (ValueError, IndexError):
                 continue
     
@@ -108,11 +108,14 @@ def check_story_point_estimation(parsed_data: Dict[str, Any], config: Dict[str, 
     Returns:
         Dictionary with rule_id, fail_count, eligible_count, failures list
     """
-    sp_patterns = config.get("story_point_estimation", {}).get("sp_regex_patterns", [
-        r"Story Point[s]?:\s*(\d+)",
-        r"SP:\s*(\d+)",
-        r"Effort:\s*(\d+)",
-        r"Estimation:\s*(\d+)"
+    rule_cfg = config.get("story_point_estimation", {})
+    sp_patterns = rule_cfg.get("sp_regex_patterns", [
+        r"\bStory[\s_-]*Point[s]?\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
+        r"\bSP\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
+        r"\bPts?\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
+        r"\bPoints?\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
+        r"\bPoint[\s_-]*Value\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
+        r"\bSize\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
     ])
     in_progress_keywords = config.get("in_progress_keywords", ["in progress", "doing"])
     
@@ -137,13 +140,12 @@ def check_story_point_estimation(parsed_data: Dict[str, Any], config: Dict[str, 
     for card in eligible_cards:
         desc = card.get("desc", "")
         story_points = extract_story_points(desc, sp_patterns)
-        
         if story_points is None:
             failures.append({
                 "card_id": card.get("id"),
                 "card_name": card.get("name"),
                 "list_name": list_map.get(card.get("list_id"), "Unknown"),
-                "reason": "No story points found in description"
+                "reason": "Missing story point estimate in description"
             })
     
     return {
@@ -159,7 +161,7 @@ def check_story_point_estimation(parsed_data: Dict[str, Any], config: Dict[str, 
 def check_card_effort(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """Rule 14: Card has effort/hours estimation.
     
-    Eligibility: Cards in IN_PROGRESS AND closed=true
+    Eligibility: Cards in IN_PROGRESS AND closed=false
     Fail Condition: Cannot parse effort hours from description
     
     Args:
@@ -170,8 +172,11 @@ def check_card_effort(parsed_data: Dict[str, Any], config: Dict[str, Any] = None
         Dictionary with rule_id, fail_count, eligible_count, failures list
     """
     effort_patterns = config.get("card_effort", {}).get("effort_regex_patterns", [
-        r"Effort:\s*(\d+)",
-        r"Hours:\s*(\d+)"
+        r"\bEffort(?:[\s_-]*(?:Hours?|Minutes?))?\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hours?|m|min|mins|minutes?)?",
+        r"\b(?:Estimate|Estimation|Estimated[\s_-]*Hours?|Estimated[\s_-]*Time|Time[\s_-]*Estimate|Est)\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hours?|m|min|mins|minutes?)?",
+        r"\bHours?\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
+        r"\bMinutes?\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
+        r"\b(?:Dev|Engineering)[\s_-]*Effort\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
     ])
     in_progress_keywords = config.get("in_progress_keywords", ["in progress", "doing"])
     
@@ -184,11 +189,11 @@ def check_card_effort(parsed_data: Dict[str, Any], config: Dict[str, Any] = None
         if any(keyword in name for keyword in in_progress_keywords)
     ]
     
-    # Filter eligible cards (in progress AND closed)
+    # Filter eligible cards (in progress AND open)
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
         if card.get("list_id") in in_progress_list_ids
-        and card.get("closed", False) == True
+        and not card.get("closed", False)
     ]
     
     # Check for failures
