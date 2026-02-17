@@ -48,8 +48,10 @@ def _build_csv_response(run_id: int) -> Response:
         ]
         base_config = RuleEngine().config or {}
         effective_config = _apply_rule_settings_overrides(base_config, overrides)
-        weights = RuleEngine(config=effective_config).get_rule_weights()
-        scoring_result = calculate_overall_score(rule_results, weights)
+        scoring_engine = RuleEngine(config=effective_config)
+        weights = scoring_engine.get_rule_weights()
+        scoring_cfg = scoring_engine.get_scoring_config()
+        scoring_result = calculate_overall_score(rule_results, weights, scoring_cfg)
         report_ctx["scores"] = {
             **(report_ctx.get("scores", {}) or {}),
             "overall_score": scoring_result.get("overall_score", 0),

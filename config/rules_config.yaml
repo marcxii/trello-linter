@@ -17,8 +17,10 @@ lists:
     - "complete"
     - "deploy"
 
-# Rule Weights (0-100, higher = more important)
-# Total doesn't need to equal 100
+# Rule Weights (relative, normalized across active scored rules).
+# Overall score uses a weighted average of per-rule scores:
+#   overall = Σ(weight_i * rule_score_i) / Σ(active_weights)
+# Only ratios matter (e.g., all 1s == all 10s).
 weights:
   card_ownership: 1.0               # Rule 1
   card_due_date: 1.0                # Rule 2
@@ -165,11 +167,16 @@ description_canonicalization:
 
 # Scoring
 scoring:
+  # Effective denominator stabilization for per-rule penalty:
+  #   penalty_pct = (k * fail_count / max(eligible_count, n0)) * 100
+  #   rule_score = max(0, 100 - penalty_pct)
+  effective_denominator:
+    enabled: true
+    n0: 20
+    k: 1.0
+
   grade_thresholds:
     excellent: 90
     good: 80
     needs_improvement: 70
     poor: 60
-  
-  # Penalty calculation method
-  penalty_method: "weighted_percentage"  # or "binary" or "scaled"
