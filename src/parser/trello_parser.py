@@ -243,6 +243,7 @@ def _parse_cards_full(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
             'name': card.get('name'),
             'desc': card.get('desc', ''),
             'list_id': card.get('idList'),
+            'dateLastActivity': card.get('dateLastActivity'),
             'members': card.get('idMembers', []),
             'labels': card.get('labels', []),
             'checklists': card.get('idChecklists', []),

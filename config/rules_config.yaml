@@ -79,7 +79,7 @@ progress_threshold:
 progress_monitoring:
   enabled: true
   threshold_num_days: 5
-  description: "Open In Progress cards are stale beyond the day threshold."
+  description: "Open In Progress cards have no activity beyond the day threshold."
 
 # Deprecated: Rule 8: Weekly Workload
 weekly_workload:
