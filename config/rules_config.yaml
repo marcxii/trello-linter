@@ -173,7 +173,7 @@ scoring:
   effective_denominator:
     enabled: true
     n0: 20
-    k: 1.0
+    k: 1.5
 
   grade_thresholds:
     excellent: 90

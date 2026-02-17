@@ -1,0 +1,278 @@
+{
+  "id": "b_example_high",
+  "name": "Example - High Score (>90)",
+  "desc": "Example board designed to score above 90.",
+  "lists": [
+    {
+      "id": "l_backlog",
+      "name": "Backlog",
+      "closed": false
+    },
+    {
+      "id": "l_inprog",
+      "name": "In Progress",
+      "closed": false
+    },
+    {
+      "id": "l_done",
+      "name": "Done",
+      "closed": false
+    }
+  ],
+  "members": [
+    {
+      "id": "mA",
+      "fullName": "Ari",
+      "username": "ari"
+    },
+    {
+      "id": "mB",
+      "fullName": "Bea",
+      "username": "bea"
+    },
+    {
+      "id": "mC",
+      "fullName": "Cam",
+      "username": "cam"
+    }
+  ],
+  "cards": [
+    {
+      "id": "high_open_1",
+      "name": "High Open 1",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mA"
+      ],
+      "closed": false,
+      "due": "2026-02-28T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_open_2",
+      "name": "High Open 2",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mB"
+      ],
+      "closed": false,
+      "due": "2026-03-01T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_open_3",
+      "name": "High Open 3",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mC"
+      ],
+      "closed": false,
+      "due": "2026-03-02T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_open_4",
+      "name": "High Open 4",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mA"
+      ],
+      "closed": false,
+      "due": "2026-03-03T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_open_5",
+      "name": "High Open 5",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mB"
+      ],
+      "closed": false,
+      "due": "2026-03-04T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_open_6",
+      "name": "High Open 6",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mC"
+      ],
+      "closed": false,
+      "due": "2026-03-05T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_open_7",
+      "name": "High Open 7",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mA"
+      ],
+      "closed": false,
+      "due": "2026-03-06T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_open_8",
+      "name": "High Open 8",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mB"
+      ],
+      "closed": false,
+      "due": "2026-03-07T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_open_9",
+      "name": "High Open 9",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mC"
+      ],
+      "closed": false,
+      "due": "2026-03-08T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_open_10",
+      "name": "High Open 10",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mA"
+      ],
+      "closed": false,
+      "due": "2026-03-09T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_open_11",
+      "name": "High Open 11",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mB"
+      ],
+      "closed": false,
+      "due": "2026-03-10T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_open_12",
+      "name": "High Open 12",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "mC"
+      ],
+      "closed": false,
+      "due": "2026-03-11T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T12:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_done_1",
+      "name": "High Done 1",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_done",
+      "idMembers": [
+        "mA"
+      ],
+      "closed": true,
+      "due": "2026-02-19T18:39:49.264727Z",
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T06:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_done_2",
+      "name": "High Done 2",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_done",
+      "idMembers": [
+        "mA"
+      ],
+      "closed": true,
+      "due": "2026-02-19T18:39:49.264727Z",
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T06:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_done_3",
+      "name": "High Done 3",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_done",
+      "idMembers": [
+        "mA"
+      ],
+      "closed": true,
+      "due": "2026-02-19T18:39:49.264727Z",
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T06:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "high_done_4",
+      "name": "High Done 4",
+      "desc": "As a developer, I need to implement the feature, so that users can complete tasks. Story Point: 3 Effort: 2",
+      "idList": "l_done",
+      "idMembers": [
+        "mA"
+      ],
+      "closed": true,
+      "due": "2026-02-19T18:39:49.264727Z",
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T06:39:49.264727Z",
+      "actions": []
+    }
+  ],
+  "checklists": []
+}
