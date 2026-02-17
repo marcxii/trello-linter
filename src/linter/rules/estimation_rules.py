@@ -40,7 +40,7 @@ def extract_story_points(description: str, patterns: List[str]) -> Optional[int]
 def check_card_descriptiveness(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """Rule 3: Card has a description length of ≥ 20 characters.
     
-    Eligibility: Cards in (BACKLOG, IN_PROGRESS) AND closed=false
+    Eligibility: Cards in any list (open or closed)
     Fail Condition: len(card.desc).strip() < MINIMUM_DESC_CHAR
     
     Args:
@@ -51,25 +51,13 @@ def check_card_descriptiveness(parsed_data: Dict[str, Any], config: Dict[str, An
         Dictionary with rule_id, fail_count, eligible_count, failures list
     """
     minimum_desc_char = config.get("card_descriptiveness", {}).get("minimum_desc_char", 20)
-    backlog_keywords = config.get("backlog_keywords", ["backlog", "to do"])
-    in_progress_keywords = config.get("in_progress_keywords", ["in progress", "doing"])
-    
     # Build list map
     list_map = {lst["id"]: lst["name"].lower() for lst in parsed_data.get("lists", [])}
-    
-    # Find eligible list IDs (Backlog or In Progress)
-    eligible_list_ids = []
-    for list_id, name in list_map.items():
-        is_backlog = any(keyword in name for keyword in backlog_keywords)
-        is_in_progress = any(keyword in name for keyword in in_progress_keywords)
-        if is_backlog or is_in_progress:
-            eligible_list_ids.append(list_id)
-    
-    # Filter eligible cards
+
+    # Filter eligible cards (any list, open or closed)
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
-        if card.get("list_id") in eligible_list_ids
-        and not card.get("closed", False)
+        if card.get("list_id") in list_map
     ]
     
     # Check for failures
@@ -98,7 +86,7 @@ def check_card_descriptiveness(parsed_data: Dict[str, Any], config: Dict[str, An
 def check_story_point_estimation(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """Rule 4: Story points present in description.
     
-    Eligibility: Cards in IN_PROGRESS AND closed=false
+    Eligibility: Cards in any list (open or closed)
     Fail Condition: Cannot parse story points from description
     
     Args:
@@ -117,22 +105,13 @@ def check_story_point_estimation(parsed_data: Dict[str, Any], config: Dict[str, 
         r"\bPoint[\s_-]*Value\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
         r"\bSize\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
     ])
-    in_progress_keywords = config.get("in_progress_keywords", ["in progress", "doing"])
-    
     # Build list map
     list_map = {lst["id"]: lst["name"].lower() for lst in parsed_data.get("lists", [])}
-    
-    # Find IN_PROGRESS list IDs
-    in_progress_list_ids = [
-        list_id for list_id, name in list_map.items()
-        if any(keyword in name for keyword in in_progress_keywords)
-    ]
-    
-    # Filter eligible cards
+
+    # Filter eligible cards (any list, open or closed)
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
-        if card.get("list_id") in in_progress_list_ids
-        and not card.get("closed", False)
+        if card.get("list_id") in list_map
     ]
     
     # Check for failures
@@ -161,7 +140,7 @@ def check_story_point_estimation(parsed_data: Dict[str, Any], config: Dict[str, 
 def check_card_effort(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """Rule 14: Card has effort/hours estimation.
     
-    Eligibility: Cards in IN_PROGRESS AND closed=false
+    Eligibility: Cards in any list (open or closed)
     Fail Condition: Cannot parse effort hours from description
     
     Args:
@@ -178,22 +157,13 @@ def check_card_effort(parsed_data: Dict[str, Any], config: Dict[str, Any] = None
         r"\bMinutes?\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
         r"\b(?:Dev|Engineering)[\s_-]*Effort\b\s*(?::|=|-|is)?\s*(\d+(?:\.\d+)?)",
     ])
-    in_progress_keywords = config.get("in_progress_keywords", ["in progress", "doing"])
-    
     # Build list map
     list_map = {lst["id"]: lst["name"].lower() for lst in parsed_data.get("lists", [])}
-    
-    # Find IN_PROGRESS list IDs
-    in_progress_list_ids = [
-        list_id for list_id, name in list_map.items()
-        if any(keyword in name for keyword in in_progress_keywords)
-    ]
-    
-    # Filter eligible cards (in progress AND open)
+
+    # Filter eligible cards (any list, open or closed)
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
-        if card.get("list_id") in in_progress_list_ids
-        and not card.get("closed", False)
+        if card.get("list_id") in list_map
     ]
     
     # Check for failures
@@ -237,25 +207,13 @@ def check_description_canonicalization(parsed_data: Dict[str, Any], config: Dict
         r"As a .+, I want .+",
         r"Given .+, [Ww]hen .+, [Tt]hen .+"
     ])
-    backlog_keywords = config.get("backlog_keywords", ["backlog", "to do"])
-    in_progress_keywords = config.get("in_progress_keywords", ["in progress", "doing"])
-    
     # Build list map
     list_map = {lst["id"]: lst["name"].lower() for lst in parsed_data.get("lists", [])}
-    
-    # Find eligible list IDs (Backlog or In Progress)
-    eligible_list_ids = []
-    for list_id, name in list_map.items():
-        is_backlog = any(keyword in name for keyword in backlog_keywords)
-        is_in_progress = any(keyword in name for keyword in in_progress_keywords)
-        if is_backlog or is_in_progress:
-            eligible_list_ids.append(list_id)
-    
-    # Filter eligible cards (cards with descriptions in eligible lists)
+
+    # Filter eligible cards (cards with descriptions in any list, open or closed)
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
-        if card.get("list_id") in eligible_list_ids
-        and not card.get("closed", False)
+        if card.get("list_id") in list_map
         and card.get("desc")  # Has description
     ]
     

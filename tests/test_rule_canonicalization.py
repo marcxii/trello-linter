@@ -91,3 +91,13 @@ def test_description_canonicalization_flags_invalid():
     )
     assert result["eligible_count"] == 1
     assert result["fail_count"] == 1
+
+
+def test_description_canonicalization_applies_to_any_list():
+    parsed = _parsed_data(["Just some notes without the required pattern."], list_name="Done")
+    result = check_description_canonicalization(
+        parsed,
+        {"description_canonicalization": {}},
+    )
+    assert result["eligible_count"] == 1
+    assert result["fail_count"] == 1

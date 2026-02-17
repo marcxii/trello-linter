@@ -18,21 +18,21 @@ from typing import Dict, List, Any
 
 # Default rule weights (can be overridden via config)
 DEFAULT_RULE_WEIGHTS = {
-    "card_ownership": 10.0,              # Rule 1: Critical - work must be assigned
-    "card_due_date": 8.0,                # Rule 2: Important - work must be scheduled
-    "card_descriptiveness": 7.0,         # Rule 3: Important - work must be described
-    "story_point_estimation": 6.0,       # Rule 4: Moderate - estimation coverage
-    "past_due_violation": 12.0,          # Rule 5: Critical - late work is severe
-    "progress_threshold": 9.0,           # Rule 6: Important - prevent overload
-    "progress_monitoring": 8.0,          # Rule 7: Important - prevent stale work
-    "weekly_workload": 7.0,              # Rule 8 (deprecated): Moderate - weekly capacity
-    "individual_overload": 10.0,         # Rule 9 (deprecated): Critical - individual capacity
-    "near_term_overcommitment": 9.0,     # Rule 10 (deprecated): Important - short-term planning
-    "unscheduled_work": 6.0,             # Rule 11 (deprecated): Moderate - committed work needs dates
-    "flow_progress_signal": 5.0,         # Rule 12 (deprecated): Low - flow metrics
-    "card_completion": 8.0,              # Rule 13: Important - proper completion
-    "card_effort": 5.0,                  # Rule 14: Low - effort estimation
-    "description_canonicalization": 4.0, # Rule 15: Low - formatting standard
+    "card_ownership": 1.0,               # Rule 1
+    "card_due_date": 1.0,                # Rule 2
+    "card_descriptiveness": 1.0,         # Rule 3
+    "story_point_estimation": 1.0,       # Rule 4
+    "past_due_violation": 1.0,           # Rule 5
+    "progress_threshold": 1.0,           # Rule 6
+    "progress_monitoring": 1.0,          # Rule 7
+    "weekly_workload": 1.0,              # Rule 8 (deprecated)
+    "individual_overload": 1.0,          # Rule 9 (deprecated)
+    "near_term_overcommitment": 1.0,     # Rule 10 (deprecated)
+    "unscheduled_work": 1.0,             # Rule 11 (deprecated)
+    "flow_progress_signal": 1.0,         # Rule 12 (deprecated)
+    "card_completion": 1.0,              # Rule 13
+    "card_effort": 1.0,                  # Rule 14
+    "description_canonicalization": 1.0, # Rule 15
 }
 
 

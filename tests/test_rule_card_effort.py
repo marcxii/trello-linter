@@ -66,3 +66,14 @@ def test_card_effort_flags_missing_effort():
     )
     assert result["eligible_count"] == len(descriptions)
     assert result["fail_count"] == len(descriptions)
+
+
+def test_card_effort_applies_to_any_list():
+    parsed = _parsed_data(["No effort estimate"], list_name="Backlog")
+    config = yaml.safe_load(Path("config/rules_config.yaml").read_text()) or {}
+    result = check_card_effort(
+        parsed,
+        {"card_effort": config.get("card_effort", {})},
+    )
+    assert result["eligible_count"] == 1
+    assert result["fail_count"] == 1

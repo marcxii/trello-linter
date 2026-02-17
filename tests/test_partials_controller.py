@@ -130,7 +130,9 @@ def test_analyze_includes_rule_description_tooltip(client):
     res = _post_analyze(client, _make_payload())
     assert res.status_code == 200
     html = res.data.decode("utf-8")
-    assert 'data-tooltip="Card has a description length of ≥ 20 characters"' in html
+    config = yaml.safe_load(Path("config/rules_config.yaml").read_text()) or {}
+    expected = config.get("card_descriptiveness", {}).get("description", "")
+    assert f'data-tooltip="{expected}"' in html
 
 
 def test_rule_settings_persist_and_disable_rule(client, app):
