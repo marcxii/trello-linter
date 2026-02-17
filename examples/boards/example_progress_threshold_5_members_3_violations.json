@@ -1,0 +1,292 @@
+{
+  "id": "b_example_progress_threshold_5_3",
+  "name": "Example - Progress Threshold 5 Members / 3 Violations",
+  "desc": "Five members have in-progress work; three exceed WIP threshold.",
+  "lists": [
+    {
+      "id": "l_backlog",
+      "name": "Backlog",
+      "closed": false
+    },
+    {
+      "id": "l_inprog",
+      "name": "In Progress",
+      "closed": false
+    },
+    {
+      "id": "l_done",
+      "name": "Done",
+      "closed": false
+    }
+  ],
+  "members": [
+    {
+      "id": "m1",
+      "fullName": "Member One",
+      "username": "m1"
+    },
+    {
+      "id": "m2",
+      "fullName": "Member Two",
+      "username": "m2"
+    },
+    {
+      "id": "m3",
+      "fullName": "Member Three",
+      "username": "m3"
+    },
+    {
+      "id": "m4",
+      "fullName": "Member Four",
+      "username": "m4"
+    },
+    {
+      "id": "m5",
+      "fullName": "Member Five",
+      "username": "m5"
+    }
+  ],
+  "cards": [
+    {
+      "id": "m1_ip_1",
+      "name": "M1 In Progress 1",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m1"
+      ],
+      "closed": false,
+      "due": "2026-02-25T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m1_ip_2",
+      "name": "M1 In Progress 2",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m1"
+      ],
+      "closed": false,
+      "due": "2026-02-26T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m1_ip_3",
+      "name": "M1 In Progress 3",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m1"
+      ],
+      "closed": false,
+      "due": "2026-02-27T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m1_ip_4",
+      "name": "M1 In Progress 4",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m1"
+      ],
+      "closed": false,
+      "due": "2026-02-28T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m2_ip_1",
+      "name": "M2 In Progress 1",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m2"
+      ],
+      "closed": false,
+      "due": "2026-02-25T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m2_ip_2",
+      "name": "M2 In Progress 2",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m2"
+      ],
+      "closed": false,
+      "due": "2026-02-26T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m2_ip_3",
+      "name": "M2 In Progress 3",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m2"
+      ],
+      "closed": false,
+      "due": "2026-02-27T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m2_ip_4",
+      "name": "M2 In Progress 4",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m2"
+      ],
+      "closed": false,
+      "due": "2026-02-28T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m3_ip_1",
+      "name": "M3 In Progress 1",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m3"
+      ],
+      "closed": false,
+      "due": "2026-02-25T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m3_ip_2",
+      "name": "M3 In Progress 2",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m3"
+      ],
+      "closed": false,
+      "due": "2026-02-26T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m3_ip_3",
+      "name": "M3 In Progress 3",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m3"
+      ],
+      "closed": false,
+      "due": "2026-02-27T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m3_ip_4",
+      "name": "M3 In Progress 4",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m3"
+      ],
+      "closed": false,
+      "due": "2026-02-28T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T19:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m4_ip_1",
+      "name": "M4 In Progress 1",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 2 Effort: 1",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m4"
+      ],
+      "closed": false,
+      "due": "2026-02-28T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T07:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m4_ip_2",
+      "name": "M4 In Progress 2",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 2 Effort: 1",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m4"
+      ],
+      "closed": false,
+      "due": "2026-03-01T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T07:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m5_ip_1",
+      "name": "M5 In Progress 1",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 2 Effort: 1",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m5"
+      ],
+      "closed": false,
+      "due": "2026-02-28T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T07:34:23.325896Z",
+      "actions": []
+    },
+    {
+      "id": "m5_ip_2",
+      "name": "M5 In Progress 2",
+      "desc": "As a user, I need to complete this task, so that we can deliver. Story Point: 2 Effort: 1",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m5"
+      ],
+      "closed": false,
+      "due": "2026-03-01T19:34:23.325896Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T07:34:23.325896Z",
+      "actions": []
+    }
+  ],
+  "checklists": []
+}

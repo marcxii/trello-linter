@@ -144,27 +144,51 @@ def check_progress_threshold(parsed_data: Dict[str, Any], config: Dict[str, Any]
         for member_id in members:
             member_wip[member_id].append(card)
     
-    # Check for failures (members exceeding threshold)
+    # Build card-level failures by member so display can group by member while
+    # preserving original scoring semantics (member-based fail/eligible counts).
     failures = []
+    member_failures = []
+    members_over_threshold = 0
     for member_id, cards in member_wip.items():
-        if len(cards) > max_wip:
-            member_name = member_map.get(member_id, member_id)
-            failures.append({
+        if len(cards) <= max_wip:
+            continue
+        members_over_threshold += 1
+        member_name = member_map.get(member_id, member_id)
+        member_failures.append(
+            {
                 "member_id": member_id,
                 "member_name": member_name,
                 "wip_count": len(cards),
                 "threshold": max_wip,
-                "reason": f"{member_name} has {len(cards)} cards in progress (max: {max_wip})",
-                "card_names": [c.get("name") for c in cards[:5]]  # First 5 cards
-            })
+                "card_names": [c.get("name") for c in cards if c.get("name")],
+                "card_ids": [c.get("id") for c in cards if c.get("id")],
+            }
+        )
+        for card in cards:
+            card_id = card.get("id")
+            if not card_id:
+                continue
+            failures.append(
+                {
+                    "card_id": card_id,
+                    "card_name": card.get("name"),
+                    "list_name": list_map.get(card.get("list_id"), "Unknown"),
+                    "member_id": member_id,
+                    "member_name": member_name,
+                    "wip_count": len(cards),
+                    "threshold": max_wip,
+                    "reason": f"{member_name} has {len(cards)} cards in progress (max: {max_wip})",
+                }
+            )
     
     return {
         "rule_id": "progress_threshold",
         "rule_name": "Progress Threshold (WIP per person)",
-        "fail_count": len(failures),
+        "fail_count": members_over_threshold,
         "eligible_count": len(member_wip),  # Count of members with WIP
         "passed": len(failures) == 0,
-        "failures": failures
+        "failures": failures,
+        "member_failures": member_failures,
     }
 
 

@@ -22,7 +22,13 @@
           >
             {% for failure in rule.failures %}
               <li class="rule-item rule-item-3col">
-                <span class="rule-card-name">{{ failure.card_name or failure.member_name or "Board-level" }}</span>
+                <span class="rule-card-name">
+                  {% if rule.rule_id == "progress_threshold" and failure.member_name and failure.card_name %}
+                    ({{ failure.member_name }}) {{ failure.card_name }}
+                  {% else %}
+                    {{ failure.card_name or failure.member_name or "Board-level" }}
+                  {% endif %}
+                </span>
                 <span class="rule-card-list u-muted">
                   {{ failure.list_name or "" }}
                 </span>
