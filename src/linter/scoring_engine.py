@@ -29,11 +29,6 @@ DEFAULT_RULE_WEIGHTS = {
     "past_due_violation": 1.0,           # Rule 5
     "progress_threshold": 1.0,           # Rule 6
     "progress_monitoring": 1.0,          # Rule 7
-    "weekly_workload": 1.0,              # Rule 8 (deprecated)
-    "individual_overload": 1.0,          # Rule 9 (deprecated)
-    "near_term_overcommitment": 1.0,     # Rule 10 (deprecated)
-    "unscheduled_work": 1.0,             # Rule 11 (deprecated)
-    "flow_progress_signal": 1.0,         # Rule 12 (deprecated)
     "card_completion": 1.0,              # Rule 13
     "card_effort": 1.0,                  # Rule 14
     "description_canonicalization": 1.0, # Rule 15

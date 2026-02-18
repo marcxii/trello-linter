@@ -78,7 +78,6 @@ progress_monitoring:
   threshold_num_days: 5
   description: "Open In Progress cards have no activity beyond the day threshold."
 
-
 # Rule 13: Card Completion
 card_completion:
   enabled: true
