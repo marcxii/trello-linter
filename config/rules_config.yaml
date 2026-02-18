@@ -29,11 +29,6 @@ weights:
   past_due_violation: 1.0           # Rule 5
   progress_threshold: 1.0           # Rule 6
   progress_monitoring: 1.0          # Rule 7
-  weekly_workload: 1.0              # Rule 8 (deprecated)
-  individual_overload: 1.0          # Rule 9 (deprecated)
-  near_term_overcommitment: 1.0     # Rule 10 (deprecated)
-  unscheduled_work: 1.0             # Rule 11 (deprecated)
-  flow_progress_signal: 1.0         # Rule 12 (deprecated)
   card_completion: 1.0              # Rule 13
   card_effort: 1.0                  # Rule 14
   description_canonicalization: 1.0 # Rule 15
@@ -83,36 +78,6 @@ progress_monitoring:
   threshold_num_days: 5
   description: "Open In Progress cards have no activity beyond the day threshold."
 
-# Deprecated: Rule 8: Weekly Workload
-weekly_workload:
-  enabled: false
-  weekly_sp_threshold: 20
-  description: "Weekly story points within capacity"
-
-# Deprecated: Rule 9: Individual Overload
-individual_overload:
-  enabled: false
-  individual_sp_threshold: 45
-  description: "Individual story points within capacity"
-
-# Deprecated: Rule 10: Near-term Overcommitment
-near_term_overcommitment:
-  enabled: false
-  window_days: 5
-  window_sp_threshold: 30
-  description: "Near-term work within capacity"
-
-# Deprecated: Rule 11: Unscheduled Work
-unscheduled_work:
-  enabled: false
-  description: "Committed work has due dates"
-
-# Deprecated: Rule 12: Flow Progress Signal
-flow_progress_signal:
-  enabled: false
-  lookback_days: 5
-  min_flow_ratio: 0.20
-  description: "Work is flowing (completions vs WIP)"
 
 # Rule 13: Card Completion
 card_completion:
