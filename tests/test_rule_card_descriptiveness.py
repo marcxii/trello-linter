@@ -48,3 +48,16 @@ def test_card_descriptiveness_fails_for_short_description():
     )
     assert result["eligible_count"] == 1
     assert result["fail_count"] == 1
+
+
+def test_card_descriptiveness_applies_to_any_list():
+    parsed = _parsed_data(
+        lists=[{"id": "l1", "name": "Done", "closed": False}],
+        cards=[{"id": "c1", "name": "Short", "list_id": "l1", "closed": False, "desc": "tiny"}],
+    )
+    result = check_card_descriptiveness(
+        parsed,
+        {"card_descriptiveness": {"minimum_desc_char": 20}},
+    )
+    assert result["eligible_count"] == 1
+    assert result["fail_count"] == 1

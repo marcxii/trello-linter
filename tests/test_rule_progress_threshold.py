@@ -49,3 +49,5 @@ def test_progress_threshold_fails_when_member_exceeds_limit():
     )
     assert result["eligible_count"] == 1
     assert result["fail_count"] == 1
+    assert len(result["failures"]) == 3
+    assert all(failure.get("card_id") for failure in result["failures"])

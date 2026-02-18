@@ -166,5 +166,9 @@ class RuleEngine:
         """
         return self.config.get('weights', {})
 
+    def get_scoring_config(self) -> Dict[str, Any]:
+        """Get scoring configuration section."""
+        return self.config.get("scoring", {})
+
 
 

@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 def check_card_ownership(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """Rule 1: Card has at least one member assigned.
     
-    Eligibility: Cards in IN_PROGRESS lists AND closed=false
+    Eligibility: Cards in all non-BACKLOG lists (open or closed)
     Fail Condition: count(card.idMembers) < 1
     
     Args:
@@ -26,22 +26,21 @@ def check_card_ownership(parsed_data: Dict[str, Any], config: Dict[str, Any] = N
     Returns:
         Dictionary with rule_id, fail_count, eligible_count, failures list
     """
-    in_progress_keywords = config.get("in_progress_keywords", ["in progress", "doing", "development"])
+    backlog_keywords = config.get("backlog_keywords", ["backlog", "to do"])
     
     # Build list map
     list_map = {lst["id"]: lst["name"].lower() for lst in parsed_data.get("lists", [])}
     
-    # Find IN_PROGRESS list IDs
-    in_progress_list_ids = [
+    # Find non-BACKLOG list IDs
+    non_backlog_list_ids = [
         list_id for list_id, name in list_map.items()
-        if any(keyword in name for keyword in in_progress_keywords)
+        if not any(keyword in name for keyword in backlog_keywords)
     ]
     
     # Filter eligible cards
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
-        if card.get("list_id") in in_progress_list_ids
-        and not card.get("closed", False)
+        if card.get("list_id") in non_backlog_list_ids
     ]
     
     # Check for failures

@@ -1,0 +1,136 @@
+{
+  "id": "b_example_violations",
+  "name": "Example - Violates Every Active Rule",
+  "desc": "Example board designed to trigger each active rule at least once.",
+  "lists": [
+    {
+      "id": "l_backlog",
+      "name": "Backlog",
+      "closed": false
+    },
+    {
+      "id": "l_inprog",
+      "name": "In Progress",
+      "closed": false
+    },
+    {
+      "id": "l_done",
+      "name": "Done",
+      "closed": false
+    }
+  ],
+  "members": [
+    {
+      "id": "m1",
+      "fullName": "Alex One",
+      "username": "alex"
+    },
+    {
+      "id": "m2",
+      "fullName": "Blair Two",
+      "username": "blair"
+    }
+  ],
+  "cards": [
+    {
+      "id": "v_ip_1",
+      "name": "InProg Task 1",
+      "desc": "bad",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m1"
+      ],
+      "closed": false,
+      "due": null,
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-07T18:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "v_ip_2",
+      "name": "InProg Task 2",
+      "desc": "bad",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m1"
+      ],
+      "closed": false,
+      "due": "2026-02-10T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-07T18:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "v_ip_3",
+      "name": "InProg Task 3",
+      "desc": "bad",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m1"
+      ],
+      "closed": false,
+      "due": "2026-02-10T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-07T18:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "v_ip_4",
+      "name": "InProg Task 4",
+      "desc": "bad",
+      "idList": "l_inprog",
+      "idMembers": [
+        "m1"
+      ],
+      "closed": false,
+      "due": "2026-02-10T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-07T18:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "v_closed_wrong_list",
+      "name": "Closed In Progress",
+      "desc": "bad",
+      "idList": "l_inprog",
+      "idMembers": [],
+      "closed": true,
+      "due": "2026-02-14T18:39:49.264727Z",
+      "dueComplete": false,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-09T18:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "v_backlog",
+      "name": "Backlog Card",
+      "desc": "tiny",
+      "idList": "l_backlog",
+      "idMembers": [],
+      "closed": false,
+      "due": null,
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-15T18:39:49.264727Z",
+      "actions": []
+    },
+    {
+      "id": "v_done_ok",
+      "name": "Done Card",
+      "desc": "As a user, I need to finish work, so that we can deliver. Story Point: 3 Effort: 2",
+      "idList": "l_done",
+      "idMembers": [
+        "m2"
+      ],
+      "closed": true,
+      "due": "2026-02-20T18:39:49.264727Z",
+      "shortUrl": "https://trello.com",
+      "dateLastActivity": "2026-02-17T16:39:49.264727Z",
+      "actions": []
+    }
+  ],
+  "checklists": []
+}

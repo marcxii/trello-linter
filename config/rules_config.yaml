@@ -17,40 +17,42 @@ lists:
     - "complete"
     - "deploy"
 
-# Rule Weights (0-100, higher = more important)
-# Total doesn't need to equal 100
+# Rule Weights (relative, normalized across active scored rules).
+# Overall score uses a weighted average of per-rule scores:
+#   overall = Σ(weight_i * rule_score_i) / Σ(active_weights)
+# Only ratios matter (e.g., all 1s == all 10s).
 weights:
-  card_ownership: 10.0              # Rule 1
-  card_due_date: 8.0                # Rule 2
-  card_descriptiveness: 7.0         # Rule 3
-  story_point_estimation: 6.0       # Rule 4
-  past_due_violation: 12.0          # Rule 5 - Highest weight
-  progress_threshold: 9.0           # Rule 6
-  progress_monitoring: 8.0          # Rule 7
-  weekly_workload: 7.0              # Rule 8 (deprecated)
-  individual_overload: 10.0         # Rule 9 (deprecated)
-  near_term_overcommitment: 9.0    # Rule 10 (deprecated)
-  unscheduled_work: 6.0             # Rule 11 (deprecated)
-  flow_progress_signal: 5.0         # Rule 12 (deprecated)
-  card_completion: 8.0              # Rule 13
-  card_effort: 5.0                  # Rule 14
-  description_canonicalization: 4.0 # Rule 15
+  card_ownership: 1.0               # Rule 1
+  card_due_date: 1.0                # Rule 2
+  card_descriptiveness: 1.0         # Rule 3
+  story_point_estimation: 1.0       # Rule 4
+  past_due_violation: 1.0           # Rule 5
+  progress_threshold: 1.0           # Rule 6
+  progress_monitoring: 1.0          # Rule 7
+  weekly_workload: 1.0              # Rule 8 (deprecated)
+  individual_overload: 1.0          # Rule 9 (deprecated)
+  near_term_overcommitment: 1.0     # Rule 10 (deprecated)
+  unscheduled_work: 1.0             # Rule 11 (deprecated)
+  flow_progress_signal: 1.0         # Rule 12 (deprecated)
+  card_completion: 1.0              # Rule 13
+  card_effort: 1.0                  # Rule 14
+  description_canonicalization: 1.0 # Rule 15
 
 # Rule 1: Card Ownership
 card_ownership:
   enabled: true
-  description: "Card has at least one member assigned"
+  description: "Cards outside Backlog must have an assigned member."
 
 # Rule 2: Card Due Date
 card_due_date:
   enabled: true
-  description: "Card has a due date present"
+  description: "Open cards in In Progress must have a due date."
 
 # Rule 3: Card Descriptiveness
 card_descriptiveness:
   enabled: true
   minimum_desc_char: 20
-  description: "Card has a description length of ≥ 20 characters"
+  description: "Cards must have a description at or above the minimum length."
 
 # Rule 4: Story Point Estimation Coverage
 story_point_estimation:
@@ -62,24 +64,24 @@ story_point_estimation:
     - "\\bPoints?\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
     - "\\bPoint[\\s_-]*Value\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
     - "\\bSize\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
-  description: "Story points present in description"
+  description: "Cards must include story points in the description."
 
 # Rule 5: Past Due Violation
 past_due_violation:
   enabled: true
-  description: "Past-due active work flagged"
+  description: "Open cards with due dates are not past due unless marked complete."
 
 # Rule 6: Progress Threshold (WIP per person)
 progress_threshold:
   enabled: true
   max_wip_per_member: 3
-  description: "In-Progress work not exceeding threshold per person"
+  description: "Cards assigned to a member must not exceed the Work In Progress limit."
 
 # Rule 7: Progress Monitoring (Stale work)
 progress_monitoring:
   enabled: true
   threshold_num_days: 5
-  description: "No stale In-Progress work"
+  description: "Open In Progress cards have no activity beyond the day threshold."
 
 # Deprecated: Rule 8: Weekly Workload
 weekly_workload:
@@ -115,7 +117,7 @@ flow_progress_signal:
 # Rule 13: Card Completion
 card_completion:
   enabled: true
-  description: "Completed cards are in Done list"
+  description: "Completed cards must not be in an In Progress or Backlog list."
 
 # Rule 14: Card Effort
 card_effort:
@@ -126,7 +128,7 @@ card_effort:
     - "\\bHours?\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
     - "\\bMinutes?\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
     - "\\b(?:Dev|Engineering)[\\s_-]*Effort\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
-  description: "Card has effort/hours estimation"
+  description: "Cards must include an effort/time estimate in the description."
 
 # Rule 15: Description Canonicalization
 description_canonicalization:
@@ -161,15 +163,20 @@ description_canonicalization:
     - "^\\s*As\\s+[^,]+\\s*,?\\s*(?:I|we)\\s+should\\s+be\\s+able\\s+to\\s+.+?\\s*,?\\s*(?:so that|so (?:I|we) can|to|in order to)\\s+.+\\.?$"
     # Given/When/Then canonical form
     - "^\\s*Given\\s+.+,\\s*[Ww]hen\\s+.+,\\s*[Tt]hen\\s+.+$"
-  description: "Card description follows standard format"
+  description: "Cards with descriptions must follow an accepted story format (e.g. As a.. I need.. So that.. OR Given.. When.. Then..)."
 
 # Scoring
 scoring:
+  # Effective denominator stabilization for per-rule penalty:
+  #   penalty_pct = (k * fail_count / max(eligible_count, n0)) * 100
+  #   rule_score = max(0, 100 - penalty_pct)
+  effective_denominator:
+    enabled: true
+    n0: 20
+    k: 1.5
+
   grade_thresholds:
     excellent: 90
     good: 80
     needs_improvement: 70
     poor: 60
-  
-  # Penalty calculation method
-  penalty_method: "weighted_percentage"  # or "binary" or "scaled"

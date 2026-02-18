@@ -30,6 +30,9 @@ Environment variables you can set:
 
 Default rule definitions live in `config/rules_config.yaml`. User rule settings are stored per-session.
 
+Scoring uses normalized active rule weights (relative shares across enabled/scored rules).  
+Optional Effective Denominator settings are available under `scoring.effective_denominator` in `config/rules_config.yaml`.
+
 ## UI flows (current)
 - Upload JSON on the home page to render the results partial.
 - Results page includes:
@@ -46,3 +49,10 @@ Default rule definitions live in `config/rules_config.yaml`. User rule settings 
 
 ## Tests
 `pytest -q`
+
+## Example boards
+Sample Trello JSON fixtures for manual validation are in `examples/boards/`:
+- `example_violates_all_rules.json`
+- `example_score_below_50.json`
+- `example_score_above_90.json`
+- `example_progress_threshold_5_members_3_violations.json`

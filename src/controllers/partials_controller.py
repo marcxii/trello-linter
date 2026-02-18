@@ -346,7 +346,8 @@ def _score_rules(engine, rule_results):
     """Compute overall score and grade metadata for rule results."""
     try:
         weights = engine.get_rule_weights()
-        scoring_result = calculate_overall_score(rule_results, weights)
+        scoring_cfg = engine.get_scoring_config()
+        scoring_result = calculate_overall_score(rule_results, weights, scoring_cfg)
         grade_info = get_grade_from_score(scoring_result["overall_score"])
         return scoring_result, grade_info
     except Exception as exc:
@@ -493,7 +494,8 @@ def _apply_overrides_to_scores(rule_results, base_config, overrides):
     effective_config = _apply_rule_settings_overrides(base_config, overrides)
     engine = RuleEngine(config=effective_config)
     weights = engine.get_rule_weights()
-    scoring_result = calculate_overall_score(rule_results, weights)
+    scoring_cfg = engine.get_scoring_config()
+    scoring_result = calculate_overall_score(rule_results, weights, scoring_cfg)
     grade_info = get_grade_from_score(scoring_result["overall_score"])
     return scoring_result, grade_info
 

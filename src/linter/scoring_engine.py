@@ -4,11 +4,15 @@ This module calculates scores based on individual rule failures,
 not category-based scoring. Each rule has its own weight.
 
 Scoring Formula:
-    Overall Score = 100 - Σ(rule_weight × fail_percentage)
-    
+    Overall Score = weighted average of per-rule scores
+
 Where:
-    fail_percentage = (fail_count / eligible_count) × 100
-    If eligible_count = 0, rule is skipped
+    rule_penalty_percentage = (k × fail_count / max(eligible_count, N0)) × 100
+    rule_score = max(0, 100 - rule_penalty_percentage)
+    overall_score = Σ(weight_norm × rule_score), where
+        weight_norm = rule_weight / Σ(active_rule_weights)
+    If effective denominator is disabled, N0 is ignored and eligible_count is used.
+    If eligible_count = 0, rule is skipped.
 """
 
 from __future__ import annotations
@@ -18,25 +22,29 @@ from typing import Dict, List, Any
 
 # Default rule weights (can be overridden via config)
 DEFAULT_RULE_WEIGHTS = {
-    "card_ownership": 10.0,              # Rule 1: Critical - work must be assigned
-    "card_due_date": 8.0,                # Rule 2: Important - work must be scheduled
-    "card_descriptiveness": 7.0,         # Rule 3: Important - work must be described
-    "story_point_estimation": 6.0,       # Rule 4: Moderate - estimation coverage
-    "past_due_violation": 12.0,          # Rule 5: Critical - late work is severe
-    "progress_threshold": 9.0,           # Rule 6: Important - prevent overload
-    "progress_monitoring": 8.0,          # Rule 7: Important - prevent stale work
-    "weekly_workload": 7.0,              # Rule 8 (deprecated): Moderate - weekly capacity
-    "individual_overload": 10.0,         # Rule 9 (deprecated): Critical - individual capacity
-    "near_term_overcommitment": 9.0,     # Rule 10 (deprecated): Important - short-term planning
-    "unscheduled_work": 6.0,             # Rule 11 (deprecated): Moderate - committed work needs dates
-    "flow_progress_signal": 5.0,         # Rule 12 (deprecated): Low - flow metrics
-    "card_completion": 8.0,              # Rule 13: Important - proper completion
-    "card_effort": 5.0,                  # Rule 14: Low - effort estimation
-    "description_canonicalization": 4.0, # Rule 15: Low - formatting standard
+    "card_ownership": 1.0,               # Rule 1
+    "card_due_date": 1.0,                # Rule 2
+    "card_descriptiveness": 1.0,         # Rule 3
+    "story_point_estimation": 1.0,       # Rule 4
+    "past_due_violation": 1.0,           # Rule 5
+    "progress_threshold": 1.0,           # Rule 6
+    "progress_monitoring": 1.0,          # Rule 7
+    "weekly_workload": 1.0,              # Rule 8 (deprecated)
+    "individual_overload": 1.0,          # Rule 9 (deprecated)
+    "near_term_overcommitment": 1.0,     # Rule 10 (deprecated)
+    "unscheduled_work": 1.0,             # Rule 11 (deprecated)
+    "flow_progress_signal": 1.0,         # Rule 12 (deprecated)
+    "card_completion": 1.0,              # Rule 13
+    "card_effort": 1.0,                  # Rule 14
+    "description_canonicalization": 1.0, # Rule 15
 }
 
 
-def calculate_overall_score(rule_results: List[Dict[str, Any]], weights: Dict[str, float] = None) -> Dict[str, Any]:
+def calculate_overall_score(
+    rule_results: List[Dict[str, Any]],
+    weights: Dict[str, float] = None,
+    scoring_config: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
     """Calculate overall score from individual rule results.
     
     Args:
@@ -46,6 +54,7 @@ def calculate_overall_score(rule_results: List[Dict[str, Any]], weights: Dict[st
             - eligible_count: int (number of eligible cards/items)
             - passed: bool (True if rule passed)
         weights: Optional custom weights per rule (defaults to DEFAULT_RULE_WEIGHTS)
+        scoring_config: Optional scoring configuration from rules_config.yaml
         
     Returns:
         Dictionary containing:
@@ -58,8 +67,13 @@ def calculate_overall_score(rule_results: List[Dict[str, Any]], weights: Dict[st
     """
     if weights is None:
         weights = DEFAULT_RULE_WEIGHTS.copy()
+
+    ed_cfg = (scoring_config or {}).get("effective_denominator", {})
+    ed_enabled = bool(ed_cfg.get("enabled", False))
+    n0 = max(0, int(ed_cfg.get("n0", 0) or 0))
+    k = float(ed_cfg.get("k", 1.0) or 1.0)
     
-    total_penalty = 0.0
+    weighted_score_sum = 0.0
     total_weight = 0.0
     rule_scores = {}
     total_failures = 0
@@ -84,17 +98,19 @@ def calculate_overall_score(rule_results: List[Dict[str, Any]], weights: Dict[st
             }
             continue
         
-        # Calculate failure percentage
+        # Raw failure percentage for reporting
         fail_percentage = (fail_count / eligible_count) * 100
+
+        # Effective denominator stabilization
+        effective_denominator = max(eligible_count, n0) if ed_enabled else eligible_count
+        penalty_percentage = (k * fail_count / effective_denominator) * 100
+        penalty_percentage = max(0.0, min(100.0, penalty_percentage))
         
         # Get rule weight
-        rule_weight = weights.get(rule_id, 5.0)  # Default weight if not found
-        
-        # Calculate penalty (fail_percentage * weight / 100)
-        # This normalizes the weight contribution
-        penalty = (fail_percentage * rule_weight) / 100
-        
-        total_penalty += penalty
+        rule_weight = float(weights.get(rule_id, 1.0))
+        rule_score = max(0.0, 100.0 - penalty_percentage)
+
+        weighted_score_sum += rule_score * rule_weight
         total_weight += rule_weight
         total_failures += fail_count
         total_eligible += eligible_count
@@ -107,18 +123,28 @@ def calculate_overall_score(rule_results: List[Dict[str, Any]], weights: Dict[st
         
         # Store individual rule score
         rule_scores[rule_id] = {
-            "score": max(0, 100 - fail_percentage),
+            "score": rule_score,
             "fail_count": fail_count,
             "eligible_count": eligible_count,
             "fail_percentage": round(fail_percentage, 2),
+            "penalty_percentage": round(penalty_percentage, 2),
+            "effective_denominator": effective_denominator,
             "weight": rule_weight,
             "skipped": False
         }
     
-    # Calculate overall score
-    # Start at 100, subtract weighted penalties
-    overall_score = max(0, min(100, 100 - total_penalty))
+    # Calculate overall score as weighted average across active rules.
+    if total_weight > 0:
+        overall_score = weighted_score_sum / total_weight
+    else:
+        overall_score = 100.0
     
+    if total_weight > 0:
+        for rule_data in rule_scores.values():
+            if rule_data.get("skipped"):
+                continue
+            rule_data["weight_normalized"] = round(rule_data.get("weight", 0.0) / total_weight, 4)
+
     return {
         "overall_score": round(overall_score, 2),
         "rule_scores": rule_scores,

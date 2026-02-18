@@ -39,8 +39,15 @@ def _filter_rule_results_by_members(
         filtered_failures = []
         for failure in failures:
             member_name = failure.get("member_name")
+            failure_members = failure.get("members") or []
             if member_name:
                 if member_name in selected_set:
+                    filtered_failures.append(failure)
+                continue
+            if failure_members:
+                if any(member in selected_set for member in failure_members):
+                    filtered_failures.append(failure)
+                elif not selected_set and include_unassigned:
                     filtered_failures.append(failure)
                 continue
 
@@ -191,6 +198,8 @@ def _build_rule_rows(
 
             if failure.get("member_name"):
                 members = [failure.get("member_name")]
+            elif failure.get("members"):
+                members = list(failure.get("members") or [""])
             else:
                 members = (lookup.get("members") if lookup else None) or [""]
 
