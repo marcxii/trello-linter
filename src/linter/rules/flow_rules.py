@@ -1,8 +1,7 @@
-"""Flow Rules - Rules 7, 12
+"""Flow Rules - Rules 7
 
 Covers:
 - Rule 7: Progress Monitoring (Stale work)
-- Rule 12: Flow Progress Signal
 
 Note: These rules require card action/movement data that may not be
 available in standard Trello JSON exports. Placeholder logic is provided.
@@ -180,154 +179,6 @@ def check_progress_monitoring(parsed_data: Dict[str, Any], config: Dict[str, Any
     }
 
 
-def get_completion_date(card: Dict[str, Any]) -> Optional[datetime]:
-    """Extract completion date from card.
-    
-    Tries multiple sources:
-    1. Look for action where card was moved to Done list
-    2. Look for action where card was closed
-    3. Use dateLastActivity if card is closed
-    
-    Args:
-        card: Card dictionary
-        
-    Returns:
-        Completion datetime or None
-    """
-    if not card.get("closed", False):
-        return None
-    
-    actions = card.get("actions", [])
-    if not actions:
-        # Fallback: use dateLastActivity if closed
-        if card.get("dateLastActivity"):
-            try:
-                return datetime.fromisoformat(card["dateLastActivity"].replace('Z', '+00:00'))
-            except (ValueError, AttributeError):
-                pass
-        return None
-    
-    # Search for completion action
-    for action in actions:
-        action_type = action.get("type")
-        
-        # Check if moved to Done list
-        if action_type == "updateCard":
-            data = action.get("data", {})
-            list_after = data.get("listAfter", {})
-            list_name = list_after.get("name", "").lower()
-            
-            if any(kw in list_name for kw in ["done", "complete", "deploy"]):
-                date_str = action.get("date")
-                if date_str:
-                    try:
-                        return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-                    except (ValueError, AttributeError):
-                        continue
-        
-        # Check if card was closed
-        if action_type == "updateCard":
-            data = action.get("data", {})
-            card_data = data.get("card", {})
-            if card_data.get("closed") == True:
-                date_str = action.get("date")
-                if date_str:
-                    try:
-                        return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-                    except (ValueError, AttributeError):
-                        continue
-    
-    return None
-
-
-def check_flow_progress_signal(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 12: Flow Progress Signal.
-    
-    Measures whether work is flowing by comparing recent completions to WIP.
-    
-    Eligibility: Board-level check (not per-card)
-    Fail Condition: flow_ratio = completed_recent / wip < MIN_FLOW_RATIO
-    
-    Note: Requires completion date data. Uses placeholder logic if unavailable.
-    
-    Args:
-        parsed_data: Full board data from parse_full_board()
-        config: Rule configuration
-        
-    Returns:
-        Dictionary with rule_id, fail_count, eligible_count, failures list
-    """
-    lookback_days = config.get("flow_progress_signal", {}).get("lookback_days", 5)
-    min_flow_ratio = config.get("flow_progress_signal", {}).get("min_flow_ratio", 0.20)
-    in_progress_keywords = config.get("in_progress_keywords", ["in progress", "doing"])
-    
-    # Build list map
-    list_map = {lst["id"]: lst["name"].lower() for lst in parsed_data.get("lists", [])}
-    
-    # Find IN_PROGRESS list IDs
-    in_progress_list_ids = [
-        list_id for list_id, name in list_map.items()
-        if any(keyword in name for keyword in in_progress_keywords)
-    ]
-    
-    # Count current WIP
-    wip_cards = [
-        card for card in parsed_data.get("cards", [])
-        if card.get("list_id") in in_progress_list_ids
-        and not card.get("closed", False)
-    ]
-    wip_count = len(wip_cards)
-    
-    # Count recent completions
-    now = datetime.now(timezone.utc)
-    lookback_date = now - timedelta(days=lookback_days)
-    
-    recent_completions = []
-    for card in parsed_data.get("cards", []):
-        if not card.get("closed", False):
-            continue
-        
-        completion_date = get_completion_date(card)
-        if completion_date and completion_date >= lookback_date:
-            recent_completions.append(card)
-    
-    completed_count = len(recent_completions)
-    
-    # Calculate flow ratio
-    if wip_count == 0:
-        # No WIP - perfect flow (or no work)
-        flow_ratio = 1.0
-    else:
-        flow_ratio = completed_count / wip_count
-    
-    # Check for failure
-    failures = []
-    if flow_ratio < min_flow_ratio:
-        failures.append({
-            "flow_ratio": round(flow_ratio, 2),
-            "min_flow_ratio": min_flow_ratio,
-            "wip_count": wip_count,
-            "completed_recent": completed_count,
-            "lookback_days": lookback_days,
-            "reason": f"Low flow: {completed_count} completed vs {wip_count} WIP (ratio: {flow_ratio:.2f}, min: {min_flow_ratio})"
-        })
-    
-    return {
-        "rule_id": "flow_progress_signal",
-        "rule_name": "Flow Progress Signal",
-        "fail_count": len(failures),
-        "eligible_count": 1,  # Board-level check (boolean)
-        "passed": len(failures) == 0,
-        "failures": failures,
-        "metrics": {
-            "wip_count": wip_count,
-            "completed_recent": completed_count,
-            "flow_ratio": round(flow_ratio, 2)
-        },
-        "note": "Requires completion dates. May use dateLastActivity as fallback."
-    }
-
-
 def run_all_flow_rules(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> List[Dict[str, Any]]:
     """Run all flow-related rules.
     
@@ -355,8 +206,5 @@ def run_all_flow_rules(parsed_data: Dict[str, Any], config: Dict[str, Any] = Non
     if config.get("progress_monitoring", {}).get("enabled", True):
         results.append(check_progress_monitoring(parsed_data, merged_config))
     
-    # Rule 12: Flow Progress Signal
-    if config.get("flow_progress_signal", {}).get("enabled", True):
-        results.append(check_flow_progress_signal(parsed_data, merged_config))
     
     return results

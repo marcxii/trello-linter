@@ -3,7 +3,6 @@
 Covers:
 - Rule 1: Card Ownership
 - Rule 2: Card Due Date
-- Rule 11: Unscheduled Work
 - Rule 13: Card Completion
 """
 
@@ -118,62 +117,6 @@ def check_card_due_date(parsed_data: Dict[str, Any], config: Dict[str, Any] = No
     }
 
 
-def check_unscheduled_work(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 11: Unscheduled work (committed but no due date).
-    
-    Eligibility: Cards in IN_PROGRESS AND closed=false AND has story points AND has members
-    Fail Condition: due == null
-    
-    Args:
-        parsed_data: Full board data from parse_full_board()
-        config: Rule configuration
-        
-    Returns:
-        Dictionary with rule_id, fail_count, eligible_count, failures list
-    """
-    in_progress_keywords = config.get("in_progress_keywords", ["in progress", "doing", "development"])
-    
-    # Build list map
-    list_map = {lst["id"]: lst["name"].lower() for lst in parsed_data.get("lists", [])}
-    
-    # Find IN_PROGRESS list IDs
-    in_progress_list_ids = [
-        list_id for list_id, name in list_map.items()
-        if any(keyword in name for keyword in in_progress_keywords)
-    ]
-    
-    # Filter eligible cards (in progress, not closed, has description, has members)
-    eligible_cards = [
-        card for card in parsed_data.get("cards", [])
-        if card.get("list_id") in in_progress_list_ids
-        and not card.get("closed", False)
-        and card.get("desc")  # Has description (likely has story points)
-        and len(card.get("members", [])) > 0  # Has assigned members
-    ]
-    
-    # Check for failures (committed work without due date)
-    failures = []
-    for card in eligible_cards:
-        due_date = card.get("due")
-        if due_date is None or due_date == "":
-            failures.append({
-                "card_id": card.get("id"),
-                "card_name": card.get("name"),
-                "list_name": list_map.get(card.get("list_id"), "Unknown"),
-                "reason": "Committed work without due date",
-                "members": len(card.get("members", []))
-            })
-    
-    return {
-        "rule_id": "unscheduled_work",
-        "rule_name": "Unscheduled Work",
-        "fail_count": len(failures),
-        "eligible_count": len(eligible_cards),
-        "passed": len(failures) == 0,
-        "failures": failures
-    }
-
-
 def check_card_completion(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """Rule 13: Complete Card is NOT in a 'Done' List.
     
@@ -257,10 +200,6 @@ def run_all_assignment_rules(parsed_data: Dict[str, Any], config: Dict[str, Any]
     # Rule 2: Card Due Date
     if config.get("card_due_date", {}).get("enabled", True):
         results.append(check_card_due_date(parsed_data, list_config))
-    
-    # Rule 11: Unscheduled Work
-    if config.get("unscheduled_work", {}).get("enabled", True):
-        results.append(check_unscheduled_work(parsed_data, list_config))
     
     # Rule 13: Card Completion
     if config.get("card_completion", {}).get("enabled", True):

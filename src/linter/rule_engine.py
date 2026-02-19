@@ -89,7 +89,7 @@ class RuleEngine:
         """
         all_results = []
         
-        # Run assignment rules (Rules 1, 2, 11, 13)
+        # Run assignment rules (Rules 1, 2, 13)
         assignment_results = run_all_assignment_rules(parsed_data, self.config)
         all_results.extend(assignment_results)
         
@@ -97,11 +97,11 @@ class RuleEngine:
         estimation_results = run_all_estimation_rules(parsed_data, self.config)
         all_results.extend(estimation_results)
         
-        # Run capacity rules (Rules 5, 6, 8, 9, 10)
+        # Run capacity rules (Rules 5, 6)
         capacity_results = run_all_capacity_rules(parsed_data, self.config)
         all_results.extend(capacity_results)
         
-        # Run flow rules (Rules 7, 12)
+        # Run flow rules (Rules 7)
         flow_results = run_all_flow_rules(parsed_data, self.config)
         all_results.extend(flow_results)
 
@@ -146,9 +146,6 @@ class RuleEngine:
             'card_ownership', 'card_due_date', 'card_descriptiveness',
             'story_point_estimation', 'past_due_violation', 'progress_threshold',
             'progress_monitoring',
-            # Deprecated rules (disabled in config by default)
-            'weekly_workload', 'individual_overload', 'near_term_overcommitment',
-            'unscheduled_work', 'flow_progress_signal',
             'card_completion', 'card_effort', 'description_canonicalization'
         ]
         

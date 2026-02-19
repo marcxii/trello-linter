@@ -510,13 +510,6 @@ def _get_rule_settings_overrides():
 
 
 def _merge_rule_settings(config, overrides):
-    deprecated = {
-        "weekly_workload",
-        "individual_overload",
-        "near_term_overcommitment",
-        "unscheduled_work",
-        "flow_progress_signal",
-    }
     rule_labels = {
         "card_ownership": "Card Ownership",
         "card_due_date": "Card Due Date",
@@ -532,8 +525,6 @@ def _merge_rule_settings(config, overrides):
 
     rules = []
     for rule_id, label in rule_labels.items():
-        if rule_id in deprecated:
-            continue
         base = config.get(rule_id, {})
         enabled = base.get("enabled", True)
         override_enabled = overrides.get("rules", {}).get(rule_id)
