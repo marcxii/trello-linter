@@ -5,7 +5,6 @@ Commit 1 refactor target:
 - Register MVC controller blueprints
 - Keep this module free of business logic (parsing/linting/scoring) and DB wiring
 
-Later commits will add Postgres + SQLAlchemy + Alembic and wire services.
 """
 
 from __future__ import annotations
