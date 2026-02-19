@@ -49,10 +49,10 @@ def check_past_due_violation(parsed_data: Dict[str, Any], config: Dict[str, Any]
             due_date = datetime.fromisoformat(due_str.replace('Z', '+00:00'))
             
             # Check if past due and not marked complete
-            # Note: dueComplete is not always in export, default to False
-            due_complete = card.get("dueComplete", False)
+            # Note: default is False, 
+            due_complete = card.get("dueComplete")
             
-            if due_date < now and not due_complete:
+            if due_date < now and due_complete == False:
                 days_overdue = (now - due_date).days
                 failures.append({
                     "card_id": card.get("id"),
