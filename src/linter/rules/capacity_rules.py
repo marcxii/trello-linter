@@ -13,30 +13,6 @@ from typing import Dict, List, Any, Optional
 from collections import defaultdict
 
 
-def extract_story_points(description: str, patterns: List[str]) -> Optional[int]:
-    """Extract story points from card description using regex patterns.
-    
-    Args:
-        description: Card description text
-        patterns: List of regex patterns to match
-        
-    Returns:
-        Story points as integer, or None if not found
-    """
-    if not description:
-        return None
-    
-    for pattern in patterns:
-        match = re.search(pattern, description, re.IGNORECASE)
-        if match:
-            try:
-                return int(match.group(1))
-            except (ValueError, IndexError):
-                continue
-    
-    return None
-
-
 def check_past_due_violation(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """Rule 5: Past-due active work.
     

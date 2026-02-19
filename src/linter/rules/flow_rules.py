@@ -179,65 +179,6 @@ def check_progress_monitoring(parsed_data: Dict[str, Any], config: Dict[str, Any
     }
 
 
-def get_completion_date(card: Dict[str, Any]) -> Optional[datetime]:
-    """Extract completion date from card.
-    
-    Tries multiple sources:
-    1. Look for action where card was moved to Done list
-    2. Look for action where card was closed
-    3. Use dateLastActivity if card is closed
-    
-    Args:
-        card: Card dictionary
-        
-    Returns:
-        Completion datetime or None
-    """
-    if not card.get("closed", False):
-        return None
-    
-    actions = card.get("actions", [])
-    if not actions:
-        # Fallback: use dateLastActivity if closed
-        if card.get("dateLastActivity"):
-            try:
-                return datetime.fromisoformat(card["dateLastActivity"].replace('Z', '+00:00'))
-            except (ValueError, AttributeError):
-                pass
-        return None
-    
-    # Search for completion action
-    for action in actions:
-        action_type = action.get("type")
-        
-        # Check if moved to Done list
-        if action_type == "updateCard":
-            data = action.get("data", {})
-            list_after = data.get("listAfter", {})
-            list_name = list_after.get("name", "").lower()
-            
-            if any(kw in list_name for kw in ["done", "complete", "deploy"]):
-                date_str = action.get("date")
-                if date_str:
-                    try:
-                        return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-                    except (ValueError, AttributeError):
-                        continue
-        
-        # Check if card was closed
-        if action_type == "updateCard":
-            data = action.get("data", {})
-            card_data = data.get("card", {})
-            if card_data.get("closed") == True:
-                date_str = action.get("date")
-                if date_str:
-                    try:
-                        return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-                    except (ValueError, AttributeError):
-                        continue
-    
-    return None
-
 def run_all_flow_rules(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> List[Dict[str, Any]]:
     """Run all flow-related rules.
     
