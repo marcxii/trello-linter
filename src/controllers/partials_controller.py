@@ -180,12 +180,12 @@ def results_partial():
             expanded_rule_ids = request.args.getlist("expanded")
             filter_active = set(selected_members) != set(member_names)
             overrides = _get_rule_settings_overrides()
-            rule_results = _filter_rule_results_by_overrides(
-                report_ctx.get("rule_results", []), overrides
+            score_rule_results = _filter_rule_results_by_overrides(
+                (report_ctx.get("report", {}) or {}).get("rule_results", []), overrides
             )
             base_config = _load_rules_config()
             scoring_result, grade_info = _apply_overrides_to_scores(
-                rule_results, base_config, overrides
+                score_rule_results, base_config, overrides
             )
             return render_template(
                 "partials/results.html",
@@ -234,11 +234,14 @@ def report_overlay_partial():
     selected_members = report_ctx.get("selected_members", [])
     filter_active = set(selected_members) != set(member_names)
     overrides = _get_rule_settings_overrides()
-    rule_results = _filter_rule_results_by_overrides(
+    score_rule_results = _filter_rule_results_by_overrides(
+        (report_ctx.get("report", {}) or {}).get("rule_results", []), overrides
+    )
+    display_rule_results = _filter_rule_results_by_overrides(
         report_ctx.get("rule_results", []), overrides
     )
     base_config = _load_rules_config()
-    scoring_result, _ = _apply_overrides_to_scores(rule_results, base_config, overrides)
+    scoring_result, _ = _apply_overrides_to_scores(score_rule_results, base_config, overrides)
     report = dict(report_ctx.get("report", {}))
     report["scores"] = {
         **(report.get("scores", {}) or {}),
@@ -253,7 +256,7 @@ def report_overlay_partial():
         lists_count=board.get("lists_count", 0),
         members_count=board.get("members_count", 0),
         generated_at=report_ctx.get("generated_at", datetime.now(timezone.utc).isoformat()),
-        rule_results=rule_results,
+        rule_results=display_rule_results,
         filter_active=filter_active,
     )
 
