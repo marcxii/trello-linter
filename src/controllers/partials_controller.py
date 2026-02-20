@@ -633,7 +633,7 @@ def analyze_partial():
     Flow:
     1. Validate uploaded file
     2. Parse Trello JSON (board, lists, cards, members, checklists)
-    3. Run all 14 linting rules via RuleEngine
+    3. Run all enabled rules via RuleEngine (keyed by rule_id)
     4. Calculate individual rule-based scores
     5. Save to database (runs, cards, members, findings)
     6. Return results HTML fragment

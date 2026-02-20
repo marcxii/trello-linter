@@ -22,16 +22,16 @@ from typing import Dict, List, Any
 
 # Default rule weights (can be overridden via config)
 DEFAULT_RULE_WEIGHTS = {
-    "card_ownership": 1.0,               # Rule 1
-    "card_due_date": 1.0,                # Rule 2
-    "card_descriptiveness": 1.0,         # Rule 3
-    "story_point_estimation": 1.0,       # Rule 4
-    "past_due_violation": 1.0,           # Rule 5
-    "progress_threshold": 1.0,           # Rule 6
-    "progress_monitoring": 1.0,          # Rule 7
-    "card_completion": 1.0,              # Rule 13
-    "card_effort": 1.0,                  # Rule 14
-    "description_canonicalization": 1.0, # Rule 15
+    "card_ownership": 1.0,               # rule_id: card_ownership
+    "card_due_date": 1.0,                # rule_id: card_due_date
+    "card_descriptiveness": 1.0,         # rule_id: card_descriptiveness
+    "story_point_estimation": 1.0,       # rule_id: story_point_estimation
+    "past_due_violation": 1.0,           # rule_id: past_due_violation
+    "progress_threshold": 1.0,           # rule_id: progress_threshold
+    "progress_monitoring": 1.0,          # rule_id: progress_monitoring
+    "card_completion": 1.0,              # rule_id: card_completion
+    "card_effort": 1.0,                  # rule_id: card_effort
+    "description_canonicalization": 1.0, # rule_id: description_canonicalization
 }
 
 

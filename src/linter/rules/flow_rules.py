@@ -1,7 +1,7 @@
-"""Flow Rules - Rules 7
+"""Flow rules.
 
 Covers:
-- Rule 7: Progress Monitoring (Stale work)
+- progress_monitoring
 
 Note: These rules require card action/movement data that may not be
 available in standard Trello JSON exports. Placeholder logic is provided.
@@ -87,7 +87,7 @@ def get_moved_to_in_progress_date(card: Dict[str, Any]) -> Optional[datetime]:
 
 
 def check_progress_monitoring(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 7: Progress Monitoring - Stale In-Progress work.
+    """progress_monitoring: Stale In-Progress work.
     
     Eligibility: Cards in IN_PROGRESS AND closed=false
     Fail Condition: (now - card.moved_to_in_progress) >= THRESHOLD_DAYS
@@ -202,7 +202,7 @@ def run_all_flow_rules(parsed_data: Dict[str, Any], config: Dict[str, Any] = Non
     
     results = []
     
-    # Rule 7: Progress Monitoring
+    # rule_id: progress_monitoring
     if config.get("progress_monitoring", {}).get("enabled", True):
         results.append(check_progress_monitoring(parsed_data, merged_config))
     

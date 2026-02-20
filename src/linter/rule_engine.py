@@ -89,19 +89,19 @@ class RuleEngine:
         """
         all_results = []
         
-        # Run assignment rules (Rules 1, 2, 13)
+        # Run assignment rules (card_ownership, card_due_date, card_completion)
         assignment_results = run_all_assignment_rules(parsed_data, self.config)
         all_results.extend(assignment_results)
         
-        # Run estimation rules (Rules 3, 4, 14, 15)
+        # Run estimation rules (card_descriptiveness, story_point_estimation, card_effort, description_canonicalization)
         estimation_results = run_all_estimation_rules(parsed_data, self.config)
         all_results.extend(estimation_results)
         
-        # Run capacity rules (Rules 5, 6)
+        # Run capacity rules (past_due_violation, progress_threshold)
         capacity_results = run_all_capacity_rules(parsed_data, self.config)
         all_results.extend(capacity_results)
         
-        # Run flow rules (Rules 7)
+        # Run flow rules (progress_monitoring)
         flow_results = run_all_flow_rules(parsed_data, self.config)
         all_results.extend(flow_results)
 
