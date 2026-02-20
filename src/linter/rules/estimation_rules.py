@@ -1,10 +1,10 @@
-"""Estimation Rules - Rules 3, 4, 14, 15
+"""Estimation rules.
 
 Covers:
-- Rule 3: Card Descriptiveness
-- Rule 4: Story Point Estimation Coverage
-- Rule 14: Card Effort
-- Rule 15: Description Canonicalization
+- card_descriptiveness
+- story_point_estimation
+- card_effort
+- description_canonicalization
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ def extract_story_points(description: str, patterns: List[str]) -> Optional[int]
 
 
 def check_card_descriptiveness(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 3: Card has a description length of ≥ 20 characters.
+    """card_descriptiveness: Card has a description length of ≥ 20 characters.
     
     Eligibility: Cards in any list (open or closed)
     Fail Condition: len(card.desc).strip() < MINIMUM_DESC_CHAR
@@ -85,7 +85,7 @@ def check_card_descriptiveness(parsed_data: Dict[str, Any], config: Dict[str, An
 
 
 def check_story_point_estimation(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 4: Story points present in description.
+    """story_point_estimation: Story points present in description.
     
     Eligibility: Cards in any list (open or closed)
     Fail Condition: Cannot parse story points from description
@@ -140,7 +140,7 @@ def check_story_point_estimation(parsed_data: Dict[str, Any], config: Dict[str, 
 
 
 def check_card_effort(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 14: Card has effort/hours estimation.
+    """card_effort: Card has effort/hours estimation.
     
     Eligibility: Cards in any list (open or closed)
     Fail Condition: Cannot parse effort hours from description
@@ -194,7 +194,7 @@ def check_card_effort(parsed_data: Dict[str, Any], config: Dict[str, Any] = None
 
 
 def check_description_canonicalization(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 15: Card description follows standard format.
+    """description_canonicalization: Card description follows standard format.
     
     Eligibility: All cards with descriptions
     Fail Condition: Description doesn't match any canonical format
@@ -275,19 +275,19 @@ def run_all_estimation_rules(parsed_data: Dict[str, Any], config: Dict[str, Any]
     
     results = []
     
-    # Rule 3: Card Descriptiveness
+    # rule_id: card_descriptiveness
     if config.get("card_descriptiveness", {}).get("enabled", True):
         results.append(check_card_descriptiveness(parsed_data, merged_config))
     
-    # Rule 4: Story Point Estimation
+    # rule_id: story_point_estimation
     if config.get("story_point_estimation", {}).get("enabled", True):
         results.append(check_story_point_estimation(parsed_data, merged_config))
     
-    # Rule 14: Card Effort
+    # rule_id: card_effort
     if config.get("card_effort", {}).get("enabled", False):  # Disabled by default per spec
         results.append(check_card_effort(parsed_data, merged_config))
     
-    # Rule 15: Description Canonicalization
+    # rule_id: description_canonicalization
     if config.get("description_canonicalization", {}).get("enabled", True):
         results.append(check_description_canonicalization(parsed_data, merged_config))
     

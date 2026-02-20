@@ -1,5 +1,4 @@
 # Trello Board Linter - Rules Configuration
-# Based on team's 14-rule specification
 
 # List Detection Keywords
 lists:
@@ -22,34 +21,34 @@ lists:
 #   overall = Σ(weight_i * rule_score_i) / Σ(active_weights)
 # Only ratios matter (e.g., all 1s == all 10s).
 weights:
-  card_ownership: 1.0               # Rule 1
-  card_due_date: 1.0                # Rule 2
-  card_descriptiveness: 1.0         # Rule 3
-  story_point_estimation: 1.0       # Rule 4
-  past_due_violation: 1.0           # Rule 5
-  progress_threshold: 1.0           # Rule 6
-  progress_monitoring: 1.0          # Rule 7
-  card_completion: 1.0              # Rule 13
-  card_effort: 1.0                  # Rule 14
-  description_canonicalization: 1.0 # Rule 15
+  card_ownership: 1.0               # rule_id: card_ownership
+  card_due_date: 1.0                # rule_id: card_due_date
+  card_descriptiveness: 1.0         # rule_id: card_descriptiveness
+  story_point_estimation: 1.0       # rule_id: story_point_estimation
+  past_due_violation: 1.0           # rule_id: past_due_violation
+  progress_threshold: 1.0           # rule_id: progress_threshold
+  progress_monitoring: 1.0          # rule_id: progress_monitoring
+  card_completion: 1.0              # rule_id: card_completion
+  card_effort: 1.0                  # rule_id: card_effort
+  description_canonicalization: 1.0 # rule_id: description_canonicalization
 
-# Rule 1: Card Ownership
+# rule_id: card_ownership
 card_ownership:
   enabled: true
   description: "Cards outside Backlog must have an assigned member."
 
-# Rule 2: Card Due Date
+# rule_id: card_due_date
 card_due_date:
   enabled: true
   description: "Open cards in In Progress must have a due date."
 
-# Rule 3: Card Descriptiveness
+# rule_id: card_descriptiveness
 card_descriptiveness:
   enabled: true
   minimum_desc_char: 20
   description: "Cards must have a description at or above the minimum length."
 
-# Rule 4: Story Point Estimation Coverage
+# rule_id: story_point_estimation
 story_point_estimation:
   enabled: true
   sp_regex_patterns:
@@ -61,29 +60,29 @@ story_point_estimation:
     - "\\bSize\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
   description: "Cards must include story points in the description."
 
-# Rule 5: Past Due Violation
+# rule_id: past_due_violation
 past_due_violation:
   enabled: true
   description: "Open cards with due dates are not past due unless marked complete."
 
-# Rule 6: Progress Threshold (WIP per person)
+# rule_id: progress_threshold
 progress_threshold:
   enabled: true
   max_wip_per_member: 3
   description: "Cards assigned to a member must not exceed the Work In Progress limit."
 
-# Rule 7: Progress Monitoring (Stale work)
+# rule_id: progress_monitoring
 progress_monitoring:
   enabled: true
   threshold_num_days: 5
   description: "Open In Progress cards have no activity beyond the day threshold."
 
-# Rule 13: Card Completion
+# rule_id: card_completion
 card_completion:
   enabled: true
   description: "Completed cards must not be in an In Progress or Backlog list."
 
-# Rule 14: Card Effort
+# rule_id: card_effort
 card_effort:
   enabled: true
   effort_regex_patterns:
@@ -94,7 +93,7 @@ card_effort:
     - "\\b(?:Dev|Engineering)[\\s_-]*Effort\\b\\s*(?::|=|-|is)?\\s*(\\d+(?:\\.\\d+)?)"
   description: "Cards must include an effort/time estimate in the description."
 
-# Rule 15: Description Canonicalization
+# rule_id: description_canonicalization
 description_canonicalization:
   enabled: true
   story_formats:

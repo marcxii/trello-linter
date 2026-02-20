@@ -1,8 +1,8 @@
-"""Capacity Rules - Rules 5, 6, 
+"""Capacity rules.
 
 Covers:
-- Rule 5: Past Due Violation
-- Rule 6: Progress Threshold (WIP per person)
+- past_due_violation
+- progress_threshold
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from collections import defaultdict
 
 
 def check_past_due_violation(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 5: Past-due active work.
+    """past_due_violation: Past-due active work.
     
     Eligibility: Cards where due != null AND closed=false
     Fail Condition: due < now AND dueComplete != true
@@ -77,7 +77,7 @@ def check_past_due_violation(parsed_data: Dict[str, Any], config: Dict[str, Any]
 
 
 def check_progress_threshold(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 6: WIP per person threshold.
+    """progress_threshold: WIP per person threshold.
     
     Eligibility: Cards in IN_PROGRESS AND closed=false
     Fail Condition: count(cards.in_progress) grouped by memberID > MAX_WIP_PER_MEMBER
@@ -188,11 +188,11 @@ def run_all_capacity_rules(parsed_data: Dict[str, Any], config: Dict[str, Any] =
     
     results = []
     
-    # Rule 5: Past Due Violation
+    # rule_id: past_due_violation
     if config.get("past_due_violation", {}).get("enabled", True):
         results.append(check_past_due_violation(parsed_data, merged_config))
     
-    # Rule 6: Progress Threshold
+    # rule_id: progress_threshold
     if config.get("progress_threshold", {}).get("enabled", True):
         results.append(check_progress_threshold(parsed_data, merged_config))
     

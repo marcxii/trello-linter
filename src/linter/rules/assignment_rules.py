@@ -1,9 +1,9 @@
-"""Assignment Rules - Rules 1, 2, 11, 13
+"""Assignment rules.
 
 Covers:
-- Rule 1: Card Ownership
-- Rule 2: Card Due Date
-- Rule 13: Card Completion
+- card_ownership
+- card_due_date
+- card_completion
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 
 
 def check_card_ownership(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 1: Card has at least one member assigned.
+    """card_ownership: Card has at least one member assigned.
     
     Eligibility: Cards in all non-BACKLOG lists (open or closed)
     Fail Condition: count(card.idMembers) < 1
@@ -67,7 +67,7 @@ def check_card_ownership(parsed_data: Dict[str, Any], config: Dict[str, Any] = N
 
 
 def check_card_due_date(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 2: Card has a due date present.
+    """card_due_date: Card has a due date present.
     
     Eligibility: Cards in IN_PROGRESS lists AND closed=false
     Fail Condition: card.due = null
@@ -120,7 +120,7 @@ def check_card_due_date(parsed_data: Dict[str, Any], config: Dict[str, Any] = No
 
 
 def check_card_completion(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
-    """Rule 13: Complete Card is NOT in a 'Done' List.
+    """card_completion: Complete Card is NOT in a 'Done' List.
     
     Eligibility: Cards where List in (BACKLOG, IN_PROGRESS) AND closed=true
     Fail Condition: Card is marked closed but not in a Done list
@@ -197,15 +197,15 @@ def run_all_assignment_rules(parsed_data: Dict[str, Any], config: Dict[str, Any]
     
     results = []
     
-    # Rule 1: Card Ownership
+    # rule_id: card_ownership
     if config.get("card_ownership", {}).get("enabled", True):
         results.append(check_card_ownership(parsed_data, list_config))
     
-    # Rule 2: Card Due Date
+    # rule_id: card_due_date
     if config.get("card_due_date", {}).get("enabled", True):
         results.append(check_card_due_date(parsed_data, list_config))
     
-    # Rule 13: Card Completion
+    # rule_id: card_completion
     if config.get("card_completion", {}).get("enabled", True):
         results.append(check_card_completion(parsed_data, list_config))
     
