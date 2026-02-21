@@ -54,3 +54,13 @@ def test_card_ownership_ignores_backlog_but_includes_other_lists():
     assert result["eligible_count"] == 1
     assert result["fail_count"] == 1
     assert result["failures"][0]["card_id"] == "c2"
+
+
+def test_card_ownership_excludes_archived_cards():
+    parsed = _parsed_data(
+        lists=[{"id": "l1", "name": "In Progress", "closed": False}],
+        cards=[{"id": "c1", "name": "Archived Unowned", "list_id": "l1", "closed": True, "members": []}],
+    )
+    result = check_card_ownership(parsed, {"in_progress_keywords": ["in progress"]})
+    assert result["eligible_count"] == 0
+    assert result["fail_count"] == 0

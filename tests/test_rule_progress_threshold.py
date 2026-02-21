@@ -53,13 +53,16 @@ def test_progress_threshold_fails_when_member_exceeds_limit():
     assert all(failure.get("card_id") for failure in result["failures"])
 
 
-def test_progress_threshold_excludes_complete_or_archived_cards():
+def test_progress_threshold_excludes_complete_and_non_in_progress_cards():
     parsed = _parsed_data(
-        lists=[{"id": "l1", "name": "In Progress", "closed": False}],
+        lists=[
+            {"id": "l1", "name": "In Progress", "closed": False},
+            {"id": "l2", "name": "Backlog", "closed": False},
+        ],
         members=[{"id": "m1", "fullName": "Alex"}],
         cards=[
             {"id": "c1", "name": "Complete", "list_id": "l1", "closed": False, "dueComplete": True, "members": ["m1"]},
-            {"id": "c2", "name": "Archived", "list_id": "l1", "closed": True, "dueComplete": False, "members": ["m1"]},
+            {"id": "c2", "name": "Backlog Card", "list_id": "l2", "closed": False, "dueComplete": False, "members": ["m1"]},
         ],
     )
     result = check_progress_threshold(

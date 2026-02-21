@@ -36,7 +36,7 @@ def test_card_due_date_fails_when_due_date_missing():
     assert result["fail_count"] == 1
 
 
-def test_card_due_date_excludes_complete_or_archived_cards():
+def test_card_due_date_excludes_complete_and_archived_cards():
     parsed = _parsed_data(
         lists=[{"id": "l1", "name": "In Progress", "closed": False}],
         cards=[

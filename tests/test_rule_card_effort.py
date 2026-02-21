@@ -77,3 +77,19 @@ def test_card_effort_applies_to_any_list():
     )
     assert result["eligible_count"] == 1
     assert result["fail_count"] == 1
+
+
+def test_card_effort_excludes_archived_cards():
+    parsed = {
+        "board": {"id": "b1", "name": "Board"},
+        "lists": [{"id": "l1", "name": "In Progress", "closed": False}],
+        "cards": [
+            {"id": "c1", "name": "Archived", "list_id": "l1", "closed": True, "desc": "no estimate"},
+        ],
+        "members": [],
+        "checklists": [],
+    }
+    config = yaml.safe_load(Path("config/rules_config.yaml").read_text()) or {}
+    result = check_card_effort(parsed, {"card_effort": config.get("card_effort", {})})
+    assert result["eligible_count"] == 0
+    assert result["fail_count"] == 0

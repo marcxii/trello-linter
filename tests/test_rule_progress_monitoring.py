@@ -46,13 +46,16 @@ def test_progress_monitoring_fails_for_stale_activity():
     assert result["fail_count"] == 1
 
 
-def test_progress_monitoring_excludes_complete_or_archived_cards():
+def test_progress_monitoring_excludes_complete_or_non_in_progress_cards():
     stale = (datetime.now(timezone.utc) - timedelta(days=10)).isoformat().replace("+00:00", "Z")
     parsed = _parsed_data(
-        lists=[{"id": "l1", "name": "In Progress", "closed": False}],
+        lists=[
+            {"id": "l1", "name": "In Progress", "closed": False},
+            {"id": "l2", "name": "Backlog", "closed": False},
+        ],
         cards=[
             {"id": "c1", "name": "Complete", "list_id": "l1", "closed": False, "dueComplete": True, "dateLastActivity": stale},
-            {"id": "c2", "name": "Archived", "list_id": "l1", "closed": True, "dueComplete": False, "dateLastActivity": stale},
+            {"id": "c2", "name": "Not In Progress", "list_id": "l2", "closed": False, "dueComplete": False, "dateLastActivity": stale},
         ],
     )
     result = check_progress_monitoring(

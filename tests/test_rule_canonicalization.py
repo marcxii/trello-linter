@@ -101,3 +101,19 @@ def test_description_canonicalization_applies_to_any_list():
     )
     assert result["eligible_count"] == 1
     assert result["fail_count"] == 1
+
+
+def test_description_canonicalization_excludes_archived_and_missing_description():
+    parsed = {
+        "board": {"id": "b1", "name": "Board"},
+        "lists": [{"id": "l1", "name": "Backlog", "closed": False}],
+        "cards": [
+            {"id": "c1", "name": "Archived", "list_id": "l1", "closed": True, "desc": "invalid format"},
+            {"id": "c2", "name": "No Desc", "list_id": "l1", "closed": False, "desc": ""},
+        ],
+        "members": [],
+        "checklists": [],
+    }
+    result = check_description_canonicalization(parsed, {"description_canonicalization": {}})
+    assert result["eligible_count"] == 0
+    assert result["fail_count"] == 0

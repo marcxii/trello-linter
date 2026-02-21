@@ -51,7 +51,7 @@ def test_past_due_violation_missing_due_complete_does_not_fail():
     assert result["fail_count"] == 0
 
 
-def test_past_due_violation_excludes_complete_or_archived_cards():
+def test_past_due_violation_excludes_complete_and_archived_cards():
     past_due = (datetime.now(timezone.utc) - timedelta(days=2)).isoformat().replace("+00:00", "Z")
     parsed = _parsed_data(
         lists=[{"id": "l1", "name": "In Progress", "closed": False}],

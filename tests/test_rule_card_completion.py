@@ -48,3 +48,23 @@ def test_card_completion_fails_when_complete_card_not_in_done():
     )
     assert result["eligible_count"] == 1
     assert result["fail_count"] == 1
+
+
+def test_card_completion_excludes_incomplete_and_archived_cards():
+    parsed = _parsed_data(
+        lists=[{"id": "l1", "name": "In Progress", "closed": False}],
+        cards=[
+            {"id": "c1", "name": "Incomplete", "list_id": "l1", "closed": False, "dueComplete": False},
+            {"id": "c2", "name": "Archived", "list_id": "l1", "closed": True, "dueComplete": True},
+        ],
+    )
+    result = check_card_completion(
+        parsed,
+        {
+            "done_keywords": ["done"],
+            "backlog_keywords": ["backlog"],
+            "in_progress_keywords": ["in progress"],
+        },
+    )
+    assert result["eligible_count"] == 0
+    assert result["fail_count"] == 0
