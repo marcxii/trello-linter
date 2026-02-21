@@ -28,7 +28,7 @@
       <div class="card-actions">
       <button
         class="btn-base btn-secondary btn-size-md"
-        hx-get="/partials/results?run_id={{ run_id }}"
+        hx-get="/partials/results?run_id={{ run_id }}{% if selected_members is defined and selected_members|length == 0 %}&members=__none__{% else %}{% for member in selected_members %}&members={{ member|urlencode }}{% endfor %}{% endif %}"
         hx-target="#content"
         hx-swap="innerHTML"
         type="button"

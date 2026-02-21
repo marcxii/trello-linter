@@ -180,12 +180,12 @@ def results_partial():
             expanded_rule_ids = request.args.getlist("expanded")
             filter_active = set(selected_members) != set(member_names)
             overrides = _get_rule_settings_overrides()
-            rule_results = _filter_rule_results_by_overrides(
-                report_ctx.get("rule_results", []), overrides
+            score_rule_results = _filter_rule_results_by_overrides(
+                (report_ctx.get("report", {}) or {}).get("rule_results", []), overrides
             )
             base_config = _load_rules_config()
             scoring_result, grade_info = _apply_overrides_to_scores(
-                rule_results, base_config, overrides
+                score_rule_results, base_config, overrides
             )
             return render_template(
                 "partials/results.html",
@@ -234,11 +234,14 @@ def report_overlay_partial():
     selected_members = report_ctx.get("selected_members", [])
     filter_active = set(selected_members) != set(member_names)
     overrides = _get_rule_settings_overrides()
-    rule_results = _filter_rule_results_by_overrides(
+    score_rule_results = _filter_rule_results_by_overrides(
+        (report_ctx.get("report", {}) or {}).get("rule_results", []), overrides
+    )
+    display_rule_results = _filter_rule_results_by_overrides(
         report_ctx.get("rule_results", []), overrides
     )
     base_config = _load_rules_config()
-    scoring_result, _ = _apply_overrides_to_scores(rule_results, base_config, overrides)
+    scoring_result, _ = _apply_overrides_to_scores(score_rule_results, base_config, overrides)
     report = dict(report_ctx.get("report", {}))
     report["scores"] = {
         **(report.get("scores", {}) or {}),
@@ -253,7 +256,7 @@ def report_overlay_partial():
         lists_count=board.get("lists_count", 0),
         members_count=board.get("members_count", 0),
         generated_at=report_ctx.get("generated_at", datetime.now(timezone.utc).isoformat()),
-        rule_results=rule_results,
+        rule_results=display_rule_results,
         filter_active=filter_active,
     )
 
@@ -630,7 +633,7 @@ def analyze_partial():
     Flow:
     1. Validate uploaded file
     2. Parse Trello JSON (board, lists, cards, members, checklists)
-    3. Run all 14 linting rules via RuleEngine
+    3. Run all enabled rules via RuleEngine (keyed by rule_id)
     4. Calculate individual rule-based scores
     5. Save to database (runs, cards, members, findings)
     6. Return results HTML fragment
@@ -746,11 +749,16 @@ def card_partial():
     report_data = json.loads(run_row["report_json"] or "{}")
     card_short_urls = report_data.get("card_short_urls", {})
     rule_settings = report_data.get("rule_settings") or {}
+    member_map = get_members_for_run(db, run_id)
+    all_member_names = sorted(set(member_map.values()))
+    all_member_names.append("Unassigned")
+    selected_members = _parse_selected_members(request.args, all_member_names)
 
     if not card_id:
         return render_template(
             "partials/card.html",
             run_id=run_id,
+            selected_members=selected_members,
             card_name="(unknown card)",
             list_name="—",
             members=[],
@@ -766,7 +774,6 @@ def card_partial():
             message="Card not found for this report.",
         )
 
-    member_map = get_members_for_run(db, run_id)
     member_names = [member_map.get(member_id, member_id) for member_id in (card.get("members") or [])]
 
     issues = []
@@ -822,6 +829,7 @@ def card_partial():
     return render_template(
         "partials/card.html",
         run_id=run_id,
+        selected_members=selected_members,
         card_name=card.get("card_name") or "(untitled card)",
         list_name=card.get("list_name") or "—",
         members=member_names,

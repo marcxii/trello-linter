@@ -81,3 +81,22 @@ def test_story_point_estimation_applies_to_any_list():
     )
     assert result["eligible_count"] == 1
     assert result["fail_count"] == 1
+
+
+def test_story_point_estimation_excludes_archived_cards():
+    parsed = {
+        "board": {"id": "b1", "name": "Board"},
+        "lists": [{"id": "l1", "name": "In Progress", "closed": False}],
+        "cards": [
+            {"id": "c1", "name": "Archived", "list_id": "l1", "closed": True, "desc": "No story points"},
+        ],
+        "members": [],
+        "checklists": [],
+    }
+    config = yaml.safe_load(Path("config/rules_config.yaml").read_text()) or {}
+    result = check_story_point_estimation(
+        parsed,
+        {"story_point_estimation": config.get("story_point_estimation", {})},
+    )
+    assert result["eligible_count"] == 0
+    assert result["fail_count"] == 0

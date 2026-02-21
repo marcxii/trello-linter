@@ -36,7 +36,7 @@
                   {% if failure.card_id %}
                     <button
                       class="btn-base btn-secondary btn-size-sm btn-no-shadow btn-hover-bg u-btn-tight u-mt-0 u-mb-0"
-                      hx-get="/partials/card?run_id={{ run_id }}&card_id={{ failure.card_id }}"
+                      hx-get="/partials/card?run_id={{ run_id }}&card_id={{ failure.card_id }}{% if selected_members is defined and selected_members|length == 0 %}&members=__none__{% else %}{% for member in selected_members %}&members={{ member|urlencode }}{% endfor %}{% endif %}"
                       hx-target="#content"
                       hx-swap="innerHTML"
                       type="button"
@@ -57,10 +57,10 @@
           <div class="rule-table">
             <table class="rule-table-grid">
               <colgroup>
-                <col style="width: 35%;">
+                <col style="width: 40%;">
                 <col style="width: 20%;">
                 <col style="width: 25%;">
-                <col style="width: 20%;">
+                <col style="width: 15%;">
               </colgroup>
               <thead>
                 <tr>

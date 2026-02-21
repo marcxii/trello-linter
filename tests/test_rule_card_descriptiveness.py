@@ -61,3 +61,16 @@ def test_card_descriptiveness_applies_to_any_list():
     )
     assert result["eligible_count"] == 1
     assert result["fail_count"] == 1
+
+
+def test_card_descriptiveness_excludes_archived_cards():
+    parsed = _parsed_data(
+        lists=[{"id": "l1", "name": "Backlog", "closed": False}],
+        cards=[{"id": "c1", "name": "Archived", "list_id": "l1", "closed": True, "desc": "short"}],
+    )
+    result = check_card_descriptiveness(
+        parsed,
+        {"card_descriptiveness": {"minimum_desc_char": 20}},
+    )
+    assert result["eligible_count"] == 0
+    assert result["fail_count"] == 0

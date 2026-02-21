@@ -225,11 +225,12 @@
       "idMembers": [
         "mA"
       ],
-      "closed": true,
+      "closed": false,
       "due": "2026-02-19T18:39:49.264727Z",
       "shortUrl": "https://trello.com",
       "dateLastActivity": "2026-02-17T06:39:49.264727Z",
-      "actions": []
+      "actions": [],
+      "dueComplete": true
     },
     {
       "id": "high_done_2",
@@ -239,11 +240,12 @@
       "idMembers": [
         "mA"
       ],
-      "closed": true,
+      "closed": false,
       "due": "2026-02-19T18:39:49.264727Z",
       "shortUrl": "https://trello.com",
       "dateLastActivity": "2026-02-17T06:39:49.264727Z",
-      "actions": []
+      "actions": [],
+      "dueComplete": true
     },
     {
       "id": "high_done_3",
@@ -253,11 +255,12 @@
       "idMembers": [
         "mA"
       ],
-      "closed": true,
+      "closed": false,
       "due": "2026-02-19T18:39:49.264727Z",
       "shortUrl": "https://trello.com",
       "dateLastActivity": "2026-02-17T06:39:49.264727Z",
-      "actions": []
+      "actions": [],
+      "dueComplete": true
     },
     {
       "id": "high_done_4",
@@ -267,11 +270,12 @@
       "idMembers": [
         "mA"
       ],
-      "closed": true,
+      "closed": false,
       "due": "2026-02-19T18:39:49.264727Z",
       "shortUrl": "https://trello.com",
       "dateLastActivity": "2026-02-17T06:39:49.264727Z",
-      "actions": []
+      "actions": [],
+      "dueComplete": true
     }
   ],
   "checklists": []

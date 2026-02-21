@@ -1,6 +1,4 @@
-import io
-import json
-import sqlite3
+from tests.helpers import create_run_from_payload
 
 
 def _make_payload():
@@ -21,21 +19,11 @@ def _make_payload():
 
 
 def _create_run(client, app):
-    data = {
-        "file": (
-            io.BytesIO(json.dumps(_make_payload()).encode("utf-8")),
-            "board.json",
-            "application/json",
-        )
-    }
-    res = client.post("/partials/analyze", data=data, content_type="multipart/form-data")
-    assert res.status_code == 200
+    return _create_run_with_payload(client, app, _make_payload())
 
-    conn = sqlite3.connect(app.config["SQLITE_DB_PATH"])
-    row = conn.execute("SELECT id FROM runs ORDER BY id DESC LIMIT 1").fetchone()
-    conn.close()
-    assert row is not None
-    return row[0]
+
+def _create_run_with_payload(client, app, payload):
+    return create_run_from_payload(client, app, payload)
 
 
 def test_results_partial_contains_required_values(client, app):
@@ -69,3 +57,48 @@ def test_csv_export_contains_required_sections(client, app):
     assert "Scorecard" in csv_text
     assert "Findings by Rule" in csv_text
     assert "Required Values Board" in csv_text
+
+
+def test_csv_export_filters_rows_by_selected_member(client, app):
+    payload = {
+        "name": "Member Filter Board",
+        "cards": [
+            {"id": "c1", "name": "Alex Card", "idList": "l1", "idMembers": ["m1"], "due": None, "closed": False},
+            {"id": "c2", "name": "Bob Card", "idList": "l1", "idMembers": ["m2"], "due": None, "closed": False},
+        ],
+        "lists": [{"id": "l1", "name": "In Progress", "closed": False}],
+        "members": [
+            {"id": "m1", "fullName": "Alex", "username": "alex"},
+            {"id": "m2", "fullName": "Bob", "username": "bob"},
+        ],
+    }
+    run_id = _create_run_with_payload(client, app, payload)
+    res = client.get(f"/export/findings.csv?run_id={run_id}&members=Alex")
+    assert res.status_code == 200
+    csv_text = res.data.decode("utf-8")
+    assert "Alex Card" in csv_text
+    assert "Bob Card" not in csv_text
+
+
+def test_csv_export_excludes_disabled_rules(client, app):
+    payload = {
+        "name": "Disabled Rule Board",
+        "cards": [
+            {"id": "c1", "name": "Due Missing", "idList": "l1", "idMembers": ["m1"], "due": None, "closed": False},
+            {"id": "c2", "name": "Unowned Done", "idList": "l2", "idMembers": [], "due": None, "closed": False},
+        ],
+        "lists": [
+            {"id": "l1", "name": "In Progress", "closed": False},
+            {"id": "l2", "name": "Done", "closed": False},
+        ],
+        "members": [{"id": "m1", "fullName": "Alex", "username": "alex"}],
+    }
+    run_id = _create_run_with_payload(client, app, payload)
+    with client.session_transaction() as sess:
+        sess["rule_settings_overrides"] = {"rules": {"card_due_date": False}}
+
+    res = client.get(f"/export/findings.csv?run_id={run_id}")
+    assert res.status_code == 200
+    csv_text = res.data.decode("utf-8")
+    assert "Card Ownership" in csv_text
+    assert "Card Due Date" not in csv_text

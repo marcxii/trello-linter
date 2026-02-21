@@ -1,6 +1,5 @@
 # requirements.txt
 flask==3.0.0
-sqlalchemy==2.0.45
 python-dotenv==1.0.0
 gunicorn==21.2.0
 pyyaml==6.0.1

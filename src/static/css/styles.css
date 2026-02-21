@@ -894,9 +894,11 @@ a.upload-form {
 }
 
 .rule-members {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    display: table-cell;
+}
+
+.rule-member {
+    display: block;
 }
 
 .rule-table {

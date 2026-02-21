@@ -98,9 +98,9 @@
       "desc": "bad",
       "idList": "l_inprog",
       "idMembers": [],
-      "closed": true,
+      "closed": false,
       "due": "2026-02-14T18:39:49.264727Z",
-      "dueComplete": false,
+      "dueComplete": true,
       "shortUrl": "https://trello.com",
       "dateLastActivity": "2026-02-09T18:39:49.264727Z",
       "actions": []
@@ -115,7 +115,8 @@
       "due": null,
       "shortUrl": "https://trello.com",
       "dateLastActivity": "2026-02-15T18:39:49.264727Z",
-      "actions": []
+      "actions": [],
+      "dueComplete": false
     },
     {
       "id": "v_done_ok",
@@ -125,11 +126,12 @@
       "idMembers": [
         "m2"
       ],
-      "closed": true,
+      "closed": false,
       "due": "2026-02-20T18:39:49.264727Z",
       "shortUrl": "https://trello.com",
       "dateLastActivity": "2026-02-17T16:39:49.264727Z",
-      "actions": []
+      "actions": [],
+      "dueComplete": true
     }
   ],
   "checklists": []

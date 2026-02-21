@@ -12,6 +12,7 @@ ENV/
 .mypy_cache/
 .coverage
 htmlcov/
+coverage.json
 
 # build artifacts
 dist/
