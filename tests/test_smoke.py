@@ -135,6 +135,32 @@ def test_partials_card_includes_back_to_report_run_id(client, app):
     assert f"run_id={run_id}".encode("utf-8") in res.data
 
 
+def test_member_filter_persists_through_card_back_link(client, app):
+    res = _post_analyze(client, _sample_payload())
+    assert res.status_code == 200
+
+    conn = sqlite3.connect(app.config["SQLITE_DB_PATH"])
+    row = conn.execute(
+        "SELECT run_id, card_id FROM cards ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    conn.close()
+    assert row is not None
+    run_id = row[0]
+    card_id = row[1]
+
+    res_results = client.get(f"/partials/results?run_id={run_id}&members=Unassigned")
+    assert res_results.status_code == 200
+    assert f"/partials/card?run_id={run_id}&card_id={card_id}".encode("utf-8") in res_results.data
+    assert b"members=Unassigned" in res_results.data
+
+    res_card = client.get(
+        f"/partials/card?run_id={run_id}&card_id={card_id}&members=Unassigned"
+    )
+    assert res_card.status_code == 200
+    assert b"Back to Report" in res_card.data
+    assert b"members=Unassigned" in res_card.data
+
+
 def test_partials_results_valid_run_renders_board_name(client, app):
     client.get("/")
     with client.session_transaction() as sess:

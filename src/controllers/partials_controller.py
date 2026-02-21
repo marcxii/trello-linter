@@ -749,11 +749,16 @@ def card_partial():
     report_data = json.loads(run_row["report_json"] or "{}")
     card_short_urls = report_data.get("card_short_urls", {})
     rule_settings = report_data.get("rule_settings") or {}
+    member_map = get_members_for_run(db, run_id)
+    all_member_names = sorted(set(member_map.values()))
+    all_member_names.append("Unassigned")
+    selected_members = _parse_selected_members(request.args, all_member_names)
 
     if not card_id:
         return render_template(
             "partials/card.html",
             run_id=run_id,
+            selected_members=selected_members,
             card_name="(unknown card)",
             list_name="—",
             members=[],
@@ -769,7 +774,6 @@ def card_partial():
             message="Card not found for this report.",
         )
 
-    member_map = get_members_for_run(db, run_id)
     member_names = [member_map.get(member_id, member_id) for member_id in (card.get("members") or [])]
 
     issues = []
@@ -825,6 +829,7 @@ def card_partial():
     return render_template(
         "partials/card.html",
         run_id=run_id,
+        selected_members=selected_members,
         card_name=card.get("card_name") or "(untitled card)",
         list_name=card.get("list_name") or "—",
         members=member_names,
