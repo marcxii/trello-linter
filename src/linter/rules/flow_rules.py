@@ -89,7 +89,7 @@ def get_moved_to_in_progress_date(card: Dict[str, Any]) -> Optional[datetime]:
 def check_progress_monitoring(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """progress_monitoring: Stale In-Progress work.
     
-    Eligibility: Cards in IN_PROGRESS AND closed=false
+    Eligibility: Cards in IN_PROGRESS AND closed=false AND dueComplete=false
     Fail Condition: (now - card.moved_to_in_progress) >= THRESHOLD_DAYS
                     AND (now - card.last_activity) >= THRESHOLD_DAYS
     
@@ -119,6 +119,7 @@ def check_progress_monitoring(parsed_data: Dict[str, Any], config: Dict[str, Any
         card for card in parsed_data.get("cards", [])
         if card.get("list_id") in in_progress_list_ids
         and not card.get("closed", False)
+        and card.get("dueComplete", False) == False
     ]
     
     now = datetime.now(timezone.utc)

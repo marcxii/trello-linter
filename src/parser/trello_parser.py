@@ -229,13 +229,17 @@ def _parse_cards_full(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
         payload: Validated Trello board JSON
         
     Returns:
-        List of dictionaries with full card details
+        List of dictionaries with full card details for non-archived cards.
     """
     cards = _safe_get_list(payload, 'cards')
     result = []
     
     for card in cards:
         if not isinstance(card, dict):
+            continue
+        # Exclude archived cards at parse time so downstream rules only
+        # evaluate active board work.
+        if card.get("closed", False):
             continue
             
         result.append({

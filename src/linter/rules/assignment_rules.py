@@ -69,7 +69,7 @@ def check_card_ownership(parsed_data: Dict[str, Any], config: Dict[str, Any] = N
 def check_card_due_date(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """card_due_date: Card has a due date present.
     
-    Eligibility: Cards in IN_PROGRESS lists AND closed=false
+    Eligibility: Cards in IN_PROGRESS lists AND closed=false AND dueComplete=false
     Fail Condition: card.due = null
     
     Args:
@@ -94,7 +94,8 @@ def check_card_due_date(parsed_data: Dict[str, Any], config: Dict[str, Any] = No
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
         if card.get("list_id") in in_progress_list_ids
-        and card.get("closed") == False #dont evaulate of archived cards
+        and card.get("closed") == False
+        and card.get("dueComplete", False) == False
     ]
     
     # Check for failures

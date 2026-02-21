@@ -16,7 +16,7 @@ from collections import defaultdict
 def check_past_due_violation(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """past_due_violation: Past-due active work.
     
-    Eligibility: Cards where due != null AND closed=false
+    Eligibility: Cards where due != null AND closed=false AND dueComplete=false
     Fail Condition: due < now AND dueComplete != true
     
     Args:
@@ -35,6 +35,7 @@ def check_past_due_violation(parsed_data: Dict[str, Any], config: Dict[str, Any]
         if card.get("due") is not None
         and card.get("due") != ""
         and not card.get("closed", False)
+        and card.get("dueComplete", False) == False
     ]
     
     # Check for failures (past due)
@@ -79,7 +80,7 @@ def check_past_due_violation(parsed_data: Dict[str, Any], config: Dict[str, Any]
 def check_progress_threshold(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """progress_threshold: WIP per person threshold.
     
-    Eligibility: Cards in IN_PROGRESS AND closed=false
+    Eligibility: Cards in IN_PROGRESS AND closed=false AND dueComplete=false
     Fail Condition: count(cards.in_progress) grouped by memberID > MAX_WIP_PER_MEMBER
     
     Args:
@@ -108,6 +109,7 @@ def check_progress_threshold(parsed_data: Dict[str, Any], config: Dict[str, Any]
         card for card in parsed_data.get("cards", [])
         if card.get("list_id") in in_progress_list_ids
         and not card.get("closed", False)
+        and card.get("dueComplete", False) == False
     ]
     
     # Group cards by member

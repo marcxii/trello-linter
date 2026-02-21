@@ -21,8 +21,8 @@ def test_progress_threshold_passes_within_member_limit():
         lists=[{"id": "l1", "name": "In Progress", "closed": False}],
         members=[{"id": "m1", "fullName": "Alex"}],
         cards=[
-            {"id": "c1", "name": "A", "list_id": "l1", "closed": False, "members": ["m1"]},
-            {"id": "c2", "name": "B", "list_id": "l1", "closed": False, "members": ["m1"]},
+            {"id": "c1", "name": "A", "list_id": "l1", "closed": False, "dueComplete": False, "members": ["m1"]},
+            {"id": "c2", "name": "B", "list_id": "l1", "closed": False, "dueComplete": False, "members": ["m1"]},
         ],
     )
     result = check_progress_threshold(
@@ -38,9 +38,9 @@ def test_progress_threshold_fails_when_member_exceeds_limit():
         lists=[{"id": "l1", "name": "In Progress", "closed": False}],
         members=[{"id": "m1", "fullName": "Alex"}],
         cards=[
-            {"id": "c1", "name": "A", "list_id": "l1", "closed": False, "members": ["m1"]},
-            {"id": "c2", "name": "B", "list_id": "l1", "closed": False, "members": ["m1"]},
-            {"id": "c3", "name": "C", "list_id": "l1", "closed": False, "members": ["m1"]},
+            {"id": "c1", "name": "A", "list_id": "l1", "closed": False, "dueComplete": False, "members": ["m1"]},
+            {"id": "c2", "name": "B", "list_id": "l1", "closed": False, "dueComplete": False, "members": ["m1"]},
+            {"id": "c3", "name": "C", "list_id": "l1", "closed": False, "dueComplete": False, "members": ["m1"]},
         ],
     )
     result = check_progress_threshold(
@@ -51,3 +51,20 @@ def test_progress_threshold_fails_when_member_exceeds_limit():
     assert result["fail_count"] == 1
     assert len(result["failures"]) == 3
     assert all(failure.get("card_id") for failure in result["failures"])
+
+
+def test_progress_threshold_excludes_complete_or_archived_cards():
+    parsed = _parsed_data(
+        lists=[{"id": "l1", "name": "In Progress", "closed": False}],
+        members=[{"id": "m1", "fullName": "Alex"}],
+        cards=[
+            {"id": "c1", "name": "Complete", "list_id": "l1", "closed": False, "dueComplete": True, "members": ["m1"]},
+            {"id": "c2", "name": "Archived", "list_id": "l1", "closed": True, "dueComplete": False, "members": ["m1"]},
+        ],
+    )
+    result = check_progress_threshold(
+        parsed,
+        {"in_progress_keywords": ["in progress"], "progress_threshold": {"max_wip_per_member": 1}},
+    )
+    assert result["eligible_count"] == 0
+    assert result["fail_count"] == 0
