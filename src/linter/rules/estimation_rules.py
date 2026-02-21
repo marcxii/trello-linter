@@ -58,6 +58,7 @@ def check_card_descriptiveness(parsed_data: Dict[str, Any], config: Dict[str, An
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
         if card.get("list_id") in list_map
+        and not card.get("closed", False)
     ]
     
     # Check for failures
@@ -112,6 +113,7 @@ def check_story_point_estimation(parsed_data: Dict[str, Any], config: Dict[str, 
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
         if card.get("list_id") in list_map
+        and not card.get("closed", False)
     ]
     
     # Check for failures
@@ -164,6 +166,7 @@ def check_card_effort(parsed_data: Dict[str, Any], config: Dict[str, Any] = None
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
         if card.get("list_id") in list_map
+        and not card.get("closed", False)
     ]
     
     # Check for failures
@@ -215,6 +218,7 @@ def check_description_canonicalization(parsed_data: Dict[str, Any], config: Dict
         card for card in parsed_data.get("cards", [])
         if card.get("list_id") in list_map
         and card.get("desc")  # Has description
+        and not card.get("closed", False)
     ]
     
     # Check for failures
