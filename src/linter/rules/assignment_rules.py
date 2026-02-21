@@ -40,6 +40,8 @@ def check_card_ownership(parsed_data: Dict[str, Any], config: Dict[str, Any] = N
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
         if card.get("list_id") in non_backlog_list_ids
+        and card.get("closed") == False
+       
     ]
     
     # Check for failures
@@ -92,7 +94,7 @@ def check_card_due_date(parsed_data: Dict[str, Any], config: Dict[str, Any] = No
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
         if card.get("list_id") in in_progress_list_ids
-        and not card.get("closed", False)
+        and card.get("closed") == False #dont evaulate of archived cards
     ]
     
     # Check for failures
@@ -143,12 +145,14 @@ def check_card_completion(parsed_data: Dict[str, Any], config: Dict[str, Any] = 
         is_done = any(keyword in name for keyword in done_keywords)
         if not is_done:
             non_done_list_ids.append(list_id)
+        
     
     # Filter eligible cards (closed but in non-Done lists)
     eligible_cards = [
         card for card in parsed_data.get("cards", [])
-        if card.get("closed", False) == True
+        if not card.get("closed", False) #not archived cards
         and card.get("list_id") in non_done_list_ids
+        and not card.get("dueComplete",True)
     ]
     
     # All eligible cards are failures (closed cards should be in Done)
