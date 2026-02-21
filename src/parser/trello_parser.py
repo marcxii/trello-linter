@@ -249,6 +249,7 @@ def _parse_cards_full(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
             'checklists': card.get('idChecklists', []),
             'closed': card.get('closed', False),
             'due': card.get('due'),
+            'dueComplete': card.get('dueComplete'),
             'short_url': card.get('shortUrl'),
             'actions': card.get('actions', []),
         })

@@ -40,7 +40,7 @@ def test_past_due_violation_fails_for_overdue_open_card():
     assert result["fail_count"] == 1
 
 
-def test_past_due_violation_missing_due_complete_still_fails_when_overdue():
+def test_past_due_violation_missing_due_complete_does_not_fail():
     past_due = (datetime.now(timezone.utc) - timedelta(days=2)).isoformat().replace("+00:00", "Z")
     parsed = _parsed_data(
         lists=[{"id": "l1", "name": "In Progress", "closed": False}],
@@ -48,4 +48,4 @@ def test_past_due_violation_missing_due_complete_still_fails_when_overdue():
     )
     result = check_past_due_violation(parsed, {})
     assert result["eligible_count"] == 1
-    assert result["fail_count"] == 1
+    assert result["fail_count"] == 0

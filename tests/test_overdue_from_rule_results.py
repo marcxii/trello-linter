@@ -13,6 +13,7 @@ def _create_run_with_overdue(client, app):
                 "idList": "l1",
                 "idMembers": ["m1"],
                 "due": "2000-01-01T00:00:00.000Z",
+                "dueComplete": False,
             },
             {
                 "id": "c2",
@@ -20,6 +21,7 @@ def _create_run_with_overdue(client, app):
                 "idList": "l1",
                 "idMembers": ["m1"],
                 "due": "2099-01-01T00:00:00.000Z",
+                "dueComplete": False,
             },
         ],
         "lists": [{"id": "l1", "name": "In Progress", "closed": False}],

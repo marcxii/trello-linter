@@ -16,10 +16,10 @@ def _parsed_data(cards, lists):
     }
 
 
-def test_card_completion_passes_when_closed_card_is_in_done():
+def test_card_completion_passes_when_complete_card_is_in_done():
     parsed = _parsed_data(
         lists=[{"id": "l1", "name": "Done", "closed": False}],
-        cards=[{"id": "c1", "name": "Finished", "list_id": "l1", "closed": True}],
+        cards=[{"id": "c1", "name": "Finished", "list_id": "l1", "closed": False, "dueComplete": True}],
     )
     result = check_card_completion(
         parsed,
@@ -33,10 +33,10 @@ def test_card_completion_passes_when_closed_card_is_in_done():
     assert result["fail_count"] == 0
 
 
-def test_card_completion_fails_when_closed_card_not_in_done():
+def test_card_completion_fails_when_complete_card_not_in_done():
     parsed = _parsed_data(
         lists=[{"id": "l1", "name": "In Progress", "closed": False}],
-        cards=[{"id": "c1", "name": "Misplaced", "list_id": "l1", "closed": True}],
+        cards=[{"id": "c1", "name": "Misplaced", "list_id": "l1", "closed": False, "dueComplete": True}],
     )
     result = check_card_completion(
         parsed,

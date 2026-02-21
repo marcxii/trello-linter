@@ -122,8 +122,8 @@ def check_card_due_date(parsed_data: Dict[str, Any], config: Dict[str, Any] = No
 def check_card_completion(parsed_data: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
     """card_completion: Complete Card is NOT in a 'Done' List.
     
-    Eligibility: Cards where List in (BACKLOG, IN_PROGRESS) AND closed=true
-    Fail Condition: Card is marked closed but not in a Done list
+    Eligibility: Cards where List in (BACKLOG, IN_PROGRESS) AND dueComplete=true
+    Fail Condition: Card is marked complete but not in a Done list
     
     Args:
         parsed_data: Full board data from parse_full_board()
@@ -152,7 +152,7 @@ def check_card_completion(parsed_data: Dict[str, Any], config: Dict[str, Any] = 
         card for card in parsed_data.get("cards", [])
         if not card.get("closed", False) #not archived cards
         and card.get("list_id") in non_done_list_ids
-        and not card.get("dueComplete",True)
+        and card.get("dueComplete",True)
     ]
     
     # All eligible cards are failures (closed cards should be in Done)
