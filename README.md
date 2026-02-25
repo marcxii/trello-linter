@@ -1,6 +1,21 @@
-# Trello Board Linter
+# TrelloScore
 
 ## A tool to analyze Trello board exports and generate quality reports
+
+## About this app
+**What:** Trello Board Linter is a Flask app that evaluates Trello board JSON exports against configurable quality rules and produces actionable score-based reports.
+
+**Why:** It was developed to help teams quickly identify workflow issues (like overdue work, unclear ownership, and sizing gaps), standardize board hygiene, and improve delivery visibility.
+
+**Developed for:** The Spring 2026 O1 term of Boston University Metropolitan College (BU MET) CS633.
+
+**Developed by:** 
+Zach Franchett - Team Lead
+Wesley Chen (`wesJchen`) - QA Engineer
+Marcus Lofton (`marcxii`) - Developer
+Domineike Henderson (`ddhender6`) - Configuration Engineer
+Paul Probst (`probst-paul`) UX Designer / Developer
+Arsal Siddiqui (`arsalsidd23`) Testing & Design Engineer
 
 ## Run locally
 
@@ -12,11 +27,7 @@
 `pip install -r requirements.txt`
 
 ### 3) Start the server
-Option A (recommended):
-`python -m flask --app src.main run --debug`
-
-Option B:
-`python src/main.py`
+`python -m flask --app src.main run`
 
 ### 4) Open the app
 Visit `http://127.0.0.1:5000/`
@@ -35,17 +46,18 @@ Optional Effective Denominator settings are available under `scoring.effective_d
 
 ## UI flows (current)
 - Upload JSON on the home page to render the results partial.
+- Report settings are opened from the upload screen after a file is selected.
+- Report settings allow toggling rules and adjusting thresholds. Disabled rules are hidden and not scored.
+- Settings persist for the session and apply to new analyses. Saving settings refreshes the report view.
+- Help button opens a slide-up FAQ panel (single item open at a time).
 - Results page includes:
   - Quick Stats and Overall Quality Score.
-  - Past-due cards populated from stored data with "View Card" buttons.
+  - Cards that violate active rules, grouped under Findings by Rule, with "View Card" buttons.
   - Filter by member dropdown (multi-select) with Apply to refresh results.
 - "View Card" opens a card detail partial with member/list/due info and a Back to Report button.
 - Back to Report restores the results partial for the same `run_id`.
-- Printable Report opens a modal overlay with report sections; Settings opens a report settings overlay.
-- Report settings allow toggling rules and adjusting thresholds. Disabled rules are hidden and not scored.
-- Settings persist for the session and apply to new analyses. Saving settings refreshes the report view.
-- Full-page report is available at `/report/<run_id>`.
-- Help button opens a slide-up FAQ panel (single item open at a time).
+- Printable Report opens a modal overlay with report sections.
+- Download CSV exports findings for the current `run_id` (and active member filter).
 
 ## Tests
 `pytest -q`
